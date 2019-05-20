@@ -2519,7 +2519,7 @@ function SaveAs() {
       if (rsp == 2) { return false; } //exit if cancelled
    }
    var ts = fso.OpenTextFile(path,2,true);
-   ts.WriteLine(NS.myText.value.replace(/\n/g,"\r\n"));
+   ts.Write(NS.myText.value.replace(/\n/g,"\r\n"));
    ts.Close();
    NS.FileName = path;
    DisplayTitle();
@@ -2535,7 +2535,7 @@ function BringToFront(app) {
    var wScript = new ActiveXObject("WScript.Shell");
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var f = fso.CreateTextFile(NS.Path + "temp.vbs");
-   f.WriteLine(["Dim objShell: Set objShell = CreateObject(\"Wscript.Shell\")",
+   f.Write(["Dim objShell: Set objShell = CreateObject(\"Wscript.Shell\")",
                 "dim success: success = false",
                 "dim sTime: sTime = Timer",
                 "do while success = false",
@@ -2554,7 +2554,7 @@ function SendKeys(keys, delay) {
    var wScript = new ActiveXObject("WScript.Shell");
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var f = fso.CreateTextFile(NS.Path + "temp.vbs");
-   f.WriteLine(["WScript.Sleep " + delay,
+   f.Write(["WScript.Sleep " + delay,
                 "CreateObject(\"WScript.Shell\").sendKeys(\"" + keys + "\")",
                 "CreateObject(\"Scripting.FileSystemObject\").deleteFile(WScript.ScriptFullName)",
                 "WScript.Quit"].join("\r\n"));
@@ -2565,8 +2565,8 @@ function SendKeys(keys, delay) {
 function Save() {
    if (NS.FileName != "") {
       var f = new ActiveXObject("Scripting.FileSystemObject").CreateTextFile(NS.FileName ,true);
-      f.writeLine(NS.myText.value.replace(/\n/g,"\r\n"));
-      f.close();
+      f.Write(NS.myText.value.replace(/\n/g,"\r\n"));
+      f.Close();
    } else {
       return SaveAs();
    }
@@ -4206,7 +4206,7 @@ function LogoChange(logo) {
    strText = strText.replace(remove, "\r\nModel=\"" + mName + "\"");
 
    objFile = fso.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 2)
-   objFile.WriteLine(strText);
+   objFile.Write(strText);
    objFile.Close
 
    MaintainSelection();
