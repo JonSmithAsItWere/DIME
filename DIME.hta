@@ -2693,7 +2693,7 @@ function UploadPortalFiles() {
    ChangeCursor("wait");
    document.getElementById("overlayText").innerHTML = "Upload In Progress<br/>Please Wait...";
    document.getElementById("overlay").style.display = "block";
-   setTimeout(function { UploadFilesToPortal(folder); }, 50);
+   setTimeout(function() { UploadFilesToPortal(folder); }, 50);
 }
 
 function UploadFilesToPortal(folder) {
