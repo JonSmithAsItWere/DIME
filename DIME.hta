@@ -2140,7 +2140,7 @@ function Run(link, element) {;
    } else {
       var fso = new ActiveXObject("Scripting.FileSystemObject")
       if (!fso.FolderExists("\\\\pva.local\\shared")) {
-         vMsgBox("Navigation failed. You are not connected to the server.", 0, "Server Links);
+         vMsgBox("Navigation failed. You are not connected to the server.", 0, "Server Links");
          ChangeCursor("default");
          setTimeout(HideMenu,10);
          return;
@@ -2855,9 +2855,9 @@ function ReplacePort() {
       oFile = fso.CreateTextFile(iniPath, true);
       oFile.Write(newText);
       oFile.Close();
-      vMsgBox("COM Port setup was successful!", 0, COM Port Setup);
+      vMsgBox("COM Port setup was successful!", 0, "COM Port Setup");
    } else {
-      vMsgBox("COM Port setup failed!", 0, COM Port Setup); //this shouldn't happen
+      vMsgBox("COM Port setup failed!", 0, "COM Port Setup"); //this shouldn't happen
    }
 }
 
