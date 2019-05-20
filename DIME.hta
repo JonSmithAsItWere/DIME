@@ -2657,7 +2657,6 @@ function BackupPortalFiles() {
 }
 
 function CreatePortalBackup(backup) {
-   alert(backup);
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (!fso.FolderExists(backup)) { fso.CreateFolder(backup); }
    fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Config", backup + "\\Config")
