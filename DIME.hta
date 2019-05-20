@@ -151,7 +151,6 @@ INI = {
 };
 
 NS = {
-   Released: "\\\\pva.local\\shared\\Programming\\System Programming\\JumpStart\\DIME.hta",
    HTA: document.getElementById("DIME"),
    FileName: "",               //filepath and filename of the text file
    fModif: false,              //boolean for if the text has been modified
@@ -1679,7 +1678,6 @@ Colors = {"#FAEBD7": "AntiqueWhite",
           "#9ACD32": "YellowGreen"
 }
 
-
 function DisplayTitle() {
    if ((NS.FileName == "") || (NS.FileName == NS.Path + "temp.txt")) {
       if (NS.FileName == NS.Path + "temp.txt") {
@@ -1795,7 +1793,6 @@ function HandleOnLoad() {
    }
 
    document.getElementById("overlay").style.display = "none";
-
 
    NS.Path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("\\") + 1);
 
@@ -2654,7 +2651,6 @@ function BackupPortalFiles() {
          return;
       }
    }
-
 
    if (!fso.FolderExists(backup)) { fso.CreateFolder(backup); }
    fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Config", backup + "\\Config")
@@ -3768,7 +3764,6 @@ function ChangeIFrame() {
    NS.myResponse = frm.contentDocument.getElementById("FrameResponse");
    NS.myInfo = frm.contentDocument.getElementById("FrameInfo");
 
-
    NS.myText.style.fontFamily = "Fixedsys, Verdana, Arial, sans-serif";
    NS.myText.style.fontSize = "14px";
 
@@ -4459,7 +4454,6 @@ function DecompressMain() {
    objShell.Run("\"" + window.location.pathname + "\" " + newMain);
 }
 
-
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 // Start CheckMainProg Functions
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
@@ -4595,7 +4589,7 @@ function VarAssignInLine(line) {
       if ((ClosBracPos != -1) && (ClosBracPos < eqPos)) { Assignment = false; }
    }
 
-   if (Assignment == true) { return line.substring(0, eqPos - 1).trim(); }
+   if (Assignment == true) { return line.substring(0, eqPos).trim(); }
    return "";
 }
 
@@ -4900,7 +4894,6 @@ Function BrowseForFile()
 End Function
 
 </script>
-
 
 <body onload="HandleOnLoad()"; onbeforeunload="HandleOnUnload(event)"; onkeydown="KeyCapture(this, event)"; onkeypress="PressCapture(event)"; onfocus="MaintainSelection()"; leftmargin="0"; topmargin="0"; rightmargin="0">
 
@@ -5341,7 +5334,6 @@ End Function
    <!-------------->
 </div>
 <!-- END OF BUTTONS -->
-
 
 <table id="ReferencePopup"; onclick="HideMenu()"; style="display:none;height:150px;width:100%";>
    <tr style="height:25px;width:100%;";>
