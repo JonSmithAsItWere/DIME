@@ -9,7 +9,7 @@
    borderStyle="normal"
    caption="yes"
    contextMenu="yes"
-   icon="C:/Program Files/Galil/gdk/etc/ico/dmc.ico"
+   icon="C:/Program Files/Galil/gdk/etc/ico/sen.ico"
    innerBorder="no"
    maximizeButton="yes"
    minimizeButton="yes"
@@ -5273,16 +5273,7 @@ End Function
 <div style="width:calc(100% - 160px);display:inline-block;"><b>Port</b></div>
 <br/>
 <select id="ini" onchange="SetPortList()"; style="width:100px;"></select>
-<select id="inidevice"; style="width:50px;">
-   <option value=1>1</option>
-   <option value=2>2</option>
-   <option value=3>3</option>
-   <option value=4>4</option>
-   <option value=5>5</option>
-   <option value=6>6</option>
-   <option value=7>7</option>
-   <option value=8>8</option>
-</select>
+<select id="inidevice"; style="width:50px;"></select>
 <select id="comdevice"; style="width:calc(100% - 160px);"></select>
 <br/><br/>
 <button class="button"; onclick="ReplacePort()"; style="width:32%;";>Update</button>
@@ -5290,7 +5281,7 @@ End Function
 <button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
 </div>
 
-<div id="findform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:150px;width:300px;top:calc(50% - 75px);left:calc(50% - 150px);display:none">
+<div id="findform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:75px;width:300px;top:70px;left:calc(50% - 150px);display:none">
 Find what: <textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea>
 Match case:<input id="matchcase" type="checkbox"></input>
 <button class="button"; onclick="Find(false)";>Find Next</button>
