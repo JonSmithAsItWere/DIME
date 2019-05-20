@@ -1766,31 +1766,36 @@ function CheckInternet() {
 }
 
 function HandleOnLoad() {
-   if (CheckInternet() == true) { //connected to the internet
-      document.getElementById("overlay").style.display = "block";
-      var ver = VersionMatch();
-      if (ver[0] == false) {
-         var rsp = vConfirm("There is a newer version available, would you like to download it?", 4, "Update Available");
-         if (rsp == 6) { //yes
-            UpdateToNewVersion(ver[1]);
-            return;
-         }
-      } else {
-         if(ver[1].substring(0, 6) == "Failed") {
-            vMsgBox(ver[1]);
+   var cl = NS.HTA.commandLine.trim();
+   var x = cl.substring(1).indexOf("\"");
+   if (x == cl.length) {
+      NS.FileName = "";
+   } else {
+      NS.FileName = cl.substring(x+2).trim();
+   }
+
+   var temp = NS.FileName.substring(NS.FileName.lastIndexOf("\\") + 1, NS.FileName.lastIndexOf("."));
+
+   if (temp != "temp") {
+      if (CheckInternet() == true) { //connected to the internet
+         document.getElementById("overlay").style.display = "block";
+         var ver = VersionMatch();
+         if (ver[0] == false) {
+            var rsp = vConfirm("There is a newer version available, would you like to download it?", 4, "Update Available");
+            if (rsp == 6) { //yes
+               UpdateToNewVersion(ver[1]);
+               return;
+            }
+         } else {
+            if(ver[1].substring(0, 6) == "Failed") {
+               vMsgBox(ver[1]);
+            }
          }
       }
    }
 
    document.getElementById("overlay").style.display = "none";
 
-   var temp = NS.HTA.commandLine.trim();
-   var x = temp.substring(1).indexOf("\"");
-   if (x == temp.length) {
-      NS.FileName = "";
-   } else {
-      NS.FileName = temp.substring(x+2).trim();
-   }
 
    NS.Path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("\\") + 1);
 
@@ -1798,7 +1803,11 @@ function HandleOnLoad() {
    NS.myText.focus();
    SetSelection();
 
-   GalilConnect(true);  //true means initial connect, won't popup up connection window
+   if (temp != "temp") {
+      GalilConnect(true);  //true means initial connect, won't popup up connection window
+   } else {
+      GalilDisconnect();
+   }
    window.addEventListener('resize',CheckWindowSize, false);
 
 // color option stuff
@@ -2623,19 +2632,30 @@ function ChangeCursor(type) {
 function BackupPortalFiles() {
    var objShell = new ActiveXObject("Shell.Application");
    var folder;
+   ChangeCursor("wait");
+   document.getElementById("overlayText").innerHTML = "";
+   document.getElementById("overlay").style.display = "block";
    try {
       folder = objShell.BrowseForFolder(0, "Choose Folder. A new dated folder will be created containing Config, Dep, and Lib Portal folders", 0, 17).Items().Item().Path;
    } catch(e) {
+      document.getElementById("overlay").style.display = "none";
+      ChangeCursor("default");
       return;
    }
+   document.getElementById("overlayText").innerHTML = "Backup In Progress<br/>Please Wait...";
    var today = Today();
    var backup = folder + "\\" + today;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (fso.FolderExists(backup)) {
       var rsp = vConfirm("Backup already exists for today's date in the selected folder. Do you want to continue?", 4, "Backup");
-      if (rsp == 7) { return; }
+      if (rsp == 7) {  // no
+         document.getElementById("overlay").style.display = "none";
+         ChangeCursor("default");
+         return;
+      }
    }
-   ChangeCursor("wait");
+
+
    if (!fso.FolderExists(backup)) { fso.CreateFolder(backup); }
    fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Config", backup + "\\Config")
    fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Dep", backup + "\\Dep")
@@ -2653,6 +2673,7 @@ function BackupPortalFiles() {
    try { fso.CopyFile(desktop + "\\a*.dmc", backup); } catch(e) {}
    try { fso.CopyFile(desktop + "\\s*.dmc", backup); } catch(e) {}
 
+   document.getElementById("overlay").style.display = "none";
    ChangeCursor("default");
    Run(backup);
 }
@@ -2667,6 +2688,8 @@ function UploadPortalFiles() {
    }
 
    ChangeCursor("wait");
+   document.getElementById("overlayText").innerHTML = "Upload In Progress<br/>Please Wait...";
+   document.getElementById("overlay").style.display = "block";
 
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (fso.FolderExists(folder + "\\Config")) {
@@ -2704,6 +2727,7 @@ function UploadPortalFiles() {
    try { fso.CopyFile(folder + "\\s*.dmc", desktop); } catch(e) {}
 
    ChangeCursor("default");
+   document.getElementById("overlay").style.display = "none";
    vMsgBox("Upload Complete!");
 }
 
@@ -3298,14 +3322,17 @@ function Terminal(command) {
    var r = "";
    if (command == "^R^S") {
       ChangeCursor("wait");
+      document.getElementById("overlayText").innerHTML = "Performing Master Reset<br/>Please Wait...";
+      document.getElementById("overlay").style.display = "block";
       vMasterReset(NS.galil);
       GalilDisconnect();
       while (NS.connection == "OFFLINE") {
          GalilConnect(true)
       }
       NS.galil.command("RS");
-      r = "Master Reset Complete!\r:"
+      document.getElementById("overlay").style.display = "none";
       ChangeCursor("default");
+      r = "Master Reset Complete!\r:"
    } else if (command == "^R^V") {
       r = vGalilRevision(NS.galil);
    } else if (command.charAt(0) == "^") {
@@ -5393,7 +5420,9 @@ Value Background Color / Text Color:<br/>
 <button class="button"; onclick="DefaultOptionsClick()"; style="width:49%;";>Restore Defaults</button>
 </div>
 
-<div  id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;"><img src="http://www.mytreedb.com/uploads/mytreedb/loader/ajax_loader_blue_128.gif"; alt="Loading"; style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%)";/></div>
+<div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
+   <div id="overlayText"; style="position:absolute;top:50%;left:50%;font-size:25px;text-align:center;color:white;transform:translate(-50%, -50%)";>Checking For New Version<br/>Please Wait...</div>
+</div>
 
 </body>
 
