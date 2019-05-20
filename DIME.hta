@@ -1779,14 +1779,14 @@ function HandleOnLoad() {
          document.getElementById("overlay").style.display = "block";
          var ver = VersionMatch();
          if (ver[0] == false) {
-            var rsp = vConfirm("There is a newer version available, would you like to download it?", 4, "Update Available");
+            var rsp = vMsgBox("There is a newer version available, would you like to download it?", 4, "Update Available");
             if (rsp == 6) { //yes
                UpdateToNewVersion(ver[1]);
                return;
             }
          } else {
             if(ver[1].substring(0, 6) == "Failed") {
-               vMsgBox(ver[1]);
+               vMsgBox(ver[1], 0, "Update Failed");
             }
          }
       }
@@ -1870,7 +1870,7 @@ function CheckWindowSize() {
 
 function HandleOnUnload(e) {
    if (NS.fModif == true) {
-      var resp = vConfirm("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\nDo you want to save the changes?", 3, "Save?");
+      var resp = vMsgBox("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\nDo you want to save the changes?", 3, "Save?");
       switch (resp) {
          case (6): //yes
             Save();
@@ -2049,7 +2049,7 @@ function SaveOptionsClick(bool) {
    f.Close();
    document.getElementById("optionsform").style.display = "none";
    if (bool) {
-      vMsgBox("Options have been saved!")
+      vMsgBox("Options have been saved!", 0, "Options")
    }
 }
 
@@ -2105,7 +2105,7 @@ function CancelOptionsClick() {
 }
 
 function DefaultOptionsClick() {
-   var rsp = vConfirm("Are you sure you want to restore default options?", 4,"Restore Defaults?"); // 4 = vbYesNo
+   var rsp = vMsgBox("Are you sure you want to restore default options?", 4,"Restore Defaults?"); // 4 = vbYesNo
    if (rsp == 6) { // yes
       NS.startLabel = "Smart";
       NS.textBC = "#FFFFFF";
@@ -2122,7 +2122,7 @@ function DefaultOptionsClick() {
       NS.valueC = "#000000";
       CancelOptionsClick();
       SaveOptionsClick(false);
-      vMsgBox("Default settings restored!");
+      vMsgBox("Default settings restored!", 0, "Options");
    }
 }
 
@@ -2132,7 +2132,7 @@ function Run(link, element) {;
    if (link.indexOf("/") != -1) {
       var temp = CheckInternet();
       if (temp == false) {
-         vMsgBox("Navigation failed. You are not connected to the internet.");
+         vMsgBox("Navigation failed. You are not connected to the internet.", 0, "Web Links");
          ChangeCursor("default");
          setTimeout(HideMenu,10);
          return;
@@ -2140,7 +2140,7 @@ function Run(link, element) {;
    } else {
       var fso = new ActiveXObject("Scripting.FileSystemObject")
       if (!fso.FolderExists("\\\\pva.local\\shared")) {
-         vMsgBox("Navigation failed. You are not connected to the server.");
+         vMsgBox("Navigation failed. You are not connected to the server.", 0, "Server Links);
          ChangeCursor("default");
          setTimeout(HideMenu,10);
          return;
@@ -2152,7 +2152,7 @@ function Run(link, element) {;
       wScript.run(link);
    } catch(e) {
       ChangeCursor("default");
-      vMsgBox("Navigation failed. Unknown Error.");
+      vMsgBox("Navigation failed. Unknown Error.", 0, "Links");
    }
 
    ChangeCursor("default");
@@ -2508,7 +2508,7 @@ function SaveAs() {
    var path = excel.GetSaveAsFileName(fso.GetAbsolutePathName(""), "Text files (*.txt;*.dmc),*.txt;*.dmc,All files (*.*),*.*", 1, saveAsTitle);
    if (!path) { return false; }
    if (fso.fileExists(path)) {
-      var rsp = vConfirm("File \"" + path + "\" already exists.\r\nDo you want to replace it?", 1, "Overwrite?");
+      var rsp = vMsgBox("File \"" + path + "\" already exists.\r\nDo you want to replace it?", 1, "Overwrite?");
       if (rsp == 2) { return false; } //exit if cancelled
    }
    var ts = fso.OpenTextFile(path,2,true);
@@ -2588,7 +2588,7 @@ function OpenIt() {
 
 function Open() {
    if (NS.fModif == true) {
-      var rsp = vConfirm("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\r\nDo you want to save the changes?", 4, "Save?");
+      var rsp = vMsgBox("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\r\nDo you want to save the changes?", 4, "Save?");
       if (rsp == 6) { Save(); }  //yes
    }
    var filePath = BrowseForFile();
@@ -2601,7 +2601,7 @@ function Open() {
 
 function NewTextSameFile() {
    if (NS.fModif == true) {
-      var rsp = vConfirm("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\r\nDo you want to save the changes?", 4, "Save?");
+      var rsp = vMsgBox("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\r\nDo you want to save the changes?", 4, "Save?");
       if (rsp == 6) { Save(); }  //yes
    }
    NS.myText.value="";
@@ -2643,7 +2643,7 @@ function BackupPortalFiles() {
    var backup = folder + "\\" + today;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (fso.FolderExists(backup)) {
-      var rsp = vConfirm("Backup already exists for today's date in the selected folder. Do you want to continue?", 4, "Backup");
+      var rsp = vMsgBox("Backup already exists for today's date in the selected folder. Do you want to continue?", 4, "Backup");
       if (rsp == 7) {  // no
          document.getElementById("overlay").style.display = "none";
          ChangeCursor("default");
@@ -2733,7 +2733,7 @@ function UploadFilesToPortal(folder) {
 
    ChangeCursor("default");
    document.getElementById("overlay").style.display = "none";
-   vMsgBox("Upload Complete!");
+   vMsgBox("Upload Complete!", 0, "Upload Portal Files");
 }
 
 function UploadToServer() {
@@ -2842,7 +2842,7 @@ function ReplacePort() {
    var newText = sTemp.substring(start);
    var replacement = sTemp.substring(start, end);
    if (replacement == format + port) {
-      vMsgBox("No change was needed!");
+      vMsgBox("No change was needed!", 0, "COM Port Setup");
       return;
    }
    newText = sTemp.substring(0, start) + newText.replace(replacement, format + port);
@@ -2855,9 +2855,9 @@ function ReplacePort() {
       oFile = fso.CreateTextFile(iniPath, true);
       oFile.Write(newText);
       oFile.Close();
-      vMsgBox("COM Port setup was successful!");
+      vMsgBox("COM Port setup was successful!", 0, COM Port Setup);
    } else {
-      vMsgBox("COM Port setup failed!"); //this shouldn't happen
+      vMsgBox("COM Port setup failed!", 0, COM Port Setup); //this shouldn't happen
    }
 }
 
@@ -2977,10 +2977,10 @@ function GoToLineNum() {
    if (goLine == null) {
       return;
    } else if (isNaN(goLine)) {
-      vMsgBox("You must enter a numerical value");
+      vMsgBox("You must enter a numerical value", 0, "Go To Line");
       return;
    } else if ((Number(goLine) < 1) || (Number(goLine) > NS.totalLines)) {
-      vMsgBox("Line number does not exist");
+      vMsgBox("Line number does not exist", 0, "Go To Line");
       return;
    } else {
       GoToLine(Number(goLine),"");
@@ -3046,7 +3046,7 @@ function FindLabel(optLabel) {
       if (optLabel != null) {
          document.getElementById("labels").remove(document.getElementById("labels").selectedIndex);
       }
-      vMsgBox(label + " not found");
+      vMsgBox(label + " not found", 0, "Find Label");
    }
 }
 
@@ -3116,13 +3116,13 @@ function GalilConnect(init) {
          GalilDisconnect();
          return;
       } else {
-         var r = vConfirm("Failed to connect to " + NS.gAddress + "\r\nWould you like to open the connection dialog?\r\n\Note: Clicking 'No' will retry current connection", 3, "Connect?")
+         var r = vMsgBox("Failed to connect to " + NS.gAddress + "\r\nWould you like to open the connection dialog?\r\n\Note: Clicking 'No' will retry current connection", 3, "Connect?")
          switch (r) {
             case (6): //yes
                try {
                   NS.galil.address = "";
                } catch(e) {
-                  vMsgBox("Failed to connect");
+                  vMsgBox("Failed to connect", 0, "Connect");
                }
                NS.gAddress = NS.galil.address;
                return;
@@ -3160,7 +3160,6 @@ function GalilDisconnect() {
    try {
       NS.galil.address = "OFFLINE";
    } catch(e) {
-      //vMsgBox("Failed to disconnect");
    }
    NS.connection = "OFFLINE"
    document.getElementById("connect").style.display = "inline-block";
@@ -3178,7 +3177,7 @@ function UploadToGalil() {
    var tCon = NS.galil.address;
    var errorText = ErrorCheck();
    if (errorText != "") {
-      var rsp = vConfirm("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText + "\r\n\r\nWould you like to download anyway?", 4, "Error Found. Continue?");
+      var rsp = vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText + "\r\n\r\nWould you like to download anyway?", 4, "Error Found. Continue?");
       if (rsp == 7) { return; } //no
    }
 
@@ -3213,7 +3212,7 @@ function UploadToGalil() {
       if (e.number == 8060) {
          gcompressed = true;
       } else {
-         vConfirm(e.description.substring(e.description.lastIndexOf("TC1")), 1, "Error Received");
+         vMsgBox(e.description.substring(e.description.lastIndexOf("TC1")), 0, "Error Received");
          return;
       }
    }
@@ -3221,9 +3220,9 @@ function UploadToGalil() {
    NS.galil.command("HX;BP0;XQ" + label);
 
    if (gcompressed) {
-      vMsgBox("Warning - The Galil attempted to compress the program. All whitespace removed");
+      vMsgBox("Warning - The Galil attempted to compress the program. All whitespace removed.\r\n\r\nUpload Complete!", 0, "Upload");
    } else {
-      vMsgBox("Download Complete!");
+      vMsgBox("Upload Complete!", 0, "Upload");
    }
 }
 
@@ -3245,7 +3244,7 @@ function DownloadFromGalil() {
       try {
          NS.myText.value = NS.galil.programUpload();
       } catch(e) {
-         vMsgBox("Failed to download main from Galil.");
+         vMsgBox("Failed to download main from Galil.", 0, "Download");
          return;
       }
       Modified(true);
@@ -3867,7 +3866,7 @@ function toggleOutput(element) {
       try {
          NS.galil.command("CB" + element.innerHTML);
       } catch(e) {
-         vMsgBox(e.description.substring(e.description.indexOf("TC1")));
+         vMsgBox(e.description.substring(e.description.indexOf("TC1")), 0, "Error Recieved");
          return;
       }
       element.className = "ioOF";
@@ -3875,7 +3874,7 @@ function toggleOutput(element) {
       try {
          NS.galil.command("SB" + element.innerHTML);
       } catch(e) {
-         vMsgBox(e.description.substring(e.description.indexOf("TC1")));
+         vMsgBox(e.description.substring(e.description.indexOf("TC1")), 0, "Error Recieved");
          return;
       }
       element.className = "ioON";
@@ -4110,10 +4109,10 @@ function ShowReference(reference) {
       if ((rsp == "") || (rsp == null)) { return; }
       var abbr = ""
       while (abbr == "") {
-         abbr = vInputBox("Enter 3-Character module abbreviation\r\n\r\nNote: If the text is blank, the operation will be canceled","Custom Module").trim().substring(0,3);
+         abbr = vInputBox("Enter 3-Character module abbreviation\r\n\r\nNote: If the text is blank, the operation will be canceled", "Custom Module").trim().substring(0,3);
          if ((abbr == "") || (abbr == null)) { return; }
          if (isNaN(abbr.charAt(0)) == false) {
-            vMsgBox("1st character must be a letter!");
+            vMsgBox("1st character must be a letter!", 0, "Custom Module");
             abbr = "";
          }
       }
@@ -4156,7 +4155,7 @@ function LogoChange(logo) {
    var fso = new ActiveXObject("Scripting.FileSystemObject")
    switch (logo) {
       case ("Delta6"):
-         rsp = vConfirm("Are you sure you want to use Delta 6 logos?", 4, "Logo Change");
+         rsp = vMsgBox("Are you sure you want to use Delta 6 logos?", 4, "Logo Change");
          if (rsp == 7) { return; }
          fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg");
          fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg");
@@ -4164,7 +4163,7 @@ function LogoChange(logo) {
          mName = "";
          break;
       case ("Delta8"):
-         rsp = vConfirm("Are you sure you want to use Delta 8 logos?", 4, "Logo Change");
+         rsp = vMsgBox("Are you sure you want to use Delta 8 logos?", 4, "Logo Change");
          if (rsp == 7) { return; }
          fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg");
          fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg");
@@ -4179,7 +4178,7 @@ function LogoChange(logo) {
          if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg", false); }
          break;
       default:
-         vMsgBox("Logo not found")
+         vMsgBox("Logo not found", 0, "Logo Change")
          return;
    }
 
@@ -4188,12 +4187,12 @@ function LogoChange(logo) {
    objFile.Close();
    start = strText.indexOf("\r\nModel=");
    if (start == -1) {
-      vMsgBox("Failed to update SysConfig.ini");
+      vMsgBox("Failed to update SysConfig.ini", 0, "Logo Change");
       return;
    }
    finish = strText.indexOf("\r\n", start + 1)
    if (finish == -1) {
-      vMsgBox("Failed to update SysConfig.ini");
+      vMsgBox("Failed to update SysConfig.ini", 0, "Logo Change");
       return;
    }
    remove = strText.substring(start, finish);
@@ -4204,7 +4203,7 @@ function LogoChange(logo) {
    objFile.Close
 
    MaintainSelection();
-   vMsgBox("Logo change complete!");
+   vMsgBox("Logo change complete!", 0, "Logo Change");
    setTimeout(HideMenu, 10);
 }
 
@@ -4349,9 +4348,9 @@ function ErrorCheck() {
 function CheckMainProg() {
    var errorText = ErrorCheck();
    if (errorText == "") {
-      vMsgBox("No Errors Found!");
+      vMsgBox("No Errors Found!", 0, "Error Check");
    } else {
-      vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText);
+      vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText, 0, "Error Check");
    }
 }
 
@@ -4688,11 +4687,11 @@ function CheckAndPopulateDupLab(fileText) {
 
 function ShowHelp(text) {
    if(text == null) { text = NS.mShortcuts; }
-   vConfirm(text, 32, "Help");
+   vMsgBox(text, 32, "Help");
 }
 
 function ShowAbout() {
-   vConfirm([NS.HTA.applicationName + " Ver. " + NS.HTA.version + "     \u00A92019",  //\u00A9 is the copywrite symbol
+   vMsgBox([NS.HTA.applicationName + " Ver. " + NS.HTA.version + "     \u00A92019",  //\u00A9 is the copywrite symbol
             "",
             "This application, including the information contained",
             "herein, is the property of Precision Valve & Automation,",
@@ -4854,10 +4853,6 @@ Function vInStrRev(text, findText, start)
    vInStrRev = InstrRev(text, findText, start)
 End Function
 
-Sub vMsgBox(text)
-   MsgBox text
-End Sub
-
 Function vGalilRevision(g)
    Dim buffer
    buffer = ""
@@ -4872,8 +4867,8 @@ Sub vMasterReset(g)
    g.write(Chr(18) + Chr(19) + vbCr) 'write <ctrl>R<ctrl>S to controller (Chr takes ascii decimal, not hex)
 End Sub
 
-Function vConfirm(text, vbType, header)
-   vConfirm = MsgBox(text, vbType, header)
+Function vMsgBox(text, vbType, header)
+   vMsgBox = MsgBox(text, vbType, header)
 End Function
 
 Function vInputBox(text, header)
