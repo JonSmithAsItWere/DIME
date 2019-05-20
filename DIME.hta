@@ -1718,8 +1718,8 @@ function UpdateToNewVersion(latest) {
    f.Close();
    CancelOptionsClick();
    SaveOptionsClick(false);
-   var wShell = new ActiveXObject("WScript.Shell");
-   wShell.Run(NS.HTA.commandLine);
+   var wScript = new ActiveXObject("WScript.Shell");
+   wScript.Run(NS.HTA.commandLine);
    window.close();
 }
 
@@ -1758,8 +1758,8 @@ function DownloadFromBitBucket() {
 }
 
 function CheckInternet() {
-   var wShell = new ActiveXObject("WScript.Shell");
-   var rsp = wShell.Run("cmd /c ping -n 2 www.google.com", 0, true)
+   var wScript = new ActiveXObject("WScript.Shell");
+   var rsp = wScript.Run("cmd /c ping -n 2 www.google.com", 0, true)
    return (rsp == 0);
 }
 
@@ -2147,9 +2147,9 @@ function Run(link, element) {;
       }
    }
 
-   var wShell = new ActiveXObject("WScript.Shell")
+   var wScript = new ActiveXObject("WScript.Shell")
    try{
-      wShell.run(link);
+      wScript.run(link);
    } catch(e) {
       ChangeCursor("default");
       vMsgBox("Navigation failed. Unknown Error.");
@@ -2525,7 +2525,7 @@ function SaveAs() {
 //   2.) Loops until the app is activated or until 2 seconds have passed
 //   3.) Deletes itself
 function BringToFront(app) {
-   var shell = new ActiveXObject("WScript.Shell");
+   var wScript = new ActiveXObject("WScript.Shell");
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var f = fso.CreateTextFile(NS.Path + "temp.vbs");
    f.WriteLine(["Dim objShell: Set objShell = CreateObject(\"Wscript.Shell\")",
@@ -2538,13 +2538,13 @@ function BringToFront(app) {
                 "CreateObject(\"Scripting.FileSystemObject\").deleteFile(WScript.ScriptFullName)",
                 "WScript.Quit"].join("\r\n"));
    f.Close();
-   shell.Run(NS.Path + "temp.vbs", 0);
+   wScript.Run(NS.Path + "temp.vbs", 0);
 }
 
 // Send Keys after delay by creating a .vbs that uses send keys with code to delete itself after
 // NOTE: This shouldn't be used
 function SendKeys(keys, delay) {
-   var shell = new ActiveXObject("WScript.Shell");
+   var wScript = new ActiveXObject("WScript.Shell");
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var f = fso.CreateTextFile(NS.Path + "temp.vbs");
    f.WriteLine(["WScript.Sleep " + delay,
@@ -2552,7 +2552,7 @@ function SendKeys(keys, delay) {
                 "CreateObject(\"Scripting.FileSystemObject\").deleteFile(WScript.ScriptFullName)",
                 "WScript.Quit"].join("\r\n"));
    f.Close();
-   shell.Run(NS.Path + "temp.vbs", 0);
+   wScript.Run(NS.Path + "temp.vbs", 0);
 }
 
 function Save() {
@@ -2569,8 +2569,8 @@ function Save() {
 
 function TextEdit(keys) {
    NS.myText.focus();
-   var temp = new ActiveXObject("WScript.Shell");
-   temp.sendKeys(keys);
+   var wScript = new ActiveXObject("WScript.Shell");
+   wScript.sendKeys(keys);
 }
 
 function OpenIt() {
@@ -2611,12 +2611,12 @@ function NewTextSameFile() {
 }
 
 function NewText() {
-   var objShell = new ActiveXObject("WScript.Shell");
-   objShell.Run("\"" + window.location.pathname + "\"")
+   var wScript = new ActiveXObject("WScript.Shell");
+   wScript.Run("\"" + window.location.pathname + "\"")
 }
 
 //I've read that this has a window in which you may get the wrong date based
-//and current time and timezone. Not sure if I should care.
+//on current time and timezone. Not sure if I should care.
 function Today() {
    return new Date().toISOString().split('T')[0];
 }
@@ -2627,19 +2627,18 @@ function ChangeCursor(type) {
 }
 
 function BackupPortalFiles() {
-   var objShell = new ActiveXObject("Shell.Application");
+   var shell = new ActiveXObject("Shell.Application");
    var folder;
-   ChangeCursor("wait");
    document.getElementById("overlayText").innerHTML = "";
    document.getElementById("overlay").style.display = "block";
    try {
-      folder = objShell.BrowseForFolder(0, "Choose Folder. A new dated folder will be created containing Config, Dep, and Lib Portal folders", 0, 17).Items().Item().Path;
+      folder = shell.BrowseForFolder(0, "Choose Folder. A new dated folder will be created containing Config, Dep, and Lib Portal folders", 0, 17).Items().Item().Path;
    } catch(e) {
       document.getElementById("overlay").style.display = "none";
       ChangeCursor("default");
       return;
    }
-   document.getElementById("overlayText").innerHTML = "Backup In Progress<br/>Please Wait...";
+
    var today = Today();
    var backup = folder + "\\" + today;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -2652,6 +2651,14 @@ function BackupPortalFiles() {
       }
    }
 
+   document.getElementById("overlayText").innerHTML = "Backup In Progress<br/>Please Wait...";
+   ChangeCursor("wait");
+   setTimeout(function() { CreatePortalBackup(backup); }, 50);
+}
+
+function CreatePortalBackup(backup) {
+   alert(backup);
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (!fso.FolderExists(backup)) { fso.CreateFolder(backup); }
    fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Config", backup + "\\Config")
    fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Dep", backup + "\\Dep")
@@ -2675,10 +2682,10 @@ function BackupPortalFiles() {
 }
 
 function UploadPortalFiles() {
-   var objShell = new ActiveXObject("Shell.Application");
+   var shell = new ActiveXObject("Shell.Application");
    var folder;
    try {
-      folder = objShell.BrowseForFolder(0, "Choose Folder containing the main for the machine as well as the Config, Dep, and Lib folders for Portal", 512, 17).Items().Item().Path;
+      folder = shell.BrowseForFolder(0, "Choose Folder containing the main for the machine as well as the Config, Dep, and Lib folders for Portal", 512, 17).Items().Item().Path;
    } catch(e) {
       return;
    }
@@ -2686,7 +2693,10 @@ function UploadPortalFiles() {
    ChangeCursor("wait");
    document.getElementById("overlayText").innerHTML = "Upload In Progress<br/>Please Wait...";
    document.getElementById("overlay").style.display = "block";
+   setTimeout(function { UploadFilesToPortal(folder); }, 50);
+}
 
+function UploadFilesToPortal(folder) {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (fso.FolderExists(folder + "\\Config")) {
       // if (fso.FolderExists("C:\\Program Files (x86)\\PVAPortal\\Config")) {
@@ -3226,12 +3236,12 @@ function DownloadFromGalil() {
    if (NS.myText.value != "") {
       var text = NS.galil.programUpload();
       var newMain = NS.Path + "temp.txt";
-      var objFSO = new ActiveXObject("Scripting.FileSystemObject");
-      var newMainFile = objFSO.CreateTextFile(newMain, true);
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var newMainFile = fso.CreateTextFile(newMain, true);
       newMainFile.Write(text);
       newMainFile.Close();
-      var objShell = new ActiveXObject("WScript.Shell");
-      objShell.Run("\"" + window.location.pathname + "\" " + newMain);
+      var wScript = new ActiveXObject("WScript.Shell");
+      wScript.Run("\"" + window.location.pathname + "\" " + newMain);
    } else {
       try {
          NS.myText.value = NS.galil.programUpload();
@@ -4144,37 +4154,37 @@ function ClearTerminal() {
 function LogoChange(logo) {
    var mName, start, finish, remove, rsp;
 
-   var objFSO = new ActiveXObject("Scripting.FileSystemObject")
+   var fso = new ActiveXObject("Scripting.FileSystemObject")
    switch (logo) {
       case ("Delta6"):
          rsp = vConfirm("Are you sure you want to use Delta 6 logos?", 4, "Logo Change");
          if (rsp == 7) { return; }
-         objFSO.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg");
-         objFSO.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg");
-         objFSO.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg");
+         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg");
+         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg");
+         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg");
          mName = "";
          break;
       case ("Delta8"):
          rsp = vConfirm("Are you sure you want to use Delta 8 logos?", 4, "Logo Change");
          if (rsp == 7) { return; }
-         objFSO.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg");
-         objFSO.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg");
-         objFSO.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg");
+         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg");
+         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg");
+         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg");
          mName = "";
          break;
       case ("Custom"):
          mName = vInputBox("Enter machine type as you want it in SysConfig.ini.\r\n\r\nNote: If the text is blank, the operation will be canceled","Logo Change")
          if ((mName == "") || (mName == null)) { return; }
-         if (objFSO.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg")) { objFSO.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg", false); }
-         if (objFSO.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg")) { objFSO.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg", false); }
-         if (objFSO.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg")) { objFSO.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg", false); }
+         if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg", false); }
+         if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg", false); }
+         if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg", false); }
          break;
       default:
          vMsgBox("Logo not found")
          return;
    }
 
-   var objFile = objFSO.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 1);
+   var objFile = fso.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 1);
    var strText = objFile.ReadAll();
    objFile.Close();
    start = strText.indexOf("\r\nModel=");
@@ -4190,7 +4200,7 @@ function LogoChange(logo) {
    remove = strText.substring(start, finish);
    strText = strText.replace(remove, "\r\nModel=\"" + mName + "\"");
 
-   objFile = objFSO.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 2)
+   objFile = fso.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 2)
    objFile.WriteLine(strText);
    objFile.Close
 
@@ -4350,12 +4360,12 @@ function CompressMain() {
    if (NS.myText.value == "") { return; }
    var text = Compress(NS.myText.value);
    var newMain = NS.Path + "temp.txt";
-   var objFSO = new ActiveXObject("Scripting.FileSystemObject");
-   var newMainFile = objFSO.CreateTextFile(newMain, true);
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var newMainFile = fso.CreateTextFile(newMain, true);
    newMainFile.Write(text);
    newMainFile.Close();
-   var objShell = new ActiveXObject("WScript.Shell");
-   objShell.Run("\"" + window.location.pathname + "\" " + newMain);
+   var wScript = new ActiveXObject("WScript.Shell");
+   wScript.Run("\"" + window.location.pathname + "\" " + newMain);
 }
 
 function Compress(stringText) {
@@ -4446,12 +4456,12 @@ function DecompressMain() {
    }
 
    var newMain = NS.Path + "temp.txt";
-   var objFSO = new ActiveXObject("Scripting.FileSystemObject");
-   var newMainFile = objFSO.CreateTextFile(newMain, true);
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var newMainFile = fso.CreateTextFile(newMain, true);
    newMainFile.write(decompressed);
    newMainFile.close();
-   var objShell = new ActiveXObject("WScript.Shell");
-   objShell.Run("\"" + window.location.pathname + "\" " + newMain);
+   var wScript = new ActiveXObject("WScript.Shell");
+   wScript.Run("\"" + window.location.pathname + "\" " + newMain);
 }
 
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
