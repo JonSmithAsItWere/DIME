@@ -152,6 +152,8 @@ INI = {
 
 NS = {
    HTA: document.getElementById("DIME"),
+   PortalVersion: "",          //default Portal Version
+   PortalBuild: "",            //default Portal Build
    FileName: "",               //filepath and filename of the text file
    fModif: false,              //boolean for if the text has been modified
    LastChildMenu: null,        //used for menu navigation
@@ -2516,7 +2518,7 @@ function SaveAs() {
    if (!path) { return false; }
    if (fso.fileExists(path)) {
       var rsp = vMsgBox("File \"" + path + "\" already exists.\r\nDo you want to replace it?", 1, "Overwrite?");
-      if (rsp == 2) { return false; } //exit if cancelled
+      if (rsp == 2) { return false; } //exit if canceled
    }
    var ts = fso.OpenTextFile(path,2,true);
    ts.Write(NS.myText.value.replace(/\n/g,"\r\n"));
@@ -2743,8 +2745,244 @@ function UploadFilesToPortal(folder) {
    vMsgBox("Upload Complete!", 0, "Upload Portal Files");
 }
 
-function UploadToServer() {
+function UploadFormCancel() {
+   document.getElementById("overlay").style.display = "none";
+   document.getElementById("uploadform").style.display = "none";
+   NS.PortalVersion = "";
+   NS.PortalBuild = "";
+}
 
+function UploadFormContinue() {
+   if (NS.PortalVersion == "") {
+      SelectPortalBuild();
+   } else {
+      UploadToServer();
+   }
+}
+
+function SelectPortalVersion() {
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var fldr, myEnum, opt;
+   
+   NS.PortalVersion = "";
+
+   // check if connected to the server
+   if (!fso.FolderExists("\\\\pva.local\\shared")) {
+      vMsgBox("You are currently not connected to the server. Operation canceled", 0, "Server Upload");
+      return;
+   }
+
+   // set overlay
+   document.getElementById("overlayText").innerHTML = "";
+   document.getElementById("overlay").style.display = "block";
+
+   // get portal versions
+   document.getElementById("portaltype").innerHTML = "<b>Portal Version</b>";
+   document.getElementById("portallist").innerHTML = "";
+   document.getElementById("portalback").style.display = "none";
+   fldr = fso.GetFolder("\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal");
+   myEnum = new Enumerator(fldr.SubFolders);
+   while(!myEnum.atEnd()) {
+      if (myEnum.item().Name.substring(0, 3) == "Ver") {
+         opt = document.createElement("Option");
+         opt.value = myEnum.item().Name;
+         opt.text = myEnum.item().Name;
+         document.getElementById("portallist").add(opt);
+      }
+      myEnum.moveNext();
+   }
+   
+   // set default value to latest version
+   document.getElementById("portallist").value = opt.value;
+   // display form
+   document.getElementById("uploadform").style.display = "block";
+}
+
+function SelectPortalBuild() {
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var fldr, myEnum, opt;
+   
+   NS.PortalBuild = "";
+   
+   // set previously selected value as the Portal Version
+   NS.PortalVersion = document.getElementById("portallist").value;
+   
+   // get builds for selected version
+   document.getElementById("portaltype").innerHTML = "<b>Portal Build</b>";
+   document.getElementById("portallist").innerHTML = "";
+   document.getElementById("portalback").style.display = "inline-block";
+   fldr = fso.GetFolder("\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\\" + NS.PortalVersion);
+   myEnum = new Enumerator(fldr.SubFolders);
+   while(!myEnum.atEnd()) {
+      if (myEnum.item().Name.substring(0, 5) == "Build") {
+         opt = document.createElement("Option");
+         opt.value = myEnum.item().Name;
+         opt.text = myEnum.item().Name;
+         document.getElementById("portallist").add(opt);
+      }
+      myEnum.moveNext();
+   }
+   
+   // set default value to latest build
+   document.getElementById("portallist").value = opt.value;
+}
+
+function UploadToServer() {
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var shell = new ActiveXObject("Shell.Application");
+   var folder, slash1, slash2, slash3;
+   var date, serial, project, regex, serverLocation;
+   
+   // set selected value as the Portal Build
+   NS.PortalBuild = document.getElementById("portallist").value;
+   
+   // hide form
+   document.getElementById("uploadform").style.display = "none";
+
+   // get folder to upload
+   try {
+      folder = shell.BrowseForFolder(0, "Choose Folder to Upload to the server. The folder be structured as follows: \project\serial\YYYY-MM-DD", 0, 17).Items().Item().Path;
+   } catch(e) {
+      UploadFormCancel();
+      return;
+   }
+   
+   // check folder selection and make sure it follows the correct format
+   slash1 = folder.lastIndexOf("\\");
+   slash2 = folder.substring(0, slash1 - 1).lastIndexOf("\\");
+   slash3 = folder.substring(0, slash2 - 1).lastIndexOf("\\");
+   if ((slash1 == -1) || (slash2 == -1) || (slash3 == -1)) {
+      // wrong format
+      vMsgBox("The folder to upload must be in the format \"\\PROJECT\\SERIAL\\YYYY-MM-DD\" to be accepted. Operation canceled", 0, "Server Upload");
+      UploadFormCancel();
+      return;
+   }
+   date = folder.substring(slash1 + 1);
+   serial = folder.substring(slash2 + 1, slash1);
+   project = folder.substring(slash3 + 1, slash2);
+   regex = /^\d{4}[\-](((0)[0-9])|((1)[0-2]))[\-]([0-2][0-9]|(3)[0-1])$/
+   match = date.match(regex);
+   if (match[0] != date) {
+      vMsgBox("The date must be in YYYY-MM-DD format. Operation canceled", 0, "Server Upload");
+      UploadFormCancel();
+      return;
+   }
+   serverLocation = "\\\\pva.local\\shared\\Projects\\Machines\\" + project + "\\" + serial;
+   if (fso.FolderExists(serverLocation + "\\Prog")) {
+      serverLocation += "\\Prog";
+   } else if (fso.FolderExists(serverLocation + "\\Machine Software")) {
+      serverLocation += "\\Machine Software";
+   } else {
+      vMsgBox("Could not find the \"Prog\" or \"Machine Software\" folder for " + project + " " + serial + ". Operation canceled", 0, "Server Upload");
+      UploadFormCancel();
+      return;
+   }
+   if (fso.FolderExists(serverLocation + "\\" + date)) {
+      var rsp = vMsgBox("\"" + serverLocation + "\\" + date + "\" already exists. This process will overwrite the current files. Do you want to continue?", 4, "Server Upload");
+      if (rsp == 7) {
+         UploadFormCancel();
+         return;
+      }
+   }
+   document.getElementById("overlayText").innerHTML = "Server Upload In Progress\r\nPlease Wait...";
+   setTimeout(function() { ServerUpload(folder, serverLocation); }, 50);
+}
+
+function ServerUpload(folder, serverLocation) {
+   var date = folder.substring(folder.lastIndexOf("\\") + 1);
+   var destination = serverLocation + "\\" + date;
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var wScript = new ActiveXObject("WScript.Shell");
+   var newSubFolder, shortcut, text, instr, fldr, myEnum;
+   var version = "";
+   var search = "PVAPortal version: ";
+   
+   // create destination folder if it doesn't exist
+   if (!fso.FolderExists(destination)) { fso.CreateFolder(destination); }
+   
+   // get the mains and the portal version
+   try { fso.CopyFile(folder + "\\*.txt", destination); } catch(e) {}
+   try { fso.CopyFile(folder + "\\*.dmc", destination); } catch(e) {}
+
+
+   // fldr = fso.GetFolder(destination);
+   // myEnum = new Enumerator(fldr.Files);
+   // while(!myEnum.atEnd()) {
+      // text = fso.OpenTextFile(myEnum.item().Path, 1).ReadAll();
+      // instr = text.indexOf(search);
+      // if (instr != - 1) {
+         // instr += search.length;
+         // version = text.substring(instr, text.substring(instr).indexOf(" ") + instr);
+         // if(fso.FolderExists("\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\\Ver " + version)) {
+            // break;
+         // }
+      // }
+      // myEnum.moveNext();
+   // }
+   // if (version == "") {
+      // var rsp = vMsgBox("Portal version was not found. The latest Portal version will be assumed", 1, "Server Upload")
+      // if (rsp == 2) { // cancel
+         // document.getElementById("overlay").style.display = "none";
+         // return;
+      // }
+      // version = NS.PortalVersion;
+   // }
+
+
+   // copy Config folder if it does exist
+   if (fso.FolderExists(folder + "\\Config")) {
+      fso.CopyFolder(folder + "\\Config", destination + "\\Config")
+   }
+   
+   // if Dep folder exists, get the ini's and create shortcuts to the server Dep location
+   if (fso.FolderExists(folder + "\\Dep")) {
+      // create destination Dep folder if it doesn't exist
+      if (!fso.FolderExists(destination + "\\Dep")) { fso.CreateFolder(destination + "\\Dep"); }
+      // get subfolders
+      fldr = fso.GetFolder(folder + "\\Dep");
+      myEnum = new Enumerator(fldr.Subfolders);// iterate through the subfolders
+      while(!myEnum.atEnd()) {
+         newSubFolder = destination + "\\Dep\\" + myEnum.item().Name;
+         // create new subfolder if it doesn't exist
+         if (!fso.FolderExists(newSubFolder)) { fso.CreateFolder(newSubFolder); }
+         if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(newSubFolder + "\\Config"))) { fso.CreateFolder(newSubFolder + "\\Config"); }
+         // try to copy over the .ini
+         try { fso.CopyFile(myEnum.item().Path + "\\*.ini", newSubFolder); } catch(e) {}
+         try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", newSubFolder + "\\Config"); } catch(e) {}
+         // create shortcut to the correct Dep using the Portal version and Portal build from the main
+         shortcut = wScript.CreateShortcut(newSubFolder + "\\" + myEnum.item().Name + ".lnk")
+         shortcut.TargetPath = "\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\\" + NS.PortalVersion + "\\" + NS.PortalBuild + "\\Dep\\" + myEnum.item().Name;
+         shortcut.Save();
+         myEnum.moveNext();
+      }
+   }
+   
+   // if Lib folder exists, get the ini's and create shortcuts to the server Lib location
+   if (fso.FolderExists(folder + "\\Lib")) {
+      // create destination Lib folder if it doesn't exist
+      if (!fso.FolderExists(destination + "\\Lib")) { fso.CreateFolder(destination + "\\Lib"); }
+      // get subfolders
+      fldr = fso.GetFolder(folder + "\\Lib");
+      myEnum = new Enumerator(fldr.Subfolders);
+      // iterate through the subfolders
+      while(!myEnum.atEnd()) {
+         newSubFolder = destination + "\\Lib\\" + myEnum.item().Name;
+         // create new subfolder if it doesn't exist
+         if (!fso.FolderExists(newSubFolder)) { fso.CreateFolder(newSubFolder); }
+         if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(newSubFolder + "\\Config"))) { fso.CreateFolder(newSubFolder + "\\Config"); }
+         // try to copy over the .ini
+         try { fso.CopyFile(myEnum.item().Path + "\\*.ini", newSubFolder); } catch(e) {}
+         try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", newSubFolder + "\\Config"); } catch(e) {}
+         // create shortcut to the correct Lib using the Portal version from the main
+         shortcut = wScript.CreateShortcut(newSubFolder + "\\" + myEnum.item().Name + ".lnk")
+         shortcut.TargetPath = "\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\\Ver " + version + "\\Lib\\" + myEnum.item().Name;
+         shortcut.Save();
+         myEnum.moveNext();
+      }
+   }
+   
+   Run(destination);
+   UploadFormCancel();
 }
 
 function ComSetupClick() {
@@ -2908,7 +3146,7 @@ function Find(reverse) {
       if (pos == 0) {
          pos = vInStrRev(text.substring(NS.startSel), findText, -1);
          if (pos != 0) {
-            rsp = "Top of document was reached. Found first occurence from the bottom."
+            rsp = "Top of document was reached. Found first occurance from the bottom."
             pos += NS.startSel;
          }
       }
@@ -2916,7 +3154,7 @@ function Find(reverse) {
    } else {
       pos = text.substring(NS.endSel).indexOf(findText);
       if (pos == -1) {
-         rsp = "Bottom of document was reached. Found first occurence from the top."
+         rsp = "Bottom of document was reached. Found first occurance from the top."
          pos = text.substring(0, NS.endSel).indexOf(findText);
       } else {
          pos += NS.endSel;
@@ -3792,7 +4030,7 @@ function ChangeIFrame() {
          DisplayTitle();
          break;
       default:
-         NS.FileName = frm.contentWindow.location.href.substring(8).replace(/\//g,"\\");
+         NS.FileName = frm.contentWindow.location.href.substring(8).replace(/\//g,"\\").replace(/%20/g," ");
          OpenIt();
          ShowMainText();
          break;
@@ -5082,10 +5320,10 @@ End Function
       <TD colspan="2"> Upload Portal Files</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
-   <!-- <TR id="uploadtoserver"; onclick="HideMenu();UploadToServer()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> -->
-      <!-- <TD colspan="2"> Upload to Server</TD> -->
+   <TR id="uploadtoserver"; onclick="HideMenu();SelectPortalVersion()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD colspan="2"> Upload to Server</TD>
       <!-- <TD align="right"></TD> -->
-   <!-- </TR> -->
+   </TR>
 </TABLE>
 
 <TABLE ID="MySettingsMenu"; class="submenu"; style="left:200px;display:none;">
@@ -5376,14 +5614,18 @@ End Function
 <button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
 </div>
 
-<div id="findform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:75px;width:300px;top:70px;left:calc(50% - 150px);display:none">
-Find what: <textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea>
-Match case:<input id="matchcase" type="checkbox"></input>
-<button class="button"; onclick="Find(false)";>Find Next</button>
-<button class="button"; onclick="Find(true)";>Find Prev</button>
-<button class="button"; onclick="FindCount()";>Count</button>
-<button class="button"; onclick="FindClose()";>Close</button>
-<p id="findcount"><p>
+<div id="findform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:110px;width:300px;top:70px;left:calc(50% - 150px);display:none">
+<div>Find what: </div>
+<div><textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea></div>
+<div style="width:100%;height:10px;">&nbsp;</div>
+<div>
+   Match case:<input id="matchcase" type="checkbox"></input>
+   <button class="button"; onclick="Find(false)";>Find Next</button>&nbsp;
+   <button class="button"; onclick="Find(true)";>Find Prev</button>&nbsp;
+   <button class="button"; onclick="FindCount()";>Count</button>&nbsp;
+   <button class="button"; onclick="FindClose()";>Close</button>
+</div>
+<div><p id="findcount"><p></div>
 </div>
 
 <div id="optionsform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:285px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
@@ -5425,6 +5667,16 @@ Value Background Color / Text Color:<br/>
 
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
    <div id="overlayText"; style="position:absolute;top:50%;left:50%;font-size:25px;text-align:center;color:white;transform:translate(-50%, -50%)";>Checking For New Version<br/>Please Wait...</div>
+</div>
+
+<div id="uploadform"; style="z-index:3000;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:250px;display:none">
+<div id="portaltype"; style="width:100%;display:inline-block;"><b>Portal Version</b></div>
+<br/>
+<select id="portallist"; style="width:100%;display:inline-block;"></select>
+<br/><br/>
+<button class="button"; onclick="UploadFormCancel()"; style="width:32%;";>Cancel</button>
+<button id="portalback"; class="button"; onclick="SelectPortalVersion()"; style="width:32%;display:none;";>Back</button>
+<button class="button"; onclick="UploadFormContinue()"; style="width:32%;float:right;";>Continue</button>
 </div>
 
 </body>
