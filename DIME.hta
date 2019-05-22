@@ -2624,10 +2624,20 @@ function NewText() {
    wScript.Run("\"" + window.location.pathname + "\"")
 }
 
-//I've read that this has a window in which you may get the wrong date based
-//on current time and timezone. Not sure if I should care.
 function Today() {
-   return new Date().toISOString().split('T')[0];
+   return formatDate(new Date());
+}
+
+function formatDate(date) {
+   var d = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear();
+
+   if (month.length < 2) month = '0' + month;
+   if (day.length < 2) day = '0' + day;
+
+   return [year, month, day].join('-');
 }
 
 function ChangeCursor(type) {
@@ -2693,7 +2703,7 @@ function UploadPortalFiles() {
    var shell = new ActiveXObject("Shell.Application");
    var folder;
    try {
-      folder = shell.BrowseForFolder(0, "Choose Folder containing the main for the machine as well as the Config, Dep, and Lib folders for Portal", 512, 17).Items().Item().Path;
+      folder = shell.BrowseForFolder(0, "Choose Folder containing the main for the machine as well as the Config, Dep, and Lib folders for Portal. WARNING: Using this functionality will delete the current Lib folder if the upload folder contains a Lib folder", 512, 17).Items().Item().Path;
    } catch(e) {
       return;
    }
@@ -2841,7 +2851,7 @@ function UploadToServer() {
 
    // get folder to upload
    try {
-      folder = shell.BrowseForFolder(0, "Choose Folder to Upload to the server. The folder be structured as follows: \project\serial\YYYY-MM-DD", 0, 17).Items().Item().Path;
+      folder = shell.BrowseForFolder(0, "Choose Folder to Upload to the server. The folder must be structured as follows: \\PROJECT\\SERIAL\\YYYY-MM-DD", 0, 17).Items().Item().Path;
    } catch(e) {
       UploadFormCancel();
       return;
