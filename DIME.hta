@@ -2520,9 +2520,9 @@ function SaveAs() {
       var rsp = vMsgBox("File \"" + path + "\" already exists.\r\nDo you want to replace it?", 1, "Overwrite?");
       if (rsp == 2) { return false; } //exit if canceled
    }
-   var ts = fso.OpenTextFile(path,2,true);
-   ts.Write(NS.myText.value.replace(/\n/g,"\r\n"));
-   ts.Close();
+   var f = fso.OpenTextFile(path, 2, true);
+   f.Write(NS.myText.value.replace(/\n/g,"\r\n"));
+   f.Close();
    NS.FileName = path;
    DisplayTitle();
    Modified(false);
@@ -2566,7 +2566,12 @@ function SendKeys(keys, delay) {
 
 function Save() {
    if (NS.FileName != "") {
-      var f = new ActiveXObject("Scripting.FileSystemObject").CreateTextFile(NS.FileName ,true);
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var backupFolder = NS.Path + "\\" + NS.HTA.applicationName + " Backups";
+      var newBackup = backupFolder + "\\" + NS.FileName.substring(NS.FileName.lastIndexOf("\\") + 1) + "." + formatDateTime(new Date()) + ".bak";
+      if (!fso.FolderExists(backupFolder)) { fso.CreateFolder(backupFolder); }
+      try { fso.CopyFile(NS.FileName, newBackup) } catch(e) {}
+      var f = fso.CreateTextFile(NS.FileName ,true);
       f.Write(NS.myText.value.replace(/\n/g,"\r\n"));
       f.Close();
    } else {
@@ -2625,10 +2630,11 @@ function NewText() {
 }
 
 function Today() {
-   return formatDate(new Date());
+   return formatDateYYYYMMDD(new Date());
 }
 
-function formatDate(date) {
+// returns date as YYYY-MM-DD
+function formatDateYYYYMMDD(date) {
    var d = new Date(date),
       month = '' + (d.getMonth() + 1),
       day = '' + d.getDate(),
@@ -2638,6 +2644,25 @@ function formatDate(date) {
    if (day.length < 2) day = '0' + day;
 
    return [year, month, day].join('-');
+}
+
+// returns date as YYYY-MM-DD_hhmmss
+function formatDateTime(date) {
+   var d = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear(),
+      hour = d.getHours(),
+      minute = d.getMinutes(),
+      second = d.getSeconds();
+
+   if (month.length < 2) month = '0' + month;
+   if (day.length < 2) day = '0' + day;
+   if (hour.length < 2) hour = '0' + hour;
+   if (minute.length < 2) minute = '0' + minute;
+   if (second.length < 2) second = '0' + second;
+
+   return [year, month, day].join('-') + "_" + [hour, minute, second].join("");
 }
 
 function ChangeCursor(type) {
@@ -2773,7 +2798,7 @@ function UploadFormContinue() {
 function SelectPortalVersion() {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var fldr, myEnum, opt;
-   
+
    NS.PortalVersion = "";
 
    // check if connected to the server
@@ -2801,7 +2826,7 @@ function SelectPortalVersion() {
       }
       myEnum.moveNext();
    }
-   
+
    // set default value to latest version
    document.getElementById("portallist").value = opt.value;
    // display form
@@ -2811,12 +2836,12 @@ function SelectPortalVersion() {
 function SelectPortalBuild() {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var fldr, myEnum, opt;
-   
+
    NS.PortalBuild = "";
-   
+
    // set previously selected value as the Portal Version
    NS.PortalVersion = document.getElementById("portallist").value;
-   
+
    // get builds for selected version
    document.getElementById("portaltype").innerHTML = "<b>Portal Build</b>";
    document.getElementById("portallist").innerHTML = "";
@@ -2832,7 +2857,7 @@ function SelectPortalBuild() {
       }
       myEnum.moveNext();
    }
-   
+
    // set default value to latest build
    document.getElementById("portallist").value = opt.value;
 }
@@ -2842,10 +2867,10 @@ function UploadToServer() {
    var shell = new ActiveXObject("Shell.Application");
    var folder, slash1, slash2, slash3;
    var date, serial, project, regex, serverLocation;
-   
+
    // set selected value as the Portal Build
    NS.PortalBuild = document.getElementById("portallist").value;
-   
+
    // hide form
    document.getElementById("uploadform").style.display = "none";
 
@@ -2856,7 +2881,7 @@ function UploadToServer() {
       UploadFormCancel();
       return;
    }
-   
+
    // check folder selection and make sure it follows the correct format
    slash1 = folder.lastIndexOf("\\");
    slash2 = folder.substring(0, slash1 - 1).lastIndexOf("\\");
@@ -2906,10 +2931,10 @@ function ServerUpload(folder, serverLocation) {
    var newSubFolder, shortcut, text, instr, fldr, myEnum;
    var version = "";
    var search = "PVAPortal version: ";
-   
+
    // create destination folder if it doesn't exist
    if (!fso.FolderExists(destination)) { fso.CreateFolder(destination); }
-   
+
    // get the mains and the portal version
    try { fso.CopyFile(folder + "\\*.txt", destination); } catch(e) {}
    try { fso.CopyFile(folder + "\\*.dmc", destination); } catch(e) {}
@@ -2943,7 +2968,7 @@ function ServerUpload(folder, serverLocation) {
    if (fso.FolderExists(folder + "\\Config")) {
       fso.CopyFolder(folder + "\\Config", destination + "\\Config")
    }
-   
+
    // if Dep folder exists, get the ini's and create shortcuts to the server Dep location
    if (fso.FolderExists(folder + "\\Dep")) {
       // create destination Dep folder if it doesn't exist
@@ -2966,7 +2991,7 @@ function ServerUpload(folder, serverLocation) {
          myEnum.moveNext();
       }
    }
-   
+
    // if Lib folder exists, get the ini's and create shortcuts to the server Lib location
    if (fso.FolderExists(folder + "\\Lib")) {
       // create destination Lib folder if it doesn't exist
@@ -2990,7 +3015,7 @@ function ServerUpload(folder, serverLocation) {
          myEnum.moveNext();
       }
    }
-   
+
    Run(destination);
    UploadFormCancel();
 }
@@ -3346,10 +3371,10 @@ function ShowSelection() {
       tempHTML.push("<TD disabled style='width:20px;'; title='Auto-Indent';>IND</TD>");
    }
 
-   if (NS.connection != "OFFLINE") {
-      tempHTML.push("<TD style='text-align:right;';><span style='background-color:#99ff33;'; title='Galil Connection Status';>" + NS.connection + "</span></TD>");
+   if ((NS.connection != "OFFLINE") && (NS.connection != undefined)) {
+      tempHTML.push("<TD style='text-align:right;';><span style='background-color:#66ff33;'; title='Galil Connection Status';>" + NS.connection + "</span></TD>");
    } else {
-      tempHTML.push("<TD style='text-align:right;';><span style='background-color:#ff3333;'; title='Galil Connection Status';>" + NS.connection + "</span></TD>");
+      tempHTML.push("<TD style='text-align:right;';><span style='background-color:#ff3333;'; title='Galil Connection Status';>OFFLINE</span></TD>");
    }
    tempHTML.push("</TR></TABLE>");
    NS.myInfo.innerHTML = tempHTML.join("");
@@ -5542,7 +5567,7 @@ End Function
 </section>
 
    <!-- Button -->
-      <button id="connect" class="button"; onclick='HideMenu();GalilConnect()'; title="Disconnected"; style="display:none;background-color:#ff3333;">
+      <button id="connect" class="button"; onclick='HideMenu();GalilConnect()'; title="Disconnected"; style="background-color:#ff3333;">
          <svg style="width:24px;height:24px" viewBox="0 0 24 24">
             <path fill="#040404" d="M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.43 19.12,14.63 17.79,15L19.25,16.44C20.88,15.61 22,13.95 22,12A5,5 0 0,0 17,7M16,11H13.81L15.81,13H16V11M2,4.27L5.11,7.38C3.29,8.12 2,9.91 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12C3.9,10.41 5.11,9.1 6.66,8.93L8.73,11H8V13H10.73L13,15.27V17H14.73L18.74,21L20,19.74L3.27,3L2,4.27Z" />
          </svg>
