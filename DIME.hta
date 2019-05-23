@@ -13,7 +13,7 @@
    innerBorder="no"
    maximizeButton="yes"
    minimizeButton="yes"
-   navigable="yes"
+   navigable="no"
    scroll="no"
    scrollFlat="no"
    selection="no"
@@ -22,7 +22,7 @@
    sysMenu="yes"
    version="1.0"
    windowState="normal"
->
+/>
 
 <style TYPE="text/css">
 
@@ -1722,9 +1722,10 @@ function UpdateToNewVersion(latest) {
    SaveOptionsClick(false);
    var wScript = new ActiveXObject("WScript.Shell");
    wScript.Run(NS.HTA.commandLine);
-   window.close();
+   window.Close();
 }
 
+// returns array of [bool version matches, string latest file]
 function VersionMatch() {
    var latest = DownloadFromBitBucket();
    if (latest.substring(0,6) != "Failed") {
@@ -1751,11 +1752,11 @@ function DownloadFromBitBucket() {
          if (Status == 200) {
             return ResponseText;
          } else {
-            return "Failed to Retrieve From BitBucket!\r\n" + "Status recieved: " + Status;
+            return "Failed to Retrieve From BitBucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
          }
       }
    } catch (e) {
-      return "Failed to Retrieve From BitBucket!\r\n" + e.number + ": " + e.description;
+      return "Failed to Retrieve From BitBucket!\r\n\r\n" + e.number + ": " + e.description;
    }
 }
 
@@ -1766,6 +1767,7 @@ function CheckInternet() {
 }
 
 function HandleOnLoad() {
+
    var cl = NS.HTA.commandLine.trim();
    var x = cl.substring(1).indexOf("\"");
    if (x == cl.length) {
@@ -1774,18 +1776,15 @@ function HandleOnLoad() {
       NS.FileName = cl.substring(x+2).trim();
    }
 
+   // check for new version if not opening a temp file (compress, decompress, download from galil, etc.)
    var temp = NS.FileName.substring(NS.FileName.lastIndexOf("\\") + 1, NS.FileName.lastIndexOf("."));
-
    if (temp != "temp") {
       if (CheckInternet() == true) { //connected to the internet
          document.getElementById("overlay").style.display = "block";
          var ver = VersionMatch();
          if (ver[0] == false) {
-            var rsp = vMsgBox("There is a newer version available, would you like to download it?", 4, "Update Available");
-            if (rsp == 6) { //yes
-               UpdateToNewVersion(ver[1]);
-               return;
-            }
+            UpdateToNewVersion(ver[1]);
+            return;
          } else {
             if(ver[1].substring(0, 6) == "Failed") {
                vMsgBox(ver[1], 0, "Update Failed");
@@ -1872,15 +1871,13 @@ function CheckWindowSize() {
 
 function HandleOnUnload(e) {
    if (NS.fModif == true) {
-      var resp = vMsgBox("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\nDo you want to save the changes?", 3, "Save?");
+      var resp = vMsgBox("Warning! The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\nDo you want to save the changes before closing?", 4, "Save?");
       switch (resp) {
          case (6): //yes
-            Save();
+            Save();             //if you don't save here, NS.fModif will still be true, and auto backup will occur
             break;
-         case (2): //cancel, currently doesn't work correctly
-            e.preventDefault();
-            return;
          default: //no
+            NS.fModif = false;  //did not want to save, prevents auto backup from occurring
       }
    }
    GalilDisconnect();
@@ -2224,6 +2221,10 @@ function KeyCapture(element, e) {
             if (document.getElementById("comform").style.display != "none") {
                e.preventDefault();
                CloseComForm();
+            }
+            if (document.getElementById("uploadform").style.display != "none") {
+               e.preventDefault();
+               UploadFormCancel();
             }
             return;
          case (112):  //F1
@@ -2808,6 +2809,8 @@ function SelectPortalVersion() {
    }
 
    // set overlay
+   FindClose();
+   CancelOptionsClick();
    document.getElementById("overlayText").innerHTML = "";
    document.getElementById("overlay").style.display = "block";
 
@@ -3029,6 +3032,8 @@ function ComSetupClick() {
       var fso = new ActiveXObject("Scripting.FileSystemObject");
       var done = false;
 
+      document.getElementById("overlayText").innerHTML = "";
+      document.getElementById("overlay").style.display = "block";
       document.getElementById("ini").innerHTML = "";
       document.getElementById("comdevice").innerHTML = "";
 
@@ -3077,6 +3082,7 @@ function ComSetupClick() {
 
 function CloseComForm() {
    document.getElementById("comform").style.display = "none";
+   document.getElementById("overlay").style.display = "none";
 }
 
 function CountPorts(ini, format) {
@@ -3787,7 +3793,7 @@ function ChangeIFrame() {
               ".ioOF {   font-size:10px; padding:0px 0px; border-radius:4px; background-color:#FF0000; height:100%; width:100% }",
               "</style>",
               "<div id=\"lineWarning\"; style=\"position:absolute;height:calc(100% - 62px);top:10px;left:673.5px;border-left:1px solid red;user-select:none;\"></div>",
-              "<textarea id=\"FrameText\"; wrap=\"off\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"parent.Modified(true)\"; onclick=\"parent.HideMenu()\"; onchange=\"parent.Modified(true)\"; onmouseup=\"parent.SetSelection()\"; onblur=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:calc(100% - 24px);display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
+              "<textarea id=\"FrameText\"; wrap=\"off\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"parent.Modified(true)\"; onclick=\"parent.HideMenu()\"; onchange=\"parent.Modified(true)\"; onmouseup=\"parent.SetSelection()\"; onfocusout=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:calc(100% - 24px);display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
               "</textarea>",
               "<table align=\"right\"; id=\"VariableWatch\"; style=\"width:50%;height:calc(100% - 47px);display:none;vertical-align:top;font:menu;\">",
               "<tr>",
@@ -4070,8 +4076,22 @@ function ChangeIFrame() {
          ShowMainText();
          break;
    }
-
+   
+   // add event listener to backup current text if you drag a new file over the frame without saving
+   frm.contentWindow.addEventListener("beforeunload", PreventLoss, false);
    SetSelection();
+}
+
+function PreventLoss() {
+   if (NS.fModif) {
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var backupFolder = NS.Path + "\\" + NS.HTA.applicationName + " Backups";
+      var lossBackup = backupFolder + "\\backup." + formatDateTime(new Date()) + ".bak";
+      if (!fso.FolderExists(backupFolder)) { fso.CreateFolder(backupFolder); }
+      var f = fso.CreateTextFile(lossBackup, true);
+      f.Write(NS.myText.value.replace(/\n/g,"\r\n"));
+      f.Close();
+   }
 }
 
 function showVariableWatchTab() {
@@ -4736,8 +4756,8 @@ function DecompressMain() {
    var newMain = NS.Path + "temp.txt";
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var newMainFile = fso.CreateTextFile(newMain, true);
-   newMainFile.write(decompressed);
-   newMainFile.close();
+   newMainFile.Write(decompressed);
+   newMainFile.Close();
    var wScript = new ActiveXObject("WScript.Shell");
    wScript.Run("\"" + window.location.pathname + "\" " + newMain);
 }
@@ -5362,10 +5382,10 @@ End Function
 </TABLE>
 
 <TABLE ID="MySettingsMenu"; class="submenu"; style="left:200px;display:none;">
-   <TR disabled id="ontop"; onclick="HideMenu();OnTopClick()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
-      <TD> Always On Top</TD>
-      <TD align="right"><input id="ontopcheckbox"; type="radio"></input></TD>
-   </TR>
+   <!-- <TR disabled id="ontop"; onclick="HideMenu();OnTopClick()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> -->
+      <!-- <TD> Always On Top</TD> -->
+      <!-- <TD align="right"><input id="ontopcheckbox"; type="radio"></input></TD> -->
+   <!-- </TR> -->
    <TR id="dock"; onclick="HideMenu();dockUnderPortal()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD colspan="2"> Dock Under Portal</TD>
       <!-- <TD align="right"></TD> -->
@@ -5388,86 +5408,86 @@ End Function
 </TABLE>
 
 <TABLE ID="MyReferenceMenu"; class="submenu"; style="left:225px;top:95px;display:none;">
-   <TR>
-      <TD id="quickref"; onclick="HideMenu();ShowReference(NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Error Codes</TD>
+   <TR id="quickref"; onclick="HideMenu();ShowReference(NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Error Codes</TD>
    </TR>
-   <TR>
-      <TD id="quickref"; onclick="HideMenu();ShowReference(NS.StopCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Stop Codes</TD>
+   <TR id="quickref"; onclick="HideMenu();ShowReference(NS.StopCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Stop Codes</TD>
    </TR>
-   <TR>
-      <TD id="quickref"; onclick="HideMenu();ShowReference(NS.DMCCommands)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> DMC Commands</TD>
+   <TR id="quickref"; onclick="HideMenu();ShowReference(NS.DMCCommands)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> DMC Commands</TD>
    </TR>
 </TABLE>
 
 <TABLE ID="MyLogoMenu"; class="submenu"; style="left:263px;top:29px;display:none;">
-   <TR>
-      <TD id="logos"; onclick="HideMenu();LogoChange('Delta6');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Delta 6</TD>
+   <TR id="logos"; onclick="HideMenu();LogoChange('Delta6');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Delta 6</TD>
    </TR>
-   <TR>
-      <TD id="logos"; onclick="HideMenu();LogoChange('Delta8');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Delta 8</TD>
+   <TR id="logos"; onclick="HideMenu();LogoChange('Delta8');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Delta 8</TD>
    </TR>
-   <TR>
-      <TD id="logos"; onclick="HideMenu();LogoChange('Custom');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Custom</TD>
+   <TR id="logos"; onclick="HideMenu();LogoChange('Custom');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Custom</TD>
    </TR>
 </TABLE>
 
 <TABLE ID="MySnippetMenu"; class="submenu"; style="left:263px;top:93px;display:none;">
-   <TR>
-      <TD id="snippet"; onclick="HideMenu();ShowReference(NS.MotorTuning)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Motor Tuning Module</TD>
+   <TR id="snippet"; onclick="HideMenu();ShowReference(NS.MotorTuning)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Motor Tuning Module</TD>
    </TR>
-   <TR>
-      <TD id="snippet"; onclick="HideMenu();ShowReference(NS.StringManip)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> String Manipulation Module</TD>
+   <TR id="snippet"; onclick="HideMenu();ShowReference(NS.StringManip)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> String Manipulation Module</TD>
    </TR>
-   <TR>
-      <TD id="snippet"; onclick="HideMenu();ShowReference(NS.IRSensor)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> IR Sensor Module</TD>
+   <TR id="snippet"; onclick="HideMenu();ShowReference(NS.IRSensor)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> IR Sensor Module</TD>
    </TR>
-   <TR>
-      <TD id="snippet"; onclick="HideMenu();ShowReference(NS.CustomModule)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Custom Module</TD>
+   <TR id="snippet"; onclick="HideMenu();ShowReference(NS.CustomModule)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Custom Module</TD>
    </TR>
 </TABLE>
 
 <TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:263px;top:115px;display:none;">
-   <TR>
-      <TD id="weblink"; onclick="HideMenu();Run(Link.Jira, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Jira</TD>
+   <TR id="weblink"; onclick="HideMenu();Run(Link.Jira, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Jira</TD>
    </TR>
-   <TR>
-      <TD id="weblink"; onclick="HideMenu();Run(Link.BitBucket, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Bitbucket</TD>
+   <TR id="weblink"; onclick="HideMenu();Run(Link.BitBucket, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Bitbucket</TD>
    </TR>
-   <TR>
-      <TD id="weblink"; onclick="HideMenu();Run(Link.ProgSite, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Programming Website</TD>
+   <TR id="weblink"; onclick="HideMenu();Run(Link.ProgSite, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Programming Website</TD>
    </TR>
 </TABLE>
 
 <TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:263px;top:137px;display:none;">
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.JumpStart, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> JumpStart</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.JumpStart, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> JumpStart</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.DMCRef, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> DMC Reference</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.DMCRef, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> DMC Reference</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.SpecialRef, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Special Reference</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.SpecialRef, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Special Reference</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.SystemProgramming, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> System Programming</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.SystemProgramming, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> System Programming</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.Portal, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Portal</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.Portal, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Portal</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.PathMaster, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> PathMaster</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.PathMaster, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> PathMaster</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.PMPlugins, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> PathMaster Plugins</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.PMPlugins, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> PathMaster Plugins</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.Machines, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Machines</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.Machines, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Machines</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.Pictures, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Pictures</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.Pictures, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Pictures</TD>
    </TR>
-   <TR>
-      <TD id="serverlink"; onclick="HideMenu();Run(Link.Cutsheets, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> Cutsheets</TD>
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.Cutsheets, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Cutsheets</TD>
    </TR>
 </TABLE>
 
@@ -5635,7 +5655,7 @@ End Function
 
 <iframe id="MyFrame"; application="yes"; scrolling="no"; onload="ChangeIFrame()"></iframe>
 
-<div id="comform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:500px;top:70px;left:calc(50% - 250px);display:none">
+<div id="comform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
 <div style="width:100px;display:inline-block;"><b>Library</b></div>
 <div style="width:50px;display:inline-block;"><b>Dev. #</b></div>
 <div style="width:calc(100% - 160px);display:inline-block;"><b>Port</b></div>
@@ -5650,54 +5670,60 @@ End Function
 </div>
 
 <div id="findform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:110px;width:300px;top:70px;left:calc(50% - 150px);display:none">
-<div>Find what: </div>
-<div><textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea></div>
-<div style="width:100%;height:10px;">&nbsp;</div>
-<div>
-   Match case:<input id="matchcase" type="checkbox"></input>
-   <button class="button"; onclick="Find(false)";>Find Next</button>&nbsp;
-   <button class="button"; onclick="Find(true)";>Find Prev</button>&nbsp;
-   <button class="button"; onclick="FindCount()";>Count</button>&nbsp;
-   <button class="button"; onclick="FindClose()";>Close</button>
-</div>
-<div><p id="findcount"><p></div>
+   <div>Find what: </div>
+   <div><textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea></div>
+   <div style="width:100%;height:10px;">&nbsp;</div>
+   <div>
+      Match case:<input id="matchcase" type="checkbox"></input>
+      <button class="button"; onclick="Find(false)";>Find Next</button>&nbsp;
+      <button class="button"; onclick="Find(true)";>Find Prev</button>&nbsp;
+      <button class="button"; onclick="FindCount()";>Count</button>&nbsp;
+      <button class="button"; onclick="FindClose()";>Close</button>
+   </div>
+   <div><p id="findcount"><p></div>
 </div>
 
 <div id="optionsform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:285px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
-Post-Download Start Label:
-<select id="myStartLabel">
-   <option value="Smart">Smart Detect</option>
-   <option value="#AUTO">#AUTO</option>
-   <option value="#AUTO1">#AUTO1</option>
-</select>
-<br/>
-Main Background Color / Text Color:<br/>
-<select id="myTextBC"; onchange="UpdateColor(this)"></select>
-<select id="myTextC"; onchange="UpdateColor(this)"></select>
-<br/>
-Reference Background Color / Text Color:<br/>
-<select id="myRefBC"; onchange="UpdateColor(this)"></select>
-<select id="myRefC"; onchange="UpdateColor(this)"></select>
-<br/>
-Terminal Background Color / Text Color:<br/>
-<select id="myTerminalBC"; onchange="UpdateColor(this)"></select>
-<select id="myTerminalC"; onchange="UpdateColor(this)"></select>
-<br/>
-Response Background Color / Text Color:<br/>
-<select id="myResponseBC"; onchange="UpdateColor(this)"></select>
-<select id="myResponseC"; onchange="UpdateColor(this)"></select>
-<br/>
-Variable Background Color / Text Color:<br/>
-<select id="myVariableBC"; onchange="UpdateColor(this)"></select>
-<select id="myVariableC"; onchange="UpdateColor(this)"></select>
-<br/>
-Value Background Color / Text Color:<br/>
-<select id="myValueBC"; onchange="UpdateColor(this)"></select>
-<select id="myValueC"; onchange="UpdateColor(this)"></select>
-<br/><br/>
-<button class="button"; onclick="SaveOptionsClick(true)"; style="width:24%;";>Save</button>
-<button class="button"; onclick="CancelOptionsClick()"; style="width:24%;";>Cancel</button>
-<button class="button"; onclick="DefaultOptionsClick()"; style="width:49%;";>Restore Defaults</button>
+   Post-Download Start Label:
+   <select id="myStartLabel">
+      <option value="Smart">Smart Detect</option>
+      <option value="#AUTO">#AUTO</option>
+      <option value="#AUTO1">#AUTO1</option>
+   </select>
+   <br/>
+   Main Background Color / Text Color:
+   <br/>
+   <select id="myTextBC"; onchange="UpdateColor(this)"></select>
+   <select id="myTextC"; onchange="UpdateColor(this)"></select>
+   <br/>
+   Reference Background Color / Text Color:
+   <br/>
+   <select id="myRefBC"; onchange="UpdateColor(this)"></select>
+   <select id="myRefC"; onchange="UpdateColor(this)"></select>
+   <br/>
+   Terminal Background Color / Text Color:
+   <br/>
+   <select id="myTerminalBC"; onchange="UpdateColor(this)"></select>
+   <select id="myTerminalC"; onchange="UpdateColor(this)"></select>
+   <br/>
+   Response Background Color / Text Color:
+   <br/>
+   <select id="myResponseBC"; onchange="UpdateColor(this)"></select>
+   <select id="myResponseC"; onchange="UpdateColor(this)"></select>
+   <br/>
+   Variable Background Color / Text Color:
+   <br/>
+   <select id="myVariableBC"; onchange="UpdateColor(this)"></select>
+   <select id="myVariableC"; onchange="UpdateColor(this)"></select>
+   <br/>
+   Value Background Color / Text Color:
+   <br/>
+   <select id="myValueBC"; onchange="UpdateColor(this)"></select>
+   <select id="myValueC"; onchange="UpdateColor(this)"></select>
+   <br/><br/>
+   <button class="button"; onclick="SaveOptionsClick(true)"; style="width:24%;";>Save</button>
+   <button class="button"; onclick="CancelOptionsClick()"; style="width:24%;";>Cancel</button>
+   <button class="button"; onclick="DefaultOptionsClick()"; style="width:49%;";>Restore Defaults</button>
 </div>
 
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
@@ -5705,13 +5731,14 @@ Value Background Color / Text Color:<br/>
 </div>
 
 <div id="uploadform"; style="z-index:3000;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:250px;display:none">
-<div id="portaltype"; style="width:100%;display:inline-block;"><b>Portal Version</b></div>
-<br/>
-<select id="portallist"; style="width:100%;display:inline-block;"></select>
-<br/><br/>
-<button class="button"; onclick="UploadFormCancel()"; style="width:32%;";>Cancel</button>
-<button id="portalback"; class="button"; onclick="SelectPortalVersion()"; style="width:32%;display:none;";>Back</button>
-<button class="button"; onclick="UploadFormContinue()"; style="width:32%;float:right;";>Continue</button>
+   <div id="portaltype"; style="width:100%;display:inline-block;"><b>Portal Version</b></div>
+   <br/>
+   <select id="portallist"; style="width:100%;display:inline-block;"></select>
+   <br/>
+   <br/>
+   <button class="button"; onclick="UploadFormCancel()"; style="width:32%;";>Cancel</button>
+   <button id="portalback"; class="button"; onclick="SelectPortalVersion()"; style="width:32%;display:none;";>Back</button>
+   <button class="button"; onclick="UploadFormContinue()"; style="width:32%;float:right;";>Continue</button>
 </div>
 
 </body>
