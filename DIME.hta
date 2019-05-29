@@ -159,6 +159,7 @@ NS = {
    LastChildMenu: null,        //used for menu navigation
    LastMenu: null,             //used for menu navigation
    Path: "",                   //gets populated with the HTA folder location
+   TempPath: "",               //gets populated with the temp file location and the file name 'temp.txt'
    watchPoll: 100,             //variable watch poll interval (ms)
    mainIOPoll: 200,            //main IO poll interval (ms)
    inputsPoll: 200,            //inputs poll interval (ms)
@@ -1681,11 +1682,11 @@ Colors = {"#FAEBD7": "AntiqueWhite",
 }
 
 function DisplayTitle() {
-   if ((NS.FileName == "") || (NS.FileName == NS.Path + "temp.txt")) {
-      if (NS.FileName == NS.Path + "temp.txt") {
-         Modified(true);
-         NS.FileName="";
-      }
+   if (NS.FileName == NS.TempPath) {
+      Modified(true);
+      NS.FileName="";
+   }
+   if (NS.FileName == "") {
       document.title = NS.HTA.applicationName + " " + NS.HTA.version;
    } else {
       document.title = NS.HTA.applicationName + " " + NS.HTA.version + " - " + NS.FileName.replace(/%20/g," ");
@@ -1795,7 +1796,9 @@ function HandleOnLoad() {
 
    document.getElementById("overlay").style.display = "none";
 
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
    NS.Path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("\\") + 1);
+   NS.TempPath = fso.GetSpecialFolder(2) + "\\temp.txt";
 
    if (NS.FileName != "") { OpenIt(); }
    NS.myText.focus();
@@ -2222,10 +2225,6 @@ function KeyCapture(element, e) {
                e.preventDefault();
                CloseComForm();
             }
-            if (document.getElementById("uploadform").style.display != "none") {
-               e.preventDefault();
-               UploadFormCancel();
-            }
             return;
          case (112):  //F1
             switch (element.id) {
@@ -2505,21 +2504,38 @@ function SaveAs() {
    document.getElementById("overlayText").innerHTML = "";
    document.getElementById("overlay").style.display = "block";
 
-   var excel = new ActiveXObject("Excel.Application");
    var fso = new ActiveXObject("Scripting.FileSystemObject");
-   var shell = new ActiveXObject("Shell.Application");
-   var saveAsTitle = DIME.applicationName + " Save As..."
+   var tempFolder = fso.GetSpecialFolder(2)
+   var tempPS1 = tempFolder + "\\temp.ps1"
+   var tempTXT = tempFolder + "\\tempPath.txt"
+   var wScript = new ActiveXObject("WScript.Shell");
+   var ps1 = fso.CreateTextFile(tempPS1);
+   ps1.Write(["Add-Type -AssemblyName System.Windows.Forms",
+            "Set-Content -Path \"" + tempTXT + "\" -Value \"\"",
+            "$dlg=New-Object System.Windows.Forms.SaveFileDialog",
+            "$dlg.InitialDirectory = \"C:\\\"",
+            "$dlg.Filter = \"Text Files (*.txt, *.dmc)|*.txt;*.dmc|All Files (*.*)|*.*\"",
+            "if($dlg.ShowDialog() -eq 'Ok'){",
+            "Set-Content -Path \"" + tempTXT + "\" -Value $dlg.FileName",
+            "}"].join("\r\n"));
+   ps1.Close();
+   
+   var sCmd = "powershell.exe -ExecutionPolicy Bypass -File " + tempPS1;
+   wScript.Run(sCmd, 0, true);
+   
+   var file = fso.OpenTextFile(tempTXT, 1);
+   var path = file.ReadLine();
+   file.Close();
+   fso.DeleteFile(tempPS1);
+   fso.DeleteFile(tempTXT);
+   document.getElementById("overlay").style.display = "none"; 
 
-   //Excel SaveAs dialog will always open in the background, this function handles it
-   BringToFront(saveAsTitle);
-   var path = excel.GetSaveAsFileName(fso.GetAbsolutePathName(""), "Text files (*.txt;*.dmc),*.txt;*.dmc,All files (*.*),*.*", 1, saveAsTitle);
-
-   document.getElementById("overlay").style.display = "none";
-
-   if (!path) { return false; }
+   if (path == "") {
+      return false;
+   }
    if (fso.fileExists(path)) {
       var rsp = vMsgBox("File \"" + path + "\" already exists.\r\nDo you want to replace it?", 1, "Overwrite?");
-      if (rsp == 2) { return false; } //exit if canceled
+      if (rsp == 2) { return false; }  //exit if canceled
    }
    var f = fso.OpenTextFile(path, 2, true);
    f.Write(NS.myText.value.replace(/\n/g,"\r\n"));
@@ -2530,45 +2546,11 @@ function SaveAs() {
    return true;
 }
 
-// This function creates a .vbs that:
-//   1.) Tries to use .AppActivate to bring the app to the front
-//   2.) Loops until the app is activated or until 2 seconds have passed
-//   3.) Deletes itself
-function BringToFront(app) {
-   var wScript = new ActiveXObject("WScript.Shell");
-   var fso = new ActiveXObject("Scripting.FileSystemObject");
-   var f = fso.CreateTextFile(NS.Path + "temp.vbs");
-   f.Write(["Dim objShell: Set objShell = CreateObject(\"Wscript.Shell\")",
-                "dim success: success = false",
-                "dim sTime: sTime = Timer",
-                "do while success = false",
-                "   if ((Timer - sTime) > 2) then exit do",
-                "   success = ObjShell.AppActivate(\"" + app + "\")",
-                "loop",
-                "CreateObject(\"Scripting.FileSystemObject\").deleteFile(WScript.ScriptFullName)",
-                "WScript.Quit"].join("\r\n"));
-   f.Close();
-   wScript.Run(NS.Path + "temp.vbs", 0);
-}
-
-// Send Keys after delay by creating a .vbs that uses send keys with code to delete itself after
-// NOTE: This shouldn't be used
-function SendKeys(keys, delay) {
-   var wScript = new ActiveXObject("WScript.Shell");
-   var fso = new ActiveXObject("Scripting.FileSystemObject");
-   var f = fso.CreateTextFile(NS.Path + "temp.vbs");
-   f.Write(["WScript.Sleep " + delay,
-                "CreateObject(\"WScript.Shell\").sendKeys(\"" + keys + "\")",
-                "CreateObject(\"Scripting.FileSystemObject\").deleteFile(WScript.ScriptFullName)",
-                "WScript.Quit"].join("\r\n"));
-   f.Close();
-   wScript.Run(NS.Path + "temp.vbs", 0);
-}
-
 function Save() {
    if (NS.FileName != "") {
       var fso = new ActiveXObject("Scripting.FileSystemObject");
-      var backupFolder = NS.Path + "\\" + NS.HTA.applicationName + " Backups";
+      var wScript = new ActiveXObject("WScript.Shell");
+      var backupFolder = wScript.SpecialFolders("Desktop") + "\\" + NS.HTA.applicationName + " Backups";
       var newBackup = backupFolder + "\\" + NS.FileName.substring(NS.FileName.lastIndexOf("\\") + 1) + "." + formatDateTime(new Date()) + ".bak";
       if (!fso.FolderExists(backupFolder)) { fso.CreateFolder(backupFolder); }
       try { fso.CopyFile(NS.FileName, newBackup) } catch(e) {}
@@ -2593,8 +2575,8 @@ function OpenIt() {
    var f = fso.OpenTextFile(NS.FileName.replace(/%20/g," "), 1, false);
    NS.myText.value = f.ReadAll();
    f.Close();
-   if(NS.FileName == NS.Path + "temp.txt") {
-      fso.deleteFile(NS.FileName);
+   if (NS.FileName == NS.TempPath) {
+      fso.deleteFile(NS.TempPath);
    } else {
       Modified(false);
    }
@@ -2631,11 +2613,11 @@ function NewText() {
 }
 
 function Today() {
-   return formatDateYYYYMMDD(new Date());
+   return formatDate(new Date());
 }
 
 // returns date as YYYY-MM-DD
-function formatDateYYYYMMDD(date) {
+function formatDate(date) {
    var d = new Date(date),
       month = '' + (d.getMonth() + 1),
       day = '' + d.getDate(),
@@ -2671,7 +2653,7 @@ function ChangeCursor(type) {
    document.getElementById("MyFrame").contentDocument.body.style.cursor = type;
 }
 
-function BackupPortalFiles() {
+function BackupMachineFiles() {
    var shell = new ActiveXObject("Shell.Application");
    var folder;
    document.getElementById("overlayText").innerHTML = "";
@@ -2702,11 +2684,42 @@ function BackupPortalFiles() {
 }
 
 function CreatePortalBackup(backup) {
+   var path = "C:\\Program Files (x86)\\PVAPortal"
+   var fldr, myEnum, path, fName
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (!fso.FolderExists(backup)) { fso.CreateFolder(backup); }
-   fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Config", backup + "\\Config")
-   fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Dep", backup + "\\Dep")
-   fso.CopyFolder("C:\\Program Files (x86)\\PVAPortal\\Lib", backup + "\\Lib")
+   if (!fso.FolderExists(backup + "\\Config")) { fso.CreateFolder(backup + "\\Config"); }
+   if (!fso.FolderExists(backup + "\\Dep")) { fso.CreateFolder(backup + "\\Dep"); }
+   if (!fso.FolderExists(backup + "\\Lib")) { fso.CreateFolder(backup + "\\Lib"); }
+
+   fso.CopyFolder(path + "\\Config", backup + "\\Config")
+
+   fldr = fso.GetFolder(path + "\\Dep");
+   myEnum = new Enumerator(fldr.SubFolders);
+   while(!myEnum.atEnd()) {
+      fName = backup + "\\Dep\\" + myEnum.item().Name;
+      if (!fso.FolderExists(fName)) { fso.CreateFolder(fName); }
+      if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(fName + "\\Config"))) { fso.CreateFolder(fName + "\\Config"); }
+      if ((fso.FolderExists(myEnum.item().Path + "\\Docs")) && (!fso.FolderExists(fName + "\\Docs"))) { fso.CreateFolder(fName + "\\Docs"); }
+      try { fso.CopyFile(myEnum.item().Path + "\\*.ini", fName); } catch(e) {}
+      try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", fName + "\\Config"); } catch(e) {}
+      try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.cfg", fName + "\\Config"); } catch(e) {}  // for PartDataType.cfg in _PartManager
+      try { fso.CopyFile(myEnum.item().Path + "\\Docs\\*.txt", fName + "\\Docs"); } catch(e) {}
+      myEnum.moveNext();
+   }
+
+   fldr = fso.GetFolder(path + "\\Lib");
+   myEnum = new Enumerator(fldr.SubFolders);
+   while(!myEnum.atEnd()) {
+      fName = backup + "\\Lib\\" + myEnum.item().Name;
+      if (!fso.FolderExists(fName)) { fso.CreateFolder(fName); }
+      if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(fName + "\\Config"))) { fso.CreateFolder(fName + "\\Config"); }
+      if ((fso.FolderExists(myEnum.item().Path + "\\Docs")) && (!fso.FolderExists(fName + "\\Docs"))) { fso.CreateFolder(fName + "\\Docs"); }
+      try { fso.CopyFile(myEnum.item().Path + "\\*.ini", fName); } catch(e) {}
+      try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", fName + "\\Config"); } catch(e) {}
+      try { fso.CopyFile(myEnum.item().Path + "\\Docs\\*.txt", fName + "\\Docs"); } catch(e) {}
+      myEnum.moveNext();
+   }
 
    var wScript = new ActiveXObject("WScript.Shell");
    var desktop = wScript.SpecialFolders("Desktop");
@@ -2725,11 +2738,17 @@ function CreatePortalBackup(backup) {
    Run(backup);
 }
 
-function UploadPortalFiles() {
+function UploadMachineFiles() {
    var shell = new ActiveXObject("Shell.Application");
    var folder;
+   vMsgBox(["Choose Folder to Upload. The following actions will occur:",
+            "",
+            "1.) Copy \"\\Config\", \"\\Dep\", and \"\\Lib\" folders to the correct Portal locations",
+            "2.) Copy \"DEFAULT.ini\" file and \"\\Plugins\" folder to the correct PathMaster locations",
+            "3.) Delete Log.dat Portal file to update the default log headers",
+            "4.) Copy any main files to the desktop (any .TXT or .DMC files that start with W, C, A, or S)"].join("\r\n"), 0, "Upload Machine Files")
    try {
-      folder = shell.BrowseForFolder(0, "Choose Folder containing the main for the machine as well as the Config, Dep, and Lib folders for Portal. WARNING: Using this functionality will delete the current Lib folder if the upload folder contains a Lib folder", 512, 17).Items().Item().Path;
+      folder = shell.BrowseForFolder(0, "Choose Folder to Upload", 512, 17).Items().Item().Path;
    } catch(e) {
       return;
    }
@@ -2742,27 +2761,13 @@ function UploadPortalFiles() {
 
 function UploadFilesToPortal(folder) {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
-   if (fso.FolderExists(folder + "\\Config")) {
-      // if (fso.FolderExists("C:\\Program Files (x86)\\PVAPortal\\Config")) {
-         // fso.DeleteFolder("C:\\Program Files (x86)\\PVAPortal\\Config\\*");
-      // }
-      fso.CopyFolder(folder + "\\Config", "C:\\Program Files (x86)\\PVAPortal\\Config")
-   }
-   if (fso.FolderExists(folder + "\\Dep")) {
-      // if (fso.FolderExists("C:\\Program Files (x86)\\PVAPortal\\Dep")) {
-         // fso.DeleteFolder("C:\\Program Files (x86)\\PVAPortal\\Dep\\*");
-      // }
-      fso.CopyFolder(folder + "\\Dep", "C:\\Program Files (x86)\\PVAPortal\\Dep")
-   }
-   if (fso.FolderExists(folder + "\\Lib")) {
-      if (fso.FolderExists("C:\\Program Files (x86)\\PVAPortal\\Lib")) {
-         fso.DeleteFolder("C:\\Program Files (x86)\\PVAPortal\\Lib\\*");
-      }
-      fso.CopyFolder(folder + "\\Lib", "C:\\Program Files (x86)\\PVAPortal\\Lib")
-   }
+   if (fso.FolderExists(folder + "\\Config")) { fso.CopyFolder(folder + "\\Config", "C:\\Program Files (x86)\\PVAPortal\\Config"); }
+   if (fso.FolderExists(folder + "\\Dep")) { fso.CopyFolder(folder + "\\Dep", "C:\\Program Files (x86)\\PVAPortal\\Dep"); }
+   if (fso.FolderExists(folder + "\\Lib")) { fso.CopyFolder(folder + "\\Lib", "C:\\Program Files (x86)\\PVAPortal\\Lib"); }
+   if (fso.FolderExists(folder + "\\Plugins")) { fso.CopyFolder(folder + "\\Plugins", "C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\Plugins"); }
 
    try { fso.DeleteFile("C:\\Program Files (x86)\\PVAPortal\\Data\\Log.dat"); } catch(e) {}
-   try { fso.CopyFile(folder + "DEFAULT.ini", "C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\DEFAULT.INI") } catch(e) {}
+   try { fso.CopyFile(folder + "\\DEFAULT.ini", "C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\DEFAULT.INI") } catch(e) {}
 
    var wScript = new ActiveXObject("WScript.Shell");
    var desktop = wScript.SpecialFolders("Desktop");
@@ -2778,91 +2783,7 @@ function UploadFilesToPortal(folder) {
 
    ChangeCursor("default");
    document.getElementById("overlay").style.display = "none";
-   vMsgBox("Upload Complete!", 0, "Upload Portal Files");
-}
-
-function UploadFormCancel() {
-   document.getElementById("overlay").style.display = "none";
-   document.getElementById("uploadform").style.display = "none";
-   NS.PortalVersion = "";
-   NS.PortalBuild = "";
-}
-
-function UploadFormContinue() {
-   if (NS.PortalVersion == "") {
-      SelectPortalBuild();
-   } else {
-      UploadToServer();
-   }
-}
-
-function SelectPortalVersion() {
-   var fso = new ActiveXObject("Scripting.FileSystemObject");
-   var fldr, myEnum, opt;
-
-   NS.PortalVersion = "";
-
-   // check if connected to the server
-   if (!fso.FolderExists("\\\\pva.local\\shared")) {
-      vMsgBox("You are currently not connected to the server. Operation canceled", 0, "Server Upload");
-      return;
-   }
-
-   // set overlay
-   FindClose();
-   CancelOptionsClick();
-   document.getElementById("overlayText").innerHTML = "";
-   document.getElementById("overlay").style.display = "block";
-
-   // get portal versions
-   document.getElementById("portaltype").innerHTML = "<b>Portal Version</b>";
-   document.getElementById("portallist").innerHTML = "";
-   document.getElementById("portalback").style.display = "none";
-   fldr = fso.GetFolder("\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal");
-   myEnum = new Enumerator(fldr.SubFolders);
-   while(!myEnum.atEnd()) {
-      if (myEnum.item().Name.substring(0, 3) == "Ver") {
-         opt = document.createElement("Option");
-         opt.value = myEnum.item().Name;
-         opt.text = myEnum.item().Name;
-         document.getElementById("portallist").add(opt);
-      }
-      myEnum.moveNext();
-   }
-
-   // set default value to latest version
-   document.getElementById("portallist").value = opt.value;
-   // display form
-   document.getElementById("uploadform").style.display = "block";
-}
-
-function SelectPortalBuild() {
-   var fso = new ActiveXObject("Scripting.FileSystemObject");
-   var fldr, myEnum, opt;
-
-   NS.PortalBuild = "";
-
-   // set previously selected value as the Portal Version
-   NS.PortalVersion = document.getElementById("portallist").value;
-
-   // get builds for selected version
-   document.getElementById("portaltype").innerHTML = "<b>Portal Build</b>";
-   document.getElementById("portallist").innerHTML = "";
-   document.getElementById("portalback").style.display = "inline-block";
-   fldr = fso.GetFolder("\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\\" + NS.PortalVersion);
-   myEnum = new Enumerator(fldr.SubFolders);
-   while(!myEnum.atEnd()) {
-      if (myEnum.item().Name.substring(0, 5) == "Build") {
-         opt = document.createElement("Option");
-         opt.value = myEnum.item().Name;
-         opt.text = myEnum.item().Name;
-         document.getElementById("portallist").add(opt);
-      }
-      myEnum.moveNext();
-   }
-
-   // set default value to latest build
-   document.getElementById("portallist").value = opt.value;
+   vMsgBox("Upload Complete! Perform logo swap if necessary", 0, "Upload Machine Files");
 }
 
 function UploadToServer() {
@@ -2871,17 +2792,14 @@ function UploadToServer() {
    var folder, slash1, slash2, slash3;
    var date, serial, project, regex, serverLocation;
 
-   // set selected value as the Portal Build
-   NS.PortalBuild = document.getElementById("portallist").value;
-
-   // hide form
-   document.getElementById("uploadform").style.display = "none";
+   document.getElementById("overlayText").innerHTML = "";
+   document.getElementById("overlay").style.display = "block";
 
    // get folder to upload
    try {
-      folder = shell.BrowseForFolder(0, "Choose Folder to Upload to the server. The folder must be structured as follows: \\PROJECT\\SERIAL\\YYYY-MM-DD", 0, 17).Items().Item().Path;
+      folder = shell.BrowseForFolder(0, "Choose Folder to Upload to the server.\r\nNote: The folder must be structured as follows - \\PROJECT\\SERIAL\\YYYY-MM-DD", 0, 17).Items().Item().Path;
    } catch(e) {
-      UploadFormCancel();
+      document.getElementById("overlay").style.display = "none";
       return;
    }
 
@@ -2892,7 +2810,7 @@ function UploadToServer() {
    if ((slash1 == -1) || (slash2 == -1) || (slash3 == -1)) {
       // wrong format
       vMsgBox("The folder to upload must be in the format \"\\PROJECT\\SERIAL\\YYYY-MM-DD\" to be accepted. Operation canceled", 0, "Server Upload");
-      UploadFormCancel();
+      document.getElementById("overlay").style.display = "none";
       return;
    }
    date = folder.substring(slash1 + 1);
@@ -2902,7 +2820,7 @@ function UploadToServer() {
    match = date.match(regex);
    if (match[0] != date) {
       vMsgBox("The date must be in YYYY-MM-DD format. Operation canceled", 0, "Server Upload");
-      UploadFormCancel();
+      document.getElementById("overlay").style.display = "none";
       return;
    }
    serverLocation = "\\\\pva.local\\shared\\Projects\\Machines\\" + project + "\\" + serial;
@@ -2912,13 +2830,13 @@ function UploadToServer() {
       serverLocation += "\\Machine Software";
    } else {
       vMsgBox("Could not find the \"Prog\" or \"Machine Software\" folder for " + project + " " + serial + ". Operation canceled", 0, "Server Upload");
-      UploadFormCancel();
+      document.getElementById("overlay").style.display = "none";
       return;
    }
    if (fso.FolderExists(serverLocation + "\\" + date)) {
       var rsp = vMsgBox("\"" + serverLocation + "\\" + date + "\" already exists. This process will overwrite the current files. Do you want to continue?", 4, "Server Upload");
       if (rsp == 7) {
-         UploadFormCancel();
+         document.getElementById("overlay").style.display = "none";
          return;
       }
    }
@@ -2930,97 +2848,13 @@ function ServerUpload(folder, serverLocation) {
    var date = folder.substring(folder.lastIndexOf("\\") + 1);
    var destination = serverLocation + "\\" + date;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
-   var wScript = new ActiveXObject("WScript.Shell");
-   var newSubFolder, shortcut, text, instr, fldr, myEnum;
-   var version = "";
-   var search = "PVAPortal version: ";
 
    // create destination folder if it doesn't exist
    if (!fso.FolderExists(destination)) { fso.CreateFolder(destination); }
-
-   // get the mains and the portal version
-   try { fso.CopyFile(folder + "\\*.txt", destination); } catch(e) {}
-   try { fso.CopyFile(folder + "\\*.dmc", destination); } catch(e) {}
-
-
-   // fldr = fso.GetFolder(destination);
-   // myEnum = new Enumerator(fldr.Files);
-   // while(!myEnum.atEnd()) {
-      // text = fso.OpenTextFile(myEnum.item().Path, 1).ReadAll();
-      // instr = text.indexOf(search);
-      // if (instr != - 1) {
-         // instr += search.length;
-         // version = text.substring(instr, text.substring(instr).indexOf(" ") + instr);
-         // if(fso.FolderExists("\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\\Ver " + version)) {
-            // break;
-         // }
-      // }
-      // myEnum.moveNext();
-   // }
-   // if (version == "") {
-      // var rsp = vMsgBox("Portal version was not found. The latest Portal version will be assumed", 1, "Server Upload")
-      // if (rsp == 2) { // cancel
-         // document.getElementById("overlay").style.display = "none";
-         // return;
-      // }
-      // version = NS.PortalVersion;
-   // }
-
-
-   // copy Config folder if it does exist
-   if (fso.FolderExists(folder + "\\Config")) {
-      fso.CopyFolder(folder + "\\Config", destination + "\\Config")
-   }
-
-   // if Dep folder exists, get the ini's and create shortcuts to the server Dep location
-   if (fso.FolderExists(folder + "\\Dep")) {
-      // create destination Dep folder if it doesn't exist
-      if (!fso.FolderExists(destination + "\\Dep")) { fso.CreateFolder(destination + "\\Dep"); }
-      // get subfolders
-      fldr = fso.GetFolder(folder + "\\Dep");
-      myEnum = new Enumerator(fldr.Subfolders);// iterate through the subfolders
-      while(!myEnum.atEnd()) {
-         newSubFolder = destination + "\\Dep\\" + myEnum.item().Name;
-         // create new subfolder if it doesn't exist
-         if (!fso.FolderExists(newSubFolder)) { fso.CreateFolder(newSubFolder); }
-         if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(newSubFolder + "\\Config"))) { fso.CreateFolder(newSubFolder + "\\Config"); }
-         // try to copy over the .ini
-         try { fso.CopyFile(myEnum.item().Path + "\\*.ini", newSubFolder); } catch(e) {}
-         try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", newSubFolder + "\\Config"); } catch(e) {}
-         // create shortcut to the correct Dep using the Portal version and Portal build from the main
-         shortcut = wScript.CreateShortcut(newSubFolder + "\\" + myEnum.item().Name + ".lnk")
-         shortcut.TargetPath = "\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\\" + NS.PortalVersion + "\\" + NS.PortalBuild + "\\Dep\\" + myEnum.item().Name;
-         shortcut.Save();
-         myEnum.moveNext();
-      }
-   }
-
-   // if Lib folder exists, get the ini's and create shortcuts to the server Lib location
-   if (fso.FolderExists(folder + "\\Lib")) {
-      // create destination Lib folder if it doesn't exist
-      if (!fso.FolderExists(destination + "\\Lib")) { fso.CreateFolder(destination + "\\Lib"); }
-      // get subfolders
-      fldr = fso.GetFolder(folder + "\\Lib");
-      myEnum = new Enumerator(fldr.Subfolders);
-      // iterate through the subfolders
-      while(!myEnum.atEnd()) {
-         newSubFolder = destination + "\\Lib\\" + myEnum.item().Name;
-         // create new subfolder if it doesn't exist
-         if (!fso.FolderExists(newSubFolder)) { fso.CreateFolder(newSubFolder); }
-         if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(newSubFolder + "\\Config"))) { fso.CreateFolder(newSubFolder + "\\Config"); }
-         // try to copy over the .ini
-         try { fso.CopyFile(myEnum.item().Path + "\\*.ini", newSubFolder); } catch(e) {}
-         try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", newSubFolder + "\\Config"); } catch(e) {}
-         // create shortcut to the correct Lib using the Portal version from the main
-         shortcut = wScript.CreateShortcut(newSubFolder + "\\" + myEnum.item().Name + ".lnk")
-         shortcut.TargetPath = "\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\\Ver " + version + "\\Lib\\" + myEnum.item().Name;
-         shortcut.Save();
-         myEnum.moveNext();
-      }
-   }
+   fso.CopyFolder(folder, destination);
 
    Run(destination);
-   UploadFormCancel();
+   document.getElementById("overlay").style.display = "none";
 }
 
 function ComSetupClick() {
@@ -3073,7 +2907,6 @@ function ComSetupClick() {
          opt.text = temp;
          document.getElementById("comdevice").add(opt);
       }
-
       document.getElementById("comform").style.display = "block";
    } else {
       CloseComForm();
@@ -3519,7 +3352,7 @@ function DownloadFromGalil() {
    }
    if (NS.myText.value != "") {
       var text = NS.galil.programUpload();
-      var newMain = NS.Path + "temp.txt";
+      var newMain = NS.TempPath;
       var fso = new ActiveXObject("Scripting.FileSystemObject");
       var newMainFile = fso.CreateTextFile(newMain, true);
       newMainFile.Write(text);
@@ -4076,7 +3909,7 @@ function ChangeIFrame() {
          ShowMainText();
          break;
    }
-   
+
    // add event listener to backup current text if you drag a new file over the frame without saving
    frm.contentWindow.addEventListener("beforeunload", PreventLoss, false);
    SetSelection();
@@ -4085,7 +3918,8 @@ function ChangeIFrame() {
 function PreventLoss() {
    if (NS.fModif) {
       var fso = new ActiveXObject("Scripting.FileSystemObject");
-      var backupFolder = NS.Path + "\\" + NS.HTA.applicationName + " Backups";
+      var wScript = new ActiveXObject("WScript.Shell");
+      var backupFolder = wScript.SpecialFolders("Desktop") + "\\" + NS.HTA.applicationName + " Backups";
       var lossBackup = backupFolder + "\\backup." + formatDateTime(new Date()) + ".bak";
       if (!fso.FolderExists(backupFolder)) { fso.CreateFolder(backupFolder); }
       var f = fso.CreateTextFile(lossBackup, true);
@@ -4657,7 +4491,7 @@ function CheckMainProg() {
 function CompressMain() {
    if (NS.myText.value == "") { return; }
    var text = Compress(NS.myText.value);
-   var newMain = NS.Path + "temp.txt";
+   var newMain = NS.TempPath;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var newMainFile = fso.CreateTextFile(newMain, true);
    newMainFile.Write(text);
@@ -4753,7 +4587,7 @@ function DecompressMain() {
       }
    }
 
-   var newMain = NS.Path + "temp.txt";
+   var newMain = NS.TempPath;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var newMainFile = fso.CreateTextFile(newMain, true);
    newMainFile.Write(decompressed);
@@ -4824,13 +4658,11 @@ function LabelInLine(line) {
 }
 
 function Min(x, y) {
-   if (x < y) { return x; }
-   else { return y; }
+   return (x < y) ? x : y;
 }
 
 function Max(x, y) {
-   if (x > y) { return x; }
-   else { return y; }
+   return (x > y) ? x : y;
 }
 
 function JumpInLine(element) {
@@ -5367,16 +5199,16 @@ End Function
       <TD align="right">></TD>
    </TR>
    <TR><TD colspan="2"><HR></TD></TR>
-   <TR onclick="HideMenu();BackupPortalFiles()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
-      <TD colspan="2"> Backup Portal Files</TD>
+   <TR onclick="HideMenu();BackupMachineFiles()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD colspan="2"> Backup Machine Files</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
-   <TR onclick="HideMenu();UploadPortalFiles()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
-      <TD colspan="2"> Upload Portal Files</TD>
+   <TR onclick="HideMenu();UploadMachineFiles()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD colspan="2"> Upload Files To Machine</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
-   <TR id="uploadtoserver"; onclick="HideMenu();SelectPortalVersion()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
-      <TD colspan="2"> Upload to Server</TD>
+   <TR id="uploadtoserver"; onclick="HideMenu();UploadToServer()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD colspan="2"> Upload Files to Server</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
 </TABLE>
@@ -5419,7 +5251,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyLogoMenu"; class="submenu"; style="left:263px;top:29px;display:none;">
+<TABLE ID="MyLogoMenu"; class="submenu"; style="left:294px;top:29px;display:none;">
    <TR id="logos"; onclick="HideMenu();LogoChange('Delta6');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Delta 6</TD>
    </TR>
@@ -5431,7 +5263,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MySnippetMenu"; class="submenu"; style="left:263px;top:93px;display:none;">
+<TABLE ID="MySnippetMenu"; class="submenu"; style="left:294px;top:93px;display:none;">
    <TR id="snippet"; onclick="HideMenu();ShowReference(NS.MotorTuning)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Motor Tuning Module</TD>
    </TR>
@@ -5446,7 +5278,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:263px;top:115px;display:none;">
+<TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:294px;top:115px;display:none;">
    <TR id="weblink"; onclick="HideMenu();Run(Link.Jira, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Jira</TD>
    </TR>
@@ -5458,7 +5290,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:263px;top:137px;display:none;">
+<TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:294px;top:137px;display:none;">
    <TR id="serverlink"; onclick="HideMenu();Run(Link.JumpStart, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> JumpStart</TD>
    </TR>
@@ -5728,17 +5560,6 @@ End Function
 
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
    <div id="overlayText"; style="position:absolute;top:50%;left:50%;font-size:25px;text-align:center;color:white;transform:translate(-50%, -50%)";>Checking For New Version<br/>Please Wait...</div>
-</div>
-
-<div id="uploadform"; style="z-index:3000;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:250px;display:none">
-   <div id="portaltype"; style="width:100%;display:inline-block;"><b>Portal Version</b></div>
-   <br/>
-   <select id="portallist"; style="width:100%;display:inline-block;"></select>
-   <br/>
-   <br/>
-   <button class="button"; onclick="UploadFormCancel()"; style="width:32%;";>Cancel</button>
-   <button id="portalback"; class="button"; onclick="SelectPortalVersion()"; style="width:32%;display:none;";>Back</button>
-   <button class="button"; onclick="UploadFormContinue()"; style="width:32%;float:right;";>Continue</button>
 </div>
 
 </body>
