@@ -1682,7 +1682,7 @@ Colors = {"#FAEBD7": "AntiqueWhite",
 }
 
 function DisplayTitle() {
-   if (NS.FileName == NS.TempPath) {
+   if ((NS.FileName == NS.TempPath) && (NS.TempPath != "")) {
       Modified(true);
       NS.FileName="";
    }
@@ -2128,10 +2128,9 @@ function DefaultOptionsClick() {
    }
 }
 
-function Run(link, element) {;
+function Run(link, type) {;
    ChangeCursor("wait");
-
-   if (link.indexOf("/") != -1) {
+   if (type == 1) {  // website link
       var temp = CheckInternet();
       if (temp == false) {
          vMsgBox("Navigation failed. You are not connected to the internet.", 0, "Web Links");
@@ -2139,7 +2138,8 @@ function Run(link, element) {;
          setTimeout(HideMenu,10);
          return;
       }
-   } else {
+   } 
+   if (type == 2) {  // server link
       var fso = new ActiveXObject("Scripting.FileSystemObject")
       if (!fso.FolderExists("\\\\pva.local\\shared")) {
          vMsgBox("Navigation failed. You are not connected to the server.", 0, "Server Links");
@@ -2586,7 +2586,10 @@ function OpenIt() {
 function Open() {
    if (NS.fModif == true) {
       var rsp = vMsgBox("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\r\nDo you want to save the changes?", 4, "Save?");
-      if (rsp == 6) { Save(); }  //yes
+      if (rsp == 6) {  //yes
+         var saved = Save();
+         if (saved == false) { return; }
+      }
    }
    var filePath = BrowseForFile();
    if (filePath != "") {
@@ -2735,7 +2738,7 @@ function CreatePortalBackup(backup) {
 
    document.getElementById("overlay").style.display = "none";
    ChangeCursor("default");
-   Run(backup);
+   Run(backup, 0);
 }
 
 function UploadMachineFiles() {
@@ -2853,7 +2856,7 @@ function ServerUpload(folder, serverLocation) {
    if (!fso.FolderExists(destination)) { fso.CreateFolder(destination); }
    fso.CopyFolder(folder, destination);
 
-   Run(destination);
+   Run("\"" + destination + "\"", 2);
    document.getElementById("overlay").style.display = "none";
 }
 
@@ -5279,46 +5282,46 @@ End Function
 </TABLE>
 
 <TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:294px;top:115px;display:none;">
-   <TR id="weblink"; onclick="HideMenu();Run(Link.Jira, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="weblink"; onclick="HideMenu();Run(Link.Jira, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Jira</TD>
    </TR>
-   <TR id="weblink"; onclick="HideMenu();Run(Link.BitBucket, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="weblink"; onclick="HideMenu();Run(Link.BitBucket, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Bitbucket</TD>
    </TR>
-   <TR id="weblink"; onclick="HideMenu();Run(Link.ProgSite, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="weblink"; onclick="HideMenu();Run(Link.ProgSite, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Programming Website</TD>
    </TR>
 </TABLE>
 
 <TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:294px;top:137px;display:none;">
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.JumpStart, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.JumpStart, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> JumpStart</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.DMCRef, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.DMCRef, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> DMC Reference</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.SpecialRef, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.SpecialRef, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Special Reference</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.SystemProgramming, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.SystemProgramming, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> System Programming</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.Portal, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.Portal, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Portal</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.PathMaster, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.PathMaster, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> PathMaster</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.PMPlugins, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.PMPlugins, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> PathMaster Plugins</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.Machines, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.Machines, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Machines</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.Pictures, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.Pictures, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Pictures</TD>
    </TR>
-   <TR id="serverlink"; onclick="HideMenu();Run(Link.Cutsheets, this)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="serverlink"; onclick="HideMenu();Run(Link.Cutsheets, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Cutsheets</TD>
    </TR>
 </TABLE>
@@ -5351,7 +5354,7 @@ End Function
          <svg style="width:24px;height:24px" viewBox="0 0 24 24">
             <path fill="#040404" d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
             <!-- <path fill="#FF0000" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" /> -->
-            <path fill="#FF0000" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12C4,13.85 4.63,15.55 5.68,16.91L16.91,5.68C15.55,4.63 13.85,4 12,4M12,20A8,8 0 0,0 20,12C20,10.15 19.37,8.45 18.32,7.09L7.09,18.32C8.45,19.37 10.15,20 12,20Z" />
+            <path fill="#00FF00" d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z" />
          </svg>
       </button>
    <!-------------->
