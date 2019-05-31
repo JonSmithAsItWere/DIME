@@ -1897,77 +1897,25 @@ function OnTopClick() {
 
 function PopulateOptionsLists() {
    var opt
+   var colorArr = ["myTextBC",
+                   "myTextC",
+                   "myRefBC",
+                   "myRefC",
+                   "myTerminalBC",
+                   "myTerminalC",
+                   "myResponseBC",
+                   "myResponseC",
+                   "myVariableBC",
+                   "myVariableC",
+                   "myValueBC",
+                   "myValueC"];
    for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myTextBC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myTextC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myRefBC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myRefC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myTerminalBC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myTerminalC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myResponseBC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myResponseC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myVariableBC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myVariableC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myValueBC").add(opt);
-   }
-   for(var key in Colors) {
-      opt = document.createElement("option");
-      opt.value = key;
-      opt.innerHTML = Colors[key];
-      document.getElementById("myValueC").add(opt);
+      for (var i = 0; i < colorArr.length; i++) {
+         opt = document.createElement("option");
+         opt.value = key;
+         opt.innerHTML = Colors[key];
+         document.getElementById(colorArr[i]).add(opt);
+      }
    }
 }
 
@@ -2138,7 +2086,7 @@ function Run(link, type) {;
          setTimeout(HideMenu,10);
          return;
       }
-   } 
+   }
    if (type == 2) {  // server link
       var fso = new ActiveXObject("Scripting.FileSystemObject")
       if (!fso.FolderExists("\\\\pva.local\\shared")) {
@@ -2399,10 +2347,10 @@ function TerminalKey(e) {
    }
    // 8 is backspace
    if (e.keyCode === 8) {
-      if (NS.myTerminal.selectionStart - 1 == NS.myTerminal.value.lastIndexOf(":")) {
-         e.preventDefault();
-         //NS.myTerminal.value = NS.myTerminal.value + ":";
-      }
+      var colon = NS.myTerminal.value.lastIndexOf(":");
+      if (NS.myTerminal.selectionStart <= colon) { NS.myTerminal.selectionStart = colon + 1}
+      if (NS.myTerminal.selectionEnd <= colon) { NS.myTerminal.selectionEnd = colon + 1}
+      if ((NS.myTerminal.selectionStart == NS.myTerminal.selectionEnd) && (NS.myTerminal.selectionStart == colon + 1)) { e.preventDefault(); }
    }
    // 35 is end key
    if (e.keyCode === 35) {
@@ -2435,6 +2383,7 @@ function TerminalKey(e) {
       e.preventDefault();
       ClearTerminal();
    }
+   // 112 is F1
    if (e.keyCode === 112) {
       ShowHelp(NS.tShortcuts);
    }
@@ -2519,24 +2468,27 @@ function SaveAs() {
             "Set-Content -Path \"" + tempTXT + "\" -Value $dlg.FileName",
             "}"].join("\r\n"));
    ps1.Close();
-   
+
    var sCmd = "powershell.exe -ExecutionPolicy Bypass -File " + tempPS1;
    wScript.Run(sCmd, 0, true);
-   
+
    var file = fso.OpenTextFile(tempTXT, 1);
    var path = file.ReadLine();
    file.Close();
    fso.DeleteFile(tempPS1);
    fso.DeleteFile(tempTXT);
-   document.getElementById("overlay").style.display = "none"; 
+   document.getElementById("overlay").style.display = "none";
 
    if (path == "") {
       return false;
    }
-   if (fso.fileExists(path)) {
-      var rsp = vMsgBox("File \"" + path + "\" already exists.\r\nDo you want to replace it?", 1, "Overwrite?");
-      if (rsp == 2) { return false; }  //exit if canceled
-   }
+
+   // Overwrite confirmation is part of the powershell savefiledialog
+   // if (fso.fileExists(path)) {
+   //    var rsp = vMsgBox("File \"" + path + "\" already exists.\r\nDo you want to replace it?", 1, "Overwrite?");
+   //    if (rsp == 2) { return false; }  //exit if canceled
+   // }
+
    var f = fso.OpenTextFile(path, 2, true);
    f.Write(NS.myText.value.replace(/\n/g,"\r\n"));
    f.Close();
@@ -2599,6 +2551,27 @@ function Open() {
    }
 }
 
+function BrowseForFile() {
+   var wScript = new ActiveXObject("WScript.Shell");
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var tempFolder = fso.GetSpecialFolder(2);
+   var tempName = fso.GetTempName() + ".hta";
+   var path = "HKCU\\Volatile Environment\\MsgResp";
+   var file = tempFolder.CreateTextFile(tempName);
+   file.Write(["<input type=file name=f>",
+               "<script>f.click();(new ActiveXObject('WScript.Shell'))",
+               ".RegWrite('HKCU\\\\Volatile Environment\\\\MsgResp', f.value);",
+               "close();",
+               "<",
+               "/script>"].join(""));
+   file.Close();
+   wScript.Run(tempFolder + "\\" + tempName, 1, true);
+   var ret = wScript.RegRead(path);
+   wScript.RegDelete(path);
+   fso.DeleteFile(tempFolder + "\\" + tempName);
+   return ret;
+}
+
 function NewTextSameFile() {
    if (NS.fModif == true) {
       var rsp = vMsgBox("The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\r\nDo you want to save the changes?", 4, "Save?");
@@ -2615,12 +2588,12 @@ function NewText() {
    wScript.Run("\"" + window.location.pathname + "\"")
 }
 
-function Today() {
-   return formatDate(new Date());
+function Today(format) {
+   return formatDate(new Date(), format);
 }
 
-// returns date as YYYY-MM-DD
-function formatDate(date) {
+// returns date as YYYY-MM-DD or MM/DD/YYYY
+function formatDate(date, type) {
    var d = new Date(date),
       month = '' + (d.getMonth() + 1),
       day = '' + d.getDate(),
@@ -2629,7 +2602,11 @@ function formatDate(date) {
    if (month.length < 2) month = '0' + month;
    if (day.length < 2) day = '0' + day;
 
-   return [year, month, day].join('-');
+   if (type == 2) {
+      return [month, day, year].join('/');
+   } else {
+      return [year, month, day].join('-');
+   }
 }
 
 // returns date as YYYY-MM-DD_hhmmss
@@ -2662,15 +2639,14 @@ function BackupMachineFiles() {
    document.getElementById("overlayText").innerHTML = "";
    document.getElementById("overlay").style.display = "block";
    try {
-      folder = shell.BrowseForFolder(0, "Choose Folder. A new dated folder will be created containing Config, Dep, and Lib Portal folders", 0, 17).Items().Item().Path;
+      folder = shell.BrowseForFolder(0, "Choose Folder. A new dated folder will be created containing Config, Dep, and Lib Portal folders, mains from the desktop, PathMaster Plugins, and the DEFAULT.ini", 0, 17).Items().Item().Path;
    } catch(e) {
       document.getElementById("overlay").style.display = "none";
       ChangeCursor("default");
       return;
    }
 
-   var today = Today();
-   var backup = folder + "\\" + today;
+   var backup = folder + "\\" + Today(1);
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (fso.FolderExists(backup)) {
       var rsp = vMsgBox("Backup already exists for today's date in the selected folder. Do you want to continue?", 4, "Backup");
@@ -2735,6 +2711,8 @@ function CreatePortalBackup(backup) {
    try { fso.CopyFile(desktop + "\\c*.dmc", backup); } catch(e) {}
    try { fso.CopyFile(desktop + "\\a*.dmc", backup); } catch(e) {}
    try { fso.CopyFile(desktop + "\\s*.dmc", backup); } catch(e) {}
+   try { fso.CopyFile("C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\*.ini", backup); } catch(e) {}
+   try { fso.CopyFolder("C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\Plugins", backup + "\\Plugins"); } catch(e) {}
 
    document.getElementById("overlay").style.display = "none";
    ChangeCursor("default");
@@ -3019,15 +2997,14 @@ function Find(reverse) {
    if ((text == "") || (findText == "")) { return; }
 
    if (reverse == true) {
-      pos = vInStrRev(text, findText, NS.startSel);
-      if (pos == 0) {
-         pos = vInStrRev(text.substring(NS.startSel), findText, -1);
-         if (pos != 0) {
+      pos = text.substring(0, NS.startSel).lastIndexOf(findText);
+      if (pos == -1) {
+         pos = text.substring(NS.startSel).lastIndexOf(findText);
+         if (pos != -1) {
             rsp = "Top of document was reached. Found first occurance from the bottom."
             pos += NS.startSel;
          }
       }
-      pos--;
    } else {
       pos = text.substring(NS.endSel).indexOf(findText);
       if (pos == -1) {
@@ -3450,7 +3427,7 @@ function Terminal(command) {
       ChangeCursor("wait");
       document.getElementById("overlayText").innerHTML = "Performing Master Reset<br/>Please Wait...";
       document.getElementById("overlay").style.display = "block";
-      vMasterReset(NS.galil);
+      NS.galil.write(String.fromCharCode(18) + String.fromCharCode(19) + "\r"); // write <ctrl>R<ctrl>S to controller
       GalilDisconnect();
       while (NS.connection == "OFFLINE") {
          GalilConnect(true)
@@ -3460,7 +3437,12 @@ function Terminal(command) {
       ChangeCursor("default");
       r = "Master Reset Complete!\r:"
    } else if (command == "^R^V") {
-      r = vGalilRevision(NS.galil);
+      var buffer = "";
+      NS.galil.write(String.fromCharCode(18) + String.fromCharCode(22) + "\r") // write <ctrl>R<ctrl>V to controller
+      while (buffer.length == 0) {   //while read returns nothing
+         buffer = NS.galil.read();
+      }
+      r = buffer;
    } else if (command.charAt(0) == "^") {
       r = arraySet(command.substring(1)) + "\r:";
    } else if (command.charAt(0) == "~") {
@@ -4234,6 +4216,32 @@ function StartPoll() {
    }
 }
 
+function ShowCustomModule() {
+   document.getElementById("overlayText").innerHTML = "";
+   document.getElementById("overlay").style.display = "block";
+   document.getElementById("moduleform").style.display = "block";
+}
+
+function CloseCustomModule() {
+   document.getElementById("overlay").style.display = "none";
+   document.getElementById("moduleform").style.display = "none";
+}
+
+function SubmitCustomModule() {
+   var name = document.getElementById("modulename").value;
+   var abbr = document.getElementById("moduleabbr").value;
+   var regex = /^[A-Z][A-Z0-9]{0,2}$/;
+   if (name == "") {
+      vMsgBox("The Custom Module Name field cannot be blank!", 0, "Custom Module")
+   }
+   if (abbr.search(regex) == -1) {
+      vMsgBox("The abbreviation entered failed the RegEx test!\r\nThe format expected is:\t" + regex.toString().replace(/\//g,"") + "", 0, "Custom Module");
+      return;
+   }
+   ShowReference(NS.CustomModule);
+   CloseCustomModule();
+}
+
 function ShowReference(reference) {
    if (reference == NS.ErrorCodes) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>ERROR CODES</b>"; }
    if (reference == NS.StopCodes) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>STOP CODES</b>"; }
@@ -4242,22 +4250,13 @@ function ShowReference(reference) {
    if (reference == NS.StringManip) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>STRING MANIPULATION MODULE</b>"; }
    if (reference == NS.IRSensor) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>IR SENSOR MODULE</b>"; }
    if (reference == NS.CustomModule) {
-      var rsp = vInputBox("Enter module name\r\n\r\nNote: If the text is blank, the operation will be canceled","Custom Module");
-      if ((rsp == "") || (rsp == null)) { return; }
-      var abbr = ""
-      while (abbr == "") {
-         abbr = vInputBox("Enter 3-Character module abbreviation\r\n\r\nNote: If the text is blank, the operation will be canceled", "Custom Module").trim().substring(0,3);
-         if ((abbr == "") || (abbr == null)) { return; }
-         if (isNaN(abbr.charAt(0)) == false) {
-            vMsgBox("1st character must be a letter!", 0, "Custom Module");
-            abbr = "";
-         }
-      }
+      var name = document.getElementById("modulename").value;
+      var abbr = document.getElementById("moduleabbr").value;
       if (abbr.length > 3) { abbr = abbr.substring(0,3); }
       for (var i = 1; i <= (3-abbr.length); i++) {
          abbr += "_"
       }
-      reference = reference.replace(/Custom/g, rsp).replace(/YYY/g, abbr); //.replace("mm/dd/yyyy", format())
+      reference = reference.replace(/Custom/g, name).replace(/YYY/g, abbr).replace("mm/dd/yyyy", Today(2))
       document.getElementById("RefDiv").innerHTML = "Custom Module Framework";
    }
    NS.myRefText.value = reference
@@ -4288,35 +4287,45 @@ function ClearTerminal() {
 
 function LogoChange(logo) {
    var mName, start, finish, remove, rsp;
-
+   var logos = [];
+   var errors = [];
    var fso = new ActiveXObject("Scripting.FileSystemObject")
    switch (logo) {
       case ("Delta6"):
          rsp = vMsgBox("Are you sure you want to use Delta 6 logos?", 4, "Logo Change");
          if (rsp == 7) { return; }
-         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg");
-         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg");
-         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg");
+         logos.push("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg",
+                   "C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg",
+                   "C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg");
          mName = "";
          break;
       case ("Delta8"):
          rsp = vMsgBox("Are you sure you want to use Delta 8 logos?", 4, "Logo Change");
          if (rsp == 7) { return; }
-         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg");
-         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg");
-         fso.copyFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg", "C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg");
+         logos.push("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg",
+                   "C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg",
+                   "C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg");
          mName = "";
          break;
-      case ("Custom"):
-         mName = vInputBox("Enter machine type as you want it in SysConfig.ini.\r\n\r\nNote: If the text is blank, the operation will be canceled","Logo Change")
-         if ((mName == "") || (mName == null)) { return; }
+      default:
+         mName = logo;
          if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg", false); }
          if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg", false); }
          if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg", false); }
-         break;
-      default:
-         vMsgBox("Logo not found", 0, "Logo Change")
-         return;
+   }
+
+   for (var i = 0; i < logos.length; i++) {
+      if (!fso.fileExists(logos[i])) { errors.push(logos[i]); }
+   }
+
+   if (errors.length > 0) {
+      var errorMsg = "Operation canceled. Could not locate the following logo file(s):"
+      for (var i = 0; i < errors.length; i++) {
+         errorMsg += "\r\n" + (i+1) + ".) \"" + errors[i] + "\"";
+      }
+      vMsgBox(errorMsg, 0, "Logo Change");
+      setTimeout(HideMenu, 10);
+      return;
    }
 
    var objFile = fso.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 1);
@@ -4325,11 +4334,13 @@ function LogoChange(logo) {
    start = strText.indexOf("\r\nModel=");
    if (start == -1) {
       vMsgBox("Failed to update SysConfig.ini", 0, "Logo Change");
+      setTimeout(HideMenu, 10);
       return;
    }
    finish = strText.indexOf("\r\n", start + 1)
    if (finish == -1) {
       vMsgBox("Failed to update SysConfig.ini", 0, "Logo Change");
+      setTimeout(HideMenu, 10);
       return;
    }
    remove = strText.substring(start, finish);
@@ -4342,6 +4353,28 @@ function LogoChange(logo) {
    MaintainSelection();
    vMsgBox("Logo change complete!", 0, "Logo Change");
    setTimeout(HideMenu, 10);
+}
+
+function ShowCustomLogoMenu() {
+   document.getElementById("overlayText").innerHTML = "";
+   document.getElementById("customlogoname").value = "";
+   document.getElementById("overlay").style.display = "block";
+   document.getElementById("logoform").style.display = "block";
+}
+
+function CloseCustomLogo() {
+   document.getElementById("overlay").style.display = "none";
+   document.getElementById("logoform").style.display = "none";
+}
+
+function CustomLogoChange() {
+   var logo = document.getElementById("customlogoname").value;
+   if (logo == "") {
+      vMsgBox("Logo text cannot be blank!", 0, "Custom Logo");
+      return;
+   }
+   LogoChange(logo);
+   CloseCustomLogo();
 }
 
 // Menu Management
@@ -4492,6 +4525,11 @@ function CheckMainProg() {
 }
 
 function CompressMain() {
+   if(document.getElementById("moduleform").style.display == "none") {
+      document.getElementById("moduleform").style.display = "block"
+   } else {
+      document.getElementById("moduleform").style.display = "none"
+   } return;
    if (NS.myText.value == "") { return; }
    var text = Compress(NS.myText.value);
    var newMain = NS.TempPath;
@@ -4984,52 +5022,8 @@ function padZero(str, len) {
 
 <script type="text/VBScript">
 
-Function vInStrRev(text, findText, start)
-   vInStrRev = InstrRev(text, findText, start)
-End Function
-
-Function vGalilRevision(g)
-   Dim buffer
-   buffer = ""
-   g.write(Chr(18) + Chr(22) + vbCr) 'write <ctrl>R<ctrl>V to controller (Chr takes ascii decimal, not hex)
-   Do While (len(buffer) = 0) 'while read returns nothing
-      buffer = g.read() 'keep reading
-   Loop
-   vGalilRevision = buffer
-End Function
-
-Sub vMasterReset(g)
-   g.write(Chr(18) + Chr(19) + vbCr) 'write <ctrl>R<ctrl>S to controller (Chr takes ascii decimal, not hex)
-End Sub
-
 Function vMsgBox(text, vbType, header)
    vMsgBox = MsgBox(text, vbType, header)
-End Function
-
-Function vInputBox(text, header)
-   vInputBox = InputBox(text, header)
-End Function
-
-Function BrowseForFile()
-   With CreateObject("WScript.Shell")
-      Dim fso : Set fso = CreateObject("Scripting.FileSystemObject")
-      Dim tempFolder : Set tempFolder = fso.GetSpecialFolder(2)
-      Dim tempName : tempName = fso.GetTempName() & ".hta"
-      Dim path : path = "HKCU\Volatile Environment\MsgResp"
-      With tempFolder.CreateTextFile(tempName)
-         .Write "<input type=file name=f>" & _
-         "<script>f.click();(new ActiveXObject('WScript.Shell'))" & _
-         ".RegWrite('HKCU\\Volatile Environment\\MsgResp', f.value);" & _
-         "close();" & _
-         "<" & _
-         "/script>"
-         .Close
-      End With
-      .Run tempFolder & "\" & tempName, 1, True
-      BrowseForFile = .RegRead(path)
-      .RegDelete path
-      fso.DeleteFile tempFolder & "\" & tempName
-   End With
 End Function
 
 </script>
@@ -5261,7 +5255,7 @@ End Function
    <TR id="logos"; onclick="HideMenu();LogoChange('Delta8');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Delta 8</TD>
    </TR>
-   <TR id="logos"; onclick="HideMenu();LogoChange('Custom');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="logos"; onclick="HideMenu();ShowCustomLogoMenu();"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Custom</TD>
    </TR>
 </TABLE>
@@ -5276,7 +5270,7 @@ End Function
    <TR id="snippet"; onclick="HideMenu();ShowReference(NS.IRSensor)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> IR Sensor Module</TD>
    </TR>
-   <TR id="snippet"; onclick="HideMenu();ShowReference(NS.CustomModule)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="snippet"; onclick="HideMenu();ShowCustomModule()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Custom Module</TD>
    </TR>
 </TABLE>
@@ -5353,7 +5347,6 @@ End Function
       <button disabled id="xsavebutton"; class="button"; onclick='HideMenu();Save()'; title="Save"; style="display:none;";>
          <svg style="width:24px;height:24px" viewBox="0 0 24 24">
             <path fill="#040404" d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
-            <!-- <path fill="#FF0000" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" /> -->
             <path fill="#00FF00" d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z" />
          </svg>
       </button>
@@ -5491,17 +5484,17 @@ End Function
 <iframe id="MyFrame"; application="yes"; scrolling="no"; onload="ChangeIFrame()"></iframe>
 
 <div id="comform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
-<div style="width:100px;display:inline-block;"><b>Library</b></div>
-<div style="width:50px;display:inline-block;"><b>Dev. #</b></div>
-<div style="width:calc(100% - 160px);display:inline-block;"><b>Port</b></div>
-<br/>
-<select id="ini" onchange="SetPortList()"; style="width:100px;"></select>
-<select id="inidevice"; style="width:50px;"></select>
-<select id="comdevice"; style="width:calc(100% - 160px);"></select>
-<br/><br/>
-<button class="button"; onclick="ReplacePort()"; style="width:32%;";>Update</button>
-<button class="button"; onclick="CloseComForm();ComSetupClick();"; style="width:32%;";>Refresh List</button>
-<button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
+   <div style="width:100px;display:inline-block;"><b>Library</b></div>
+   <div style="width:50px;display:inline-block;"><b>Dev. #</b></div>
+   <div style="width:calc(100% - 160px);display:inline-block;"><b>Port</b></div>
+   <br/>
+   <select id="ini" onchange="SetPortList()"; style="width:100px;"></select>
+   <select id="inidevice"; style="width:50px;"></select>
+   <select id="comdevice"; style="width:calc(100% - 160px);"></select>
+   <br/><br/>
+   <button class="button"; onclick="ReplacePort()"; style="width:32%;";>Update</button>
+   <button class="button"; onclick="CloseComForm();ComSetupClick();"; style="width:32%;";>Refresh List</button>
+   <button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
 </div>
 
 <div id="findform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:110px;width:300px;top:70px;left:calc(50% - 150px);display:none">
@@ -5559,6 +5552,25 @@ End Function
    <button class="button"; onclick="SaveOptionsClick(true)"; style="width:24%;";>Save</button>
    <button class="button"; onclick="CancelOptionsClick()"; style="width:24%;";>Cancel</button>
    <button class="button"; onclick="DefaultOptionsClick()"; style="width:49%;";>Restore Defaults</button>
+</div>
+
+<div id="logoform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:60px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div style="width:100px;display:inline-block;"><b>Custom Logo:</b></div>
+   <input id="customlogoname"; maxlength="15"; style="width:calc(100% - 110px);display:inline-block;"></input>
+   <br/><br/>
+   <button class="button"; onclick="CloseCustomLogo()"; style="width:49%;";>Cancel</button>
+   <button class="button"; onclick="CustomLogoChange()"; style="width:49%;";>Update</button>
+</div>
+
+<div id="moduleform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div style="width:150px;display:inline-block;"><b>Custom Module Name:</b></div>
+   <input onkeyup="this.value = this.value.toUpperCase();"; id="modulename"; maxlength="25"; style="width:calc(100% - 160px);display:inline-block;"></input>
+   <br>
+   <div style="width:150px;display:inline-block;"><b>Custom Module Abbr:</b></div>
+   <input onkeyup="this.value = this.value.toUpperCase();"; id="moduleabbr"; maxlength="3"; size="3"; style="display:inline-block;"></input>
+   <br/><br/>
+   <button class="button"; onclick="CloseCustomModule()"; style="width:49%;";>Cancel</button>
+   <button class="button"; onclick="SubmitCustomModule()"; style="width:49%;";>Continue</button>
 </div>
 
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
