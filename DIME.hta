@@ -30,11 +30,12 @@
       zoom:100%;
    }
 
+html { font-size:62.5%; }
+
 body   {   font-family:"Verdana, Arial, Helvetica, sans-serif";
-      font:menu;
       background-color:#F0F0F0;
       color:MenuText;
-      font-size:8px;
+      font-size:1rem;
       cursor:default;
       position:absolute; top:0px; bottom:0px; right:0px; left:0px;
       border-style:none;
@@ -43,8 +44,7 @@ body   {   font-family:"Verdana, Arial, Helvetica, sans-serif";
    }
 
 TABLE   {   font-family:"Arial";
-      font-size:8px;
-      font:menu;
+      font-size:1.25rem;
       z-index:1000;
    }
 
@@ -92,8 +92,7 @@ TD   {   border-width:1px;
       display:inline-block;
       background-color:#E0E0E0;
       font-family:"Arial";
-      font-size:8px;
-      font:menu;
+      font-size:1.25rem;
       text-align: middle;
       color: black;
       box-shadow: 3px 3px 5px 0px #2f3035;
@@ -1767,6 +1766,12 @@ function CheckInternet() {
 
 function HandleOnLoad() {
 
+   switch (document.getElementById("dpi").offsetHeight) {
+      case (96):
+         break;
+      default:
+   }
+
    var cl = NS.HTA.commandLine.trim();
    var x = cl.substring(1).indexOf("\"");
    if (x == cl.length) {
@@ -3173,7 +3178,7 @@ function SetSelection() {
 }
 
 function ShowSelection() {
-   var tempHTML = ["<TABLE wrap='off'; style=\"font-family:'Arial';font-size:8px;font:menu;width:100%;display:flex;overflow:none;\"><TR>",
+   var tempHTML = ["<TABLE wrap='off'; style=\"font-family:'Arial';font-size:1.25rem;width:100%;display:flex;overflow:none;\"><TR>",
                    "<TD style='width:90px;';>Length: " + NS.totalChars + "</TD>",
                    "<TD style='width:70px;';>Lines: " + NS.totalLines + "</TD>",
                    "<TD style='width:100px;';>Ln: " + NS.lineNumber + " | Col:" + NS.column + "</TD>"];
@@ -3600,15 +3605,16 @@ function GoToEnd(element) {
 function ChangeIFrame() {
    var str = ["<style>",
               "*{ cursor: inherit;}",
+              "html { font-size:62.5%; }",
               "TR {   width:100%; }",
               ".ioCell {   height:20px; width:12%; }",
-              ".ioON {   font-size:10px; padding:0px 0px; border-radius:4px; background-color:#00FF00; height:100%; width:100% }",
-              ".ioOF {   font-size:10px; padding:0px 0px; border-radius:4px; background-color:#FF0000; height:100%; width:100% }",
+              ".ioON {   font-size:1rem; padding:0px 0px; border-radius:4px; background-color:#00FF00; height:100%; width:100% }",
+              ".ioOF {   font-size:1rem; padding:0px 0px; border-radius:4px; background-color:#FF0000; height:100%; width:100% }",
               "</style>",
               "<div id=\"lineWarning\"; style=\"position:absolute;height:calc(100% - 62px);top:10px;left:673.5px;border-left:1px solid red;user-select:none;\"></div>",
               "<textarea id=\"FrameText\"; wrap=\"off\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"parent.Modified(true)\"; onclick=\"parent.HideMenu()\"; onchange=\"parent.Modified(true)\"; onmouseup=\"parent.SetSelection()\"; onfocusout=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:calc(100% - 24px);display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
               "</textarea>",
-              "<table align=\"right\"; id=\"VariableWatch\"; style=\"width:50%;height:calc(100% - 47px);display:none;vertical-align:top;font:menu;\">",
+              "<table align=\"right\"; id=\"VariableWatch\"; style=\"width:50%;height:calc(100% - 47px);display:none;vertical-align:top;\">",
               "<tr>",
                  "<button style=\"width:25%;\"; id=\"variableWatchTab\"; onclick=\"parent.showVariableWatchTab()\">Watch</button>",
                  "<button style=\"width:25%;\"; id=\"mainIOTab\"; onclick=\"parent.showMainIOTab()\">Main IO</button>",
@@ -3870,7 +3876,7 @@ function ChangeIFrame() {
    NS.myInfo = frm.contentDocument.getElementById("FrameInfo");
 
    NS.myText.style.fontFamily = "Fixedsys, Verdana, Arial, sans-serif";
-   NS.myText.style.fontSize = "14px";
+   NS.myText.style.fontSize = "1.6rem";
 
    showVariableWatchTab();
    ClearTerminal();
@@ -4554,8 +4560,6 @@ function CheckMainProg() {
 }
 
 function CompressMain() {
-   alert(document.getElementById("dpi").offsetHeight);
-   return;
    var text = Compress(NS.myText.value);
    var newMain = NS.TempPath;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -4899,7 +4903,7 @@ function ShowModeless(text, title, type, width, height) {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var modeless = fso.CreateTextFile(NS.TempPath + ".htm");
    if(type.toLowerCase() != "textarea") {
-      style = ["table { font-family:Fixedsys, Verdana, Arial, sans-serif; font-size:14px; background-color:" + NS.popupBC + "; color:" + NS.popupC + ";border-collapse:collapse;border:1px solid " + NS.popupC + ";} ",
+      style = ["table { font-family:Fixedsys, Verdana, Arial, sans-serif; font-size:1rem; background-color:" + NS.popupBC + "; color:" + NS.popupC + ";border-collapse:collapse;border:1px solid " + NS.popupC + ";} ",
                "tr { background-color:" + NS.popupBC + "; cursor:pointer; }",
                "th { border-collapse:collapse;border:1px solid " + NS.popupC + "; }",
                "td { border-collapse:collapse;border:1px solid " + NS.popupC + "; }",
@@ -5523,7 +5527,7 @@ End Function
       &nbsp;&nbsp;
 
    <!-- Poll Input -->
-      <div id="pollDiv"; style="display:none;font-size:10px;vertical-align:70%;";>
+      <div id="pollDiv"; style="display:none;font-size:1rem;vertical-align:70%;";>
          <div id="pollText"; style="vertical-align:middle;display:inline-block;";>Poll Interval (ms):</div>
          <input id="pollTime"; style="vertical-align:middle;display:inline-block;"; maxlength="4"; size="3"; onclick='HideMenu()'; onblur="UpdatePoll()";></input>
       </div>
@@ -5533,7 +5537,7 @@ End Function
 
 <iframe id="MyFrame"; application="yes"; scrolling="no"; onload="ChangeIFrame()"></iframe>
 
-<div id="comform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+<div id="comform"; style="z-index:3000;position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:80px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
    <div style="width:100px;display:inline-block;"><b>Library</b></div>
    <div style="width:50px;display:inline-block;"><b>Dev. #</b></div>
    <div style="width:calc(100% - 160px);display:inline-block;"><b>Port</b></div>
@@ -5547,7 +5551,7 @@ End Function
    <button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
 </div>
 
-<div id="findform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:110px;width:300px;top:70px;left:calc(50% - 150px);display:none">
+<div id="findform"; style="position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:110px;width:300px;top:70px;left:calc(50% - 150px);display:none">
    <div>Find what: </div>
    <div><textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea></div>
    <div style="width:100%;height:10px;">&nbsp;</div>
@@ -5561,7 +5565,7 @@ End Function
    <div><p id="findcount"><p></div>
 </div>
 
-<div id="optionsform"; style="position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:285px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
+<div id="optionsform"; style="position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:285px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
    Post-Download Start Label:
    <select id="myStartLabel">
       <option value="Smart">Smart Detect</option>
@@ -5604,7 +5608,7 @@ End Function
    <button class="button"; onclick="DefaultOptionsClick()"; style="width:49%;";>Restore Defaults</button>
 </div>
 
-<div id="logoform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:60px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+<div id="logoform"; style="z-index:3000;position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:60px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
    <div style="width:100px;display:inline-block;"><b>Custom Logo:</b></div>
    <input id="customlogoname"; maxlength="15"; style="width:calc(100% - 110px);display:inline-block;"></input>
    <br/><br/>
@@ -5612,7 +5616,7 @@ End Function
    <button class="button"; onclick="CustomLogoChange()"; style="width:49%;";>Update</button>
 </div>
 
-<div id="moduleform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+<div id="moduleform"; style="z-index:3000;position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:80px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
    <div style="width:150px;display:inline-block;"><b>Custom Module Name:</b></div>
    <input id="modulename"; maxlength="25"; style="width:calc(100% - 160px);display:inline-block;"></input>
    <br>
@@ -5624,7 +5628,7 @@ End Function
 </div>
 
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
-   <div id="overlayText"; style="position:absolute;top:50%;left:50%;font-size:25px;text-align:center;color:white;transform:translate(-50%, -50%)";>Checking For New Version<br/>Please Wait...</div>
+   <div id="overlayText"; style="position:absolute;top:50%;left:50%;font-size:2rem;text-align:center;color:white;transform:translate(-50%, -50%)";>Checking For New Version<br/>Please Wait...</div>
 </div>
 
 <div id="dpi"></div>
