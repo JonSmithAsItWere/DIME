@@ -173,8 +173,6 @@ NS = {
    myPoll: {},                 //used to set/clear polling interval
    myWindow: {},               //used to monitor minimum window size
    myText: {},                 //gets set to object pointing to the main text
-   myReference: {},            //gets set to object pointing to reference/snippet popup
-   myRefText: {},              //gets set to object that contains the text for the above popup
    myInfo: {},                 //gets set to object pointing to bottom line of app
    myWatch: {},                //gets set to object pointing to the variable watch / io container
    myTerminal: {},             //gets set to object pointing to the terminal window
@@ -190,8 +188,8 @@ NS = {
    startLabel: "Smart",        //post-download start label (Smart = #AUTO/#AUTO1)
    textBC: "#FFFFFF",          //main text background color
    textC: "#000000",           //main text font color
-   refBC: "#FFFFFF",           //reference/snippet text background color
-   refC: "#000000",            //reference/snippet text font color
+   popupBC: "#FFFFFF",         //popup background color
+   popupC: "#000000",          //popup text font color
    terminalBC: "#B4CFEC",      //terminal window background color
    terminalC: "#000000",       //terminal window font color
    responseBC: "#B4CFEC",      //response window background color
@@ -297,7 +295,7 @@ NS = {
                "150\tNot defined as digital input",
                "151\tNot defined as digital output",
                "152\tNot defined as analog input",
-               "153\tNot defined as analog output"].join("\n"),
+               "153\tNot defined as analog output"].join("\r\n"),
    StopCodes: ["0\tMotors are running, independent mode",
                "1\tMotors decelerating or stopped at commanded independent position",
                "2\tDecelerating or stopped by FWD limit switch or soft limit FL",
@@ -323,7 +321,7 @@ NS = {
                "71\tStopped due to EtherCAT drive fault",
                "99\tMC timeout",
                "100\tVector Sequence running",
-               "101\tVector Sequence stopped"].join("\n"),
+               "101\tVector Sequence stopped"].join("\r\n"),
    DMCCommands: ["DMC-40x0 Firmware Command Reference",
                "Revision: 1761",
                "12/20/18",
@@ -612,7 +610,7 @@ NS = {
                "ZA\t\tUser Data Record Variables",
                "ZN\t\tNegative Antifriction Bias",
                "ZP\t\tPositive Antifriction Bias",
-               "ZS\t\tZero Subroutine Stack"].join("\n"),
+               "ZS\t\tZero Subroutine Stack"].join("\r\n"),
    MotorTuning: ["REM=============================Motor Tuning Module==============================",
                   "REM           Author: Prog Dept   Date: 03/30/2017   Version: 2.0",
                   "REM               ===============================================",
@@ -706,7 +704,7 @@ NS = {
                   "   ENDIF",
                   "EN",
                   "",
-                  "REM===============================End of Module=================================="].join("\n"),
+                  "REM===============================End of Module=================================="].join("\r\n"),
    StringManip: ["REM==========================String Utilities Module============================",
             "REM             Author: Prog Dept   Date: 5/6/2019   Version: 1.00",
             "REM               ===============================================",
@@ -1287,7 +1285,7 @@ NS = {
             "",
             "REM==============================Module Messages=================================",
             "",
-            "REM===============================End of Module=================================="].join("\n"),
+            "REM===============================End of Module=================================="].join("\r\n"),
    IRSensor: ["REM============================IR Temp Sensor Module=============================",
             "REM             Author: Prog Dept   Date: 05/15/2017   Version: 1.2",
             "REM               ===============================================",
@@ -1507,7 +1505,7 @@ NS = {
             "   MERR=0",
             "   JP#ESTOP1",
             "",
-            "REM===============================End of Module=================================="].join("\n"),
+            "REM===============================End of Module=================================="].join("\r\n"),
    CustomModule: ["REM============================Custom Module==============================",
                "REM             Author: Prog Dept   Date: mm/dd/yyyy   Version: 1.00",
                "REM               ===============================================",
@@ -1554,65 +1552,56 @@ NS = {
                "",
                "REM==============================Module Messages=================================",
                "",
-               "REM===============================End of Module=================================="].join("\n"),
-   tShortcuts: ["======================================",
-                "Terminal Help",
-                "======================================",
-                "",
-                "Shortcut Keys:",
-                "Up\t\t- Scrolls up through command history",
-                "Down\t\t- Scrolls down through command history",
-                "Delete\t\t- Clears command and response window",
-                "End\t\t- Clears command history",
-                "",
-                "Custom Commands:",
-                "^R^V\t\t- Firmware Revision",
-                "^R^S\t\t- Master Reset",
-                "^array[x,y]=\"str\"\t- Set array equal to string (any length)",
-                "~array[x,y]=value\t- Reset array to a value (or variable)"].join("\r\n"),
-   wShortcuts: ["======================================",
-                "Variable Watch Help",
-                "======================================",
-                "",
-                "Custom Commands:",
-                "^array[x,y]\t- Display array as string",
-                "{S}variable\t- Format as string",
-                "{Fx.y}variable\t- Format as decimal w/ leading zeroes",
-                "{Zx.y}variable\t- Format as decimal w/o leading zeroes"].join("\r\n"),
-   mShortcuts: ["======================================",
-                "General Help",
-                "======================================",
-                "",
-                "Shortcuts:",
-                "Ctrl+A\t\t- Select All",
-                "Ctrl+C\t\t- Copy",
-                "Ctrl+D\t\t- Download Main From Galil",
-                "Ctrl+F\t\t- Find",
-                "Ctrl+G\t\t- GoTo Line",
-                "Ctrl+I\t\t- Toggle Auto-Indent",
-                "Ctrl+L\t\t- Jump To Label",
-                "Ctrl+N\t\t- New",
-                "Ctrl+O\t\t- Open",
-                "Ctrl+R\t\t- Return From Label Jump",
-                "Ctrl+S\t\t- Save",
-                "Ctrl+T\t\t- Toggle Main Text View",
-                "Ctrl+U\t\t- Upload Main To Galil",
-                "Ctrl+W\t\t- Toggle Sidebar View",
-                "Ctrl+X\t\t- Cut",
-                "Ctrl+Y\t\t- Redo",
-                "Ctrl+Z\t\t- Undo",
-                "F1\t\t- Help Window (focus dependent)",
-                "F3\t\t- Find Next",
-                "F7\t\t- Error Check",
-                "",
-                "Custom Commands:",
-                "^array[x]=\"string\"\t- Parses array into string segments",
-                "~array=value\t- Parses into JS#ARR_RST(array,value)",
-                "",
-                "Notes:",
-                "Saved Labels are generated by using Jump To Label.",
-                "",
-                ""].join("\r\n"),
+               "REM===============================End of Module=================================="].join("\r\n"),
+   tShortcuts: ["<table>",
+                "<tr><td><b>Key</b></td><td><b>Description</b></td></tr>",
+                "<tr><td>Up</td><td>Scrolls up through command history</td></tr>",
+                "<tr><td>Down</td><td>Scrolls down through command history</td></tr>",
+                "<tr><td>Delete</td><td>Clears command and response window</td></tr>",
+                "<tr><td>End</td><td>Clears command history</td></tr>",
+                "</table><br/><table>",
+                "<tr><td><b>Command</b></td><td><b>Description</b></td></tr>",
+                "<tr><td>^R^V</td><td>Firmware Revision</td></tr>",
+                "<tr><td>^R^S</td><td>Master Reset</td></tr>",
+                "<tr><td>^array[x,y]=\"str\"</td><td>Set array equal to string (any length)</td></tr>",
+                "<tr><td>~array[x,y]=value</td><td>Reset array to a value (or variable)</td></tr>",
+                "</table>"].join("\r\n"),
+   wShortcuts: ["<table>",
+                "<tr><td><b>Command</b></td><td><b>Description</b></td></tr>",
+                "<tr><td>^array[x,y]</td><td>Display array as string</td></tr>",
+                "<tr><td>{S}variable</td><td>Format as string</td></tr>",
+                "<tr><td>{Fx.y}variable</td><td>Format as decimal w/ leading zeroes</td></tr>",
+                "<tr><td>{Zx.y}variable</td><td>Format as decimal w/o leading zeroes</td></tr>",
+                "</table>"].join("\r\n"),
+   mShortcuts: ["<table>",
+                "<tr><td><b>Shortcut</b></td><td><b>Description</b></td></tr>",
+                "<tr><td>Ctrl+A</td><td>Select All</td></tr>",
+                "<tr><td>Ctrl+C</td><td>Copy</td></tr>",
+                "<tr><td>Ctrl+D</td><td>Download Main From Galil</td></tr>",
+                "<tr><td>Ctrl+F</td><td>Find</td></tr>",
+                "<tr><td>Ctrl+G</td><td>GoTo Line</td></tr>",
+                "<tr><td>Ctrl+I</td><td>Toggle Auto-Indent</td></tr>",
+                "<tr><td>Ctrl+L</td><td>Jump To Label</td></tr>",
+                "<tr><td>Ctrl+N</td><td>New</td></tr>",
+                "<tr><td>Ctrl+O</td><td>Open</td></tr>",
+                "<tr><td>Ctrl+R</td><td>Return From Label Jump</td></tr>",
+                "<tr><td>Ctrl+S</td><td>Save</td></tr>",
+                "<tr><td>Ctrl+T</td><td>Toggle Main Text View</td></tr>",
+                "<tr><td>Ctrl+U</td><td>Upload Main To Galil</td></tr>",
+                "<tr><td>Ctrl+W</td><td>Toggle Sidebar View</td></tr>",
+                "<tr><td>Ctrl+X</td><td>Cut</td></tr>",
+                "<tr><td>Ctrl+Y</td><td>Redo</td></tr>",
+                "<tr><td>Ctrl+Z</td><td>Undo</td></tr>",
+                "<tr><td>F1</td><td>Help Window (focus dependent)</td></tr>",
+                "<tr><td>F3</td><td>Find Next</td></tr>",
+                "<tr><td>F7</td><td>Error Check</td></tr>",
+                "</table><br/><table>",
+                "<tr><td><b>Command</b></td><td><b>Description</b></td></tr>",
+                "<tr><td>^array[x]=\"string\"</td><td>Parses array into string segments</td></tr>",
+                "<tr><td>~array=value</td><td>Parses into JS#ARR_RST(array,value)</td></tr>",
+                "</table>",
+                "<br/>",
+                "Note: Saved Labels are generated by using Jump To Label."].join("\r\n"),
 };
 
 Colors = {"#FAEBD7": "AntiqueWhite",
@@ -1815,8 +1804,8 @@ function HandleOnLoad() {
    PopulateOptionsLists();
    setColorInvert(document.getElementById("myTextBC"), true);
    setColorInvert(document.getElementById("myTextC"), true);
-   setColorInvert(document.getElementById("myRefBC"), true);
-   setColorInvert(document.getElementById("myRefC"), true);
+   setColorInvert(document.getElementById("myPopupBC"), true);
+   setColorInvert(document.getElementById("myPopupC"), true);
    setColorInvert(document.getElementById("myTerminalBC"), true);
    setColorInvert(document.getElementById("myTerminalC"), true);
    setColorInvert(document.getElementById("myResponseBC"), true);
@@ -1825,8 +1814,6 @@ function HandleOnLoad() {
    setColorInvert(document.getElementById("myVariableC"), true);
    setColorInvert(document.getElementById("myValueBC"), true);
    setColorInvert(document.getElementById("myValueC"), true);
-   NS.myRefText.style.backgroundColor = NS.refBC
-   NS.myRefText.style.color = NS.refC
 }
 
 function MoveLineWarning() {
@@ -1842,21 +1829,16 @@ function MoveLineWarning() {
 function CheckWindowSize() {
    clearTimeout(NS.myWindow);
    NS.myWindow = setTimeout(function() {
-      var minx, miny, refy;
-      if (NS.myReference.style.display == "none") {
-         refy = 0;
-      } else {
-         refy = 200;
-      }
+      var minx, miny;
       if ((NS.myWatch.style.display == "none") || (NS.myWatch.style.width == "100%")) {
          minx = 565;
       } else {
          minx = 585;
       }
       if (NS.myWatch.style.display == "none") {
-         miny = 350 + refy;
+         miny = 350;
       } else {
-         miny = 560 + refy;
+         miny = 560;
       }
       var x = Max(window.outerWidth, minx);
       var y = Max(window.outerHeight, miny);
@@ -1899,8 +1881,8 @@ function PopulateOptionsLists() {
    var opt
    var colorArr = ["myTextBC",
                    "myTextC",
-                   "myRefBC",
-                   "myRefC",
+                   "myPopupBC",
+                   "myPopupC",
                    "myTerminalBC",
                    "myTerminalC",
                    "myResponseBC",
@@ -1924,8 +1906,8 @@ function SetOptions() {
    document.getElementById("myStartLabel").value = NS.startLabel;
    document.getElementById("myTextBC").value = NS.textBC;
    document.getElementById("myTextC").value = NS.textC;
-   document.getElementById("myRefBC").value = NS.refBC;
-   document.getElementById("myRefC").value = NS.refC;
+   document.getElementById("myPopupBC").value = NS.popupBC;
+   document.getElementById("myPopupC").value = NS.popupC;
    document.getElementById("myTerminalBC").value = NS.terminalBC;
    document.getElementById("myTerminalC").value = NS.terminalC;
    document.getElementById("myResponseBC").value = NS.responseBC;
@@ -1936,8 +1918,8 @@ function SetOptions() {
    document.getElementById("myValueC").value = NS.valueC;
    document.getElementById("myTextBC").style.backgroundColor = NS.textBC;
    document.getElementById("myTextC").style.backgroundColor = NS.textC;
-   document.getElementById("myRefBC").style.backgroundColor = NS.refBC;
-   document.getElementById("myRefC").style.backgroundColor = NS.refC;
+   document.getElementById("myPopupBC").style.backgroundColor = NS.popupBC;
+   document.getElementById("myPopupC").style.backgroundColor = NS.popupC;
    document.getElementById("myTerminalBC").style.backgroundColor = NS.terminalBC;
    document.getElementById("myTerminalC").style.backgroundColor = NS.terminalC;
    document.getElementById("myResponseBC").style.backgroundColor = NS.responseBC;
@@ -1965,8 +1947,8 @@ function SaveOptionsClick(bool) {
    NS.startLabel = document.getElementById("myStartLabel").value;
    NS.textBC = document.getElementById("myTextBC").value;
    NS.textC = document.getElementById("myTextC").value;
-   NS.refBC = document.getElementById("myRefBC").value;
-   NS.refC = document.getElementById("myRefC").value;
+   NS.popupBC = document.getElementById("myPopupBC").value;
+   NS.popupC = document.getElementById("myPopupC").value;
    NS.terminalBC = document.getElementById("myTerminalBC").value;
    NS.terminalC = document.getElementById("myTerminalC").value;
    NS.responseBC = document.getElementById("myResponseBC").value;
@@ -1984,8 +1966,8 @@ function SaveOptionsClick(bool) {
    temp = ReplaceVar(temp, "startLabel", NS.startLabel);
    temp = ReplaceVar(temp, "textBC", NS.textBC);
    temp = ReplaceVar(temp, "textC", NS.textC);
-   temp = ReplaceVar(temp, "refBC", NS.refBC);
-   temp = ReplaceVar(temp, "refC", NS.refC);
+   temp = ReplaceVar(temp, "popupBC", NS.popupBC);
+   temp = ReplaceVar(temp, "popupC", NS.popupC);
    temp = ReplaceVar(temp, "terminalBC", NS.terminalBC);
    temp = ReplaceVar(temp, "terminalC", NS.terminalC);
    temp = ReplaceVar(temp, "responseBC", NS.responseBC);
@@ -2017,8 +1999,6 @@ function ReplaceVar(text, variable, newValue) {
 function UpdateColors() {
    NS.myText.style.backgroundColor = document.getElementById("myTextBC").value;
    NS.myText.style.color = document.getElementById("myTextC").value;
-   NS.myRefText.style.backgroundColor = document.getElementById("myRefBC").value;
-   NS.myRefText.style.color = document.getElementById("myRefC").value;
    NS.myTerminal.style.backgroundColor = document.getElementById("myTerminalBC").value;
    NS.myTerminal.style.color = document.getElementById("myTerminalC").value;
    NS.myResponse.style.backgroundColor = document.getElementById("myResponseBC").value;
@@ -2036,8 +2016,6 @@ function CancelOptionsClick() {
    //restore saved values
    NS.myText.style.backgroundColor = NS.textBC;
    NS.myText.style.color = NS.textC;
-   NS.myRefText.style.backgroundColor = NS.refBC;
-   NS.myRefText.style.color = NS.refC;
    NS.myTerminal.style.backgroundColor = NS.terminalBC;
    NS.myTerminal.style.color = NS.terminalC;
    NS.myResponse.style.backgroundColor = NS.responseBC;
@@ -2060,8 +2038,8 @@ function DefaultOptionsClick() {
       NS.startLabel = "Smart";
       NS.textBC = "#FFFFFF";
       NS.textC = "#000000";
-      NS.refBC = "#FFFFFF";
-      NS.refC = "#000000";
+      NS.popupBC = "#FFFFFF";
+      NS.popupC = "#000000";
       NS.terminalBC = "#B4CFEC";
       NS.terminalC = "#000000";
       NS.responseBC = "#B4CFEC";
@@ -3082,26 +3060,33 @@ function GoToLineNum() {
       vMsgBox("Line number does not exist", 0, "Go To Line");
       return;
    } else {
-      GoToLine(Number(goLine),"");
+      GoToLine(Number(goLine), 0, false);
    }
 }
 
-function GoToLine(validLine, highlight) {
+function GoToLine(validLine, highlight, midBool) {
    var tempLines = NS.myText.value.split("\n");
    var tempChar = 0;
    for (var i = 0; i < validLine; i++) {
       tempChar += tempLines[i].length + 1;
    }
    tempChar -= (tempLines[i - 1].length + 1);
-   NS.myText.scrollTop = ((validLine - 1) / NS.totalLines) * NS.myText.scrollHeight;
-   NS.myText.setSelectionRange(tempChar, tempChar + highlight.length);
+   if (highlight == -1) { highlight = tempLines[i - 1].length; }
+   var half = NS.myText.clientHeight / 2;
+   var scroll = ((validLine - 1) / NS.totalLines) * NS.myText.scrollHeight;
+   if ((scroll < (NS.myText.scrollHeight - half)) && (midBool == true)) {
+      NS.myText.scrollTop = scroll - half;
+   } else {
+      NS.myText.scrollTop = scroll;
+   }
+   NS.myText.setSelectionRange(tempChar, tempChar + highlight);
    SetSelection();
 }
 
 function ReturnToLine() {
    if (NS.returnLines.length > 0) {
       var arr = NS.returnLines.pop();
-      GoToLine(arr[0], "");
+      GoToLine(arr[0], 0, true);
       NS.startSel = arr[1];
       NS.endSel = arr[2];
       MaintainSelection();
@@ -3137,7 +3122,7 @@ function FindLabel(optLabel) {
                      document.getElementById("labels").add(opt);
                   }
                }
-               GoToLine(i + 1, label);
+               GoToLine(i + 1, label.length, false);
                return;
             }
          }
@@ -3276,7 +3261,8 @@ function UploadToGalil() {
    var tCon = NS.galil.address;
    var errorText = ErrorCheck();
    if (errorText != "") {
-      var rsp = vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText + "\r\n\r\nWould you like to download anyway?", 4, "Error Found. Continue?");
+      //var rsp = vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText + "\r\n\r\nWould you like to download anyway?", 4, "Error Found. Continue?");
+      var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to download anyway?", 4, "Warning");
       if (rsp == 7) { return; } //no
    }
 
@@ -3869,8 +3855,6 @@ function ChangeIFrame() {
    frm.style.marginBottom = "0";
 
    NS.myText = frm.contentDocument.getElementById("FrameText");
-   NS.myReference = document.getElementById("ReferencePopup");
-   NS.myRefText = document.getElementById("ReferenceText");
    NS.myWatch = frm.contentDocument.getElementById("VariableWatch");
    NS.myTerminal = frm.contentDocument.getElementById("FrameTerminal");
    NS.myResponse = frm.contentDocument.getElementById("FrameResponse");
@@ -4243,33 +4227,58 @@ function SubmitCustomModule() {
 }
 
 function ShowReference(reference) {
-   if (reference == NS.ErrorCodes) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>ERROR CODES</b>"; }
-   if (reference == NS.StopCodes) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>STOP CODES</b>"; }
-   if (reference == NS.DMCCommands) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>DMC REFERENCE</b>"; }
-   if (reference == NS.MotorTuning) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>MOTOR TUNING MODULE</b>"; }
-   if (reference == NS.StringManip) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>STRING MANIPULATION MODULE</b>"; }
-   if (reference == NS.IRSensor) { document.getElementById("RefDiv").innerHTML = "&nbsp;<b>IR SENSOR MODULE</b>"; }
-   if (reference == NS.CustomModule) {
-      var name = document.getElementById("modulename").value;
-      var abbr = document.getElementById("moduleabbr").value;
-      if (abbr.length > 3) { abbr = abbr.substring(0,3); }
-      for (var i = 1; i <= (3-abbr.length); i++) {
-         abbr += "_"
-      }
-      reference = reference.replace(/Custom/g, name).replace(/YYY/g, abbr).replace("mm/dd/yyyy", Today(2))
-      document.getElementById("RefDiv").innerHTML = "Custom Module Framework";
+   var title, w, h;
+   switch (reference) {
+      case (NS.ErrorCodes):
+         title = "Error Codes";
+         w = document.innerWidth;
+         h = document.innerHeight;
+         break;
+      case (NS.StopCodes):
+         title = "Stop Codes";
+         w = document.innerWidth;
+         h = 440;
+         break;
+      case (NS.DMCCommands):
+         title = "DMC Reference";
+         w = document.innerWidth;
+         h = document.innerHeight;
+         break;
+      case (NS.MotorTuning):
+         title = "Motor Tuning Module";
+         w = document.innerWidth;
+         h = document.innerHeight;
+         break;
+      case (NS.StringManip):
+         title = "String Manipulation Module";
+         w = document.innerWidth;
+         h = document.innerHeight;
+         break;
+      case (NS.IRSensor):
+         title = "IR Sensor Module";
+         w = document.innerWidth;
+         h = document.innerHeight;
+         break;
+      case (NS.CustomModule):
+         var name = document.getElementById("modulename").value;
+         var abbr = document.getElementById("moduleabbr").value;
+         if (abbr.length > 3) { abbr = abbr.substring(0,3); }
+         for (var i = 1; i <= (3-abbr.length); i++) {
+            abbr += "_"
+         }
+         reference = reference.replace(/Custom/g, name).replace(/YYY/g, abbr).replace("mm/dd/yyyy", Today(2))
+         title = name + " Module Framework";
+         w = document.innerWidth;
+         h = document.innerHeight;
+         break;
+      default:
+         title = "Reference";
+         w = document.innerWidth;
+         h = document.innerHeight;
    }
-   NS.myRefText.value = reference
-   NS.myRefText.scrollTop = 0;
-   NS.myReference.style.display = "block";
-   document.getElementById("MyFrame").style.height = "calc(100% - 246px)";
-   CheckWindowSize();
-   if(reference == NS.CustomModule) { setTimeout(HideMenu, 10); }
-}
-
-function HideReference() {
-   NS.myReference.style.display = "none";
-   document.getElementById("MyFrame").style.height = "calc(100% - 43px)";
+   ShowModeless(reference, title, "textarea", w, h);
+   setTimeout(HideMenu, 10);
+   return;
 }
 
 function ResetWatch() {
@@ -4501,18 +4510,22 @@ function ErrorCheck() {
       }
       lineNum++;
    }
-   if (ifs != 0) { errorText += lastIf + "\tIF with no ENDIF\t\t" + lastIfText.replace("/\t/", "").substring(0, 20) + "\r\n"; }
+   if (ifs != 0) { errorText += ErrorReturn(lastIf, "IF with no ENDIF", lastIfText); }
 
    //sort errors
-   var sort = errorText.split("\r\n");
+   var sort = errorText.split("</tr>");
    sort.sort(function(a, b){
-      var intA = parseInt(a.substring(0,a.indexOf("\t")));
-      var intB = parseInt(b.substring(0,b.indexOf("\t")));
+      var intA = parseInt(a.substring(a.indexOf("<td>") + 4,a.indexOf("</td>")));
+      var intB = parseInt(b.substring(b.indexOf("<td>") + 4,b.indexOf("</td>")));
       return intA - intB;
    });
-   errorText = sort.join("\r\n");
+   errorText = sort.join("</tr>");
 
    return errorText;
+}
+
+function ErrorReturn(line, type, element) {
+   return "<tr onclick=\"ReturnLine(" + line + ")\";><td>" + line + "</td><td>" + type + "</td><td>" + element.replace("/\t/", "").substring(0, 20) + "</td></tr>";
 }
 
 function CheckMainProg() {
@@ -4520,17 +4533,18 @@ function CheckMainProg() {
    if (errorText == "") {
       vMsgBox("No Errors Found!", 0, "Error Check");
    } else {
-      vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText, 0, "Error Check");
+      //vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText, 0, "Error Check");
+      ShowModeless(["<table>",
+                    "<col width=\"50\">",
+                    "<col width=\"250\">",
+                    "<col width=\"190\">",
+                    "<tr style=\"cursor:default;\";><td><b>Line</b></td><td><b>Error Type</b></td><td><b>Element Text</b></td></tr>",
+                    errorText,
+                    "</table>"].join(""), "Error Check", "div", 470, 300);
    }
 }
 
 function CompressMain() {
-   if(document.getElementById("moduleform").style.display == "none") {
-      document.getElementById("moduleform").style.display = "block"
-   } else {
-      document.getElementById("moduleform").style.display = "none"
-   } return;
-   if (NS.myText.value == "") { return; }
    var text = Compress(NS.myText.value);
    var newMain = NS.TempPath;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -4642,27 +4656,27 @@ function DecompressMain() {
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 function Check80Char(element, line) {
    if ((element.length > 80) && (element.substring(0, 3) != "REM")) {
-      return line + "\tLine over 80 characters\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+      return ErrorReturn(line, "Line over 80 characters", element);
    }
    return "";
 }
 
 function CheckVarLen(element, line) {
    if (VarAssignInLine(element).length > 8) {
-      return line + "\tVariable over 8 characters\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+      return ErrorReturn(line, "Variable over 8 characters", element);
    }
    return "";
 }
 
 function EndIfWithNoIf(element, line) {
-   return line + "\tENDIF with no IF\t\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+      return ErrorReturn(line, "ENDIF with no IF", element);
 }
 
 function CheckJumpToLabel(element, line, ListToCheck) {
    var labelToCheck = JumpInLine(element);
    if (labelToCheck != "") {
       if (ListToCheck.indexOf(labelToCheck) == -1) {
-         return line + "\tJump To Invalid Label\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+         return ErrorReturn(line, "Jump to invalid label", element);
       }
    }
    return "";
@@ -4671,7 +4685,7 @@ function CheckJumpToLabel(element, line, ListToCheck) {
 function CheckLabelLength(element, line) {
    if (JumpInLine(element) == "") {
       if (LabelInLine(element).trim().length > 8) {
-         return line + "\tLabel over 8 characters\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+         return ErrorReturn(line, "Label over 8 characters", element);
       }
    }
    return "";
@@ -4707,40 +4721,21 @@ function Max(x, y) {
 }
 
 function JumpInLine(element) {
-   element = element.trim();
-   var jumpCommand = "";
-   var poundLoc = element.indexOf("#");
-   var isLabel = (poundLoc != -1);
-   var isJump = false;
-   var endOfJump = 0;
+   var trimmed = element.trim();
+   var jumpCommand = trimmed.substring(0,3);
+   var isJump = ((jumpCommand == "JS#") || (jumpCommand == "XQ#") || (jumpCommand == "JP#"));
+   
+   if (!isJump) { return ""; }
 
-   if ((isLabel == true) && (poundLoc >= 3)) {
-      jumpCommand = element.substring(poundLoc - 2, poundLoc);
-      isJump = ((jumpCommand = "JS") || (jumpCommand = "XQ") || (jumpCommand = "JP"));
-   }
-
-   var endOfJump1 = element.indexOf("(");
-   var endOfJump2 = element.indexOf(",");
-   var endOfJump3 = element.indexOf(" ");
-   if (endOfJump1 == -1) { endOfJump1 = element.length + 1; }
-   if (endOfJump2 == -1) { endOfJump2 = element.length + 1; }
-   if (endOfJump3 == -1) { endOfJump3 = element.length + 1; }
+   var endOfJump1 = trimmed.indexOf("(");
+   var endOfJump2 = trimmed.indexOf(",");
+   var endOfJump3 = trimmed.indexOf(" ");
+   if (endOfJump1 == -1) { endOfJump1 = trimmed.length + 1; }
+   if (endOfJump2 == -1) { endOfJump2 = trimmed.length + 1; }
+   if (endOfJump3 == -1) { endOfJump3 = trimmed.length + 1; }
    endOfJump = Min(Min(endOfJump1, endOfJump2), endOfJump3);
 
-   if ((element.substring(0, 3) == "REM") || (element.trim().substring(0, 2) == "NO") || (endOfJump < poundLoc)) {
-      isLabel = false;
-      isJump = false;
-   }
-
-   if (isJump == true) {
-      //if (endOfJump != 0) {
-         return element.substring(poundLoc, endOfJump).trim();
-      //}
-      // may need to come back here else {
-      //   return element.substring().trim()Trim(Right(element, 1 + Len(element) - poundLoc))
-      //}
-   }
-   return "";
+   return "#" + trimmed.substring(3, endOfJump);
 }
 
 function VarAssignInLine(line) {
@@ -4788,21 +4783,21 @@ function CheckParen(element, line) {
    }
 
    if (leftParen != rightParen) {
-      return line + "\tMismatched Parenthesis\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+      return ErrorReturn(line, "Mismatched parentheses", element);
    }
    return "";
 }
 
 function CheckREM(element, line) {
    if ((element.trim().substring(0,3) == "REM") && (element.substring(0,3) != "REM")) {
-      return line + "\tWhitespace before REM\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+      return ErrorReturn(line, "Whitespace before REM", element);
    }
    return "";
 }
 
 function CheckTab(element, line) {
    if (element.indexOf("\t") != -1) {
-      return line + "\tTab Present\t\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+      return ErrorReturn(line, "Tab present", element);
    }
    return "";
 }
@@ -4822,7 +4817,7 @@ function CheckAndPopulateDupLab(fileText) {
          if (LabelInLine(element) != "") {
             element = element.trim();
             if (res2.indexOf(element) != -1) {
-               res1 += (i + 1) + "\tDuplicate Label\t\t" + element.replace("/\t/", "").substring(0, 20) + "\r\n";
+               res1 += ErrorReturn(i + 1, "Duplicate label", element);
             } else {
                res2.push(element);
             }
@@ -4859,8 +4854,66 @@ function CheckAndPopulateDupLab(fileText) {
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
 function ShowHelp(text) {
+   var title, w, h;
    if(text == null) { text = NS.mShortcuts; }
-   vMsgBox(text, 32, "Help");
+   switch (text) {
+      case NS.mShortcuts:
+         title = "General Help";
+         w = 500;
+         h = 760;
+         break;
+      case NS.tShortcuts:
+         title = "Terminal Help";
+         w = 500;
+         h = 310;
+         break;
+      case NS.wShortcuts:
+         title = "Variable Watch Help";
+         w = 460;
+         h = 160;
+         break;
+      default:
+         title = "Help";
+         w = 500;
+         h = 500;
+   }
+   ShowModeless(text, title, "div", w, h);
+}
+
+function ShowModeless(text, title, type, width, height) {
+   var w, h, t, l;
+   var style = "";
+   var script = "function ReturnLine(line) { window.dialogArguments.GoToLine(line, -1, true); this.close(); }"
+   var bodyStyle = "overflow-x:hidden;overflow-y:scroll;";
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var modeless = fso.CreateTextFile(NS.TempPath + ".htm");
+   if(type.toLowerCase() != "textarea") {
+      style = ["table { font-family:Fixedsys, Verdana, Arial, sans-serif; font-size:14px; background-color:" + NS.popupBC + "; color:" + NS.popupC + ";border-collapse:collapse;border:1px solid " + NS.popupC + ";} ",
+               "tr { background-color:" + NS.popupBC + "; cursor:pointer; }",
+               "th { border-collapse:collapse;border:1px solid " + NS.popupC + "; }",
+               "td { border-collapse:collapse;border:1px solid " + NS.popupC + "; }",
+               "tr:hover { background-color:#7FB3D5; cursor:copy; }"].join("\r\n");
+   } else {
+      bodyStyle = "overflow:hidden;"
+   }
+   w = Min(width, window.innerWidth);
+   h = Min(height, window.innerHeight);
+   t = window.screenY;
+   l = Min(window.screenX + window.outerWidth, window.screen.availWidth - window.outerWidth);
+   var html = ["<title>" + title + "</title>",
+               "<style>" + style + "</style>",
+               "<script>" + script + "<",
+               "/script>",
+               "<body style=\"" + bodyStyle + "\";>",
+               "<" +  type + "  readonly wrap=\"off\"; style=\"width:100%;height:100%;background-color:'" + NS.popupBC + "';color:'" + NS.popupC + "';\";>",
+               text,
+               "</" + type + ">",
+               "</body>",
+               ""].join("")
+   modeless.Write(html);
+   modeless.Close();
+   window.showModelessDialog(NS.TempPath + ".htm", window, "resizable:1;dialogWidth:" + w + "px;dialogHeight:" + h + "px;dialogTop:" + t + "px;dialogLeft:" + l + "px");
+   //fso.DeleteFile(NS.TempPath + ".htm");
 }
 
 function ShowAbout() {
@@ -5467,20 +5520,6 @@ End Function
 </div>
 <!-- END OF BUTTONS -->
 
-<table id="ReferencePopup"; onclick="HideMenu()"; style="display:none;height:150px;width:100%";>
-   <tr style="height:25px;width:100%;";>
-      <td><div id="RefDiv"; style="font-size:14px;";></div></td>
-      <td align="right";><button class="button"; onclick="HideReference()">
-         <svg style="width:24px;height:24px" viewBox="0 0 24 24">
-            <path fill="#FF0000" d="M19,3H16.3H7.7H5A2,2 0 0,0 3,5V7.7V16.4V19A2,2 0 0,0 5,21H7.7H16.4H19A2,2 0 0,0 21,19V16.3V7.7V5A2,2 0 0,0 19,3M15.6,17L12,13.4L8.4,17L7,15.6L10.6,12L7,8.4L8.4,7L12,10.6L15.6,7L17,8.4L13.4,12L17,15.6L15.6,17Z" />
-         </svg>
-      </button></td>
-   </tr>
-   <tr rowspan="5"; style="height:calc(100% - 26px);width:100%;";>
-      <td colspan="2"; style="width:100%;height:100%;"><textarea readonly id="ReferenceText"; wrap="off"; style="width:100%;height:100%;"></textarea></td>
-   </tr>
-</table>
-
 <iframe id="MyFrame"; application="yes"; scrolling="no"; onload="ChangeIFrame()"></iframe>
 
 <div id="comform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
@@ -5524,10 +5563,10 @@ End Function
    <select id="myTextBC"; onchange="UpdateColor(this)"></select>
    <select id="myTextC"; onchange="UpdateColor(this)"></select>
    <br/>
-   Reference Background Color / Text Color:
+   Popup Background Color / Text Color:
    <br/>
-   <select id="myRefBC"; onchange="UpdateColor(this)"></select>
-   <select id="myRefC"; onchange="UpdateColor(this)"></select>
+   <select id="myPopupBC"; onchange="UpdateColor(this)"></select>
+   <select id="myPopupC"; onchange="UpdateColor(this)"></select>
    <br/>
    Terminal Background Color / Text Color:
    <br/>
@@ -5564,7 +5603,7 @@ End Function
 
 <div id="moduleform"; style="z-index:3000;position:fixed;font-size:12px;border-width:1px;border-style:solid;background-color:menu;padding:5px;height:80px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
    <div style="width:150px;display:inline-block;"><b>Custom Module Name:</b></div>
-   <input onkeyup="this.value = this.value.toUpperCase();"; id="modulename"; maxlength="25"; style="width:calc(100% - 160px);display:inline-block;"></input>
+   <input id="modulename"; maxlength="25"; style="width:calc(100% - 160px);display:inline-block;"></input>
    <br>
    <div style="width:150px;display:inline-block;"><b>Custom Module Abbr:</b></div>
    <input onkeyup="this.value = this.value.toUpperCase();"; id="moduleabbr"; maxlength="3"; size="3"; style="display:inline-block;"></input>
