@@ -26,13 +26,15 @@
 
 <style TYPE="text/css">
 
-*{ cursor: inherit; }
+*   {   cursor:inherit;
+      zoom:100%;
+   }
 
-body   {   font-family: "Verdana, Arial, Helvetica, sans-serif";
+body   {   font-family:"Verdana, Arial, Helvetica, sans-serif";
       font:menu;
       background-color:#F0F0F0;
       color:MenuText;
-      font-size: 8px;
+      font-size:8px;
       cursor:default;
       position:absolute; top:0px; bottom:0px; right:0px; left:0px;
       border-style:none;
@@ -85,10 +87,10 @@ TD   {   border-width:1px;
       color:MenuText;
    }
 
-.button   {   padding: 0%;
-      float: none;
-      display: inline-block;
-      background-color: #E0E0E0;
+.button   {   padding:0%;
+      float:none;
+      display:inline-block;
+      background-color:#E0E0E0;
       font-family:"Arial";
       font-size:8px;
       font:menu;
@@ -97,22 +99,29 @@ TD   {   border-width:1px;
       box-shadow: 3px 3px 5px 0px #2f3035;
    }
 
-.button svg   {   position: relative;
-      display: inline;
-      float: left;
+.button svg   {   position:relative;
+      display:inline;
+      float:left;
    }
 
 .button:hover:enabled   {   background-color:#7FB3D5;
    }
 
-.button:active:enabled   {   transform: translate(0px, 1px);
+.button:active:enabled   {   transform:translate(0px, 1px);
       background-color:#7FB3D5;
-      box-shadow: 3px 3px 5px 0px #2f3035;
+      box-shadow:3px 3px 5px 0px #2f3035;
    }
 
 .divider   {   width:5px;
       height:auto;
       display:inline-block;
+   }
+   
+#dpi   {   height: 1in;
+      left: -100%;
+      position: absolute;
+      top: -100%;
+      width: 1in;
    }
 
 </style>
@@ -4545,6 +4554,8 @@ function CheckMainProg() {
 }
 
 function CompressMain() {
+   alert(document.getElementById("dpi").offsetHeight);
+   return;
    var text = Compress(NS.myText.value);
    var newMain = NS.TempPath;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -5615,6 +5626,8 @@ End Function
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
    <div id="overlayText"; style="position:absolute;top:50%;left:50%;font-size:25px;text-align:center;color:white;transform:translate(-50%, -50%)";>Checking For New Version<br/>Please Wait...</div>
 </div>
+
+<div id="dpi"></div>
 
 </body>
 
