@@ -30,9 +30,11 @@
       zoom:100%;
    }
 
-html { font-size:62.5%; }
+html { font-size:62.5%;
+      height:100%;
+   }
 
-body   {   font-family:"Verdana, Arial, Helvetica, sans-serif";
+body   {   font-family:"Arial";
       background-color:#F0F0F0;
       color:MenuText;
       font-size:1rem;
@@ -41,6 +43,7 @@ body   {   font-family:"Verdana, Arial, Helvetica, sans-serif";
       border-style:none;
       min-width:400;
       min-height:200;
+      height:100%;
    }
 
 TABLE   {   font-family:"Arial";
@@ -52,6 +55,8 @@ IFrame   {   height:calc(100% - 43px);
       width:100%;
       border:2px;
    }
+
+TR {   width:100%; }
 
 TD   {   border-width:1px;
       border-style:solid;
@@ -111,17 +116,17 @@ TD   {   border-width:1px;
       box-shadow:3px 3px 5px 0px #2f3035;
    }
 
-.divider   {   width:5px;
-      height:auto;
-      display:inline-block;
-   }
-   
+
 #dpi   {   height: 1in;
       left: -100%;
       position: absolute;
       top: -100%;
       width: 1in;
    }
+
+.ioCell {   height:20px; width:12%; }
+.ioON {   font-size:1rem; padding:0px 0px; border-radius:4px; background-color:#00FF00; height:100%; width:100% }
+.ioOF {   font-size:1rem; padding:0px 0px; border-radius:4px; background-color:#FF0000; height:100%; width:100% }
 
 </style>
 
@@ -180,6 +185,8 @@ NS = {
    indent: false,              //auto-indent setting
    myPoll: {},                 //used to set/clear polling interval
    myWindow: {},               //used to monitor minimum window size
+   myFrame: {},               //gets set to object pointing to the main text frame
+   myFrameDiv: {},             //gets set to object pointing to the main text frame div
    myText: {},                 //gets set to object pointing to the main text
    myInfo: {},                 //gets set to object pointing to bottom line of app
    myWatch: {},                //gets set to object pointing to the variable watch / io container
@@ -196,7 +203,7 @@ NS = {
    startLabel: "Smart",        //post-download start label (Smart = #AUTO/#AUTO1)
    textBC: "#FFFFFF",          //main text background color
    textC: "#000000",           //main text font color
-   popupBC: "#FFFFFF",         //popup background color
+   popupBC: "#4682B4",         //popup background color
    popupC: "#000000",          //popup text font color
    terminalBC: "#B4CFEC",      //terminal window background color
    terminalC: "#000000",       //terminal window font color
@@ -1768,6 +1775,10 @@ function HandleOnLoad() {
 
    switch (document.getElementById("dpi").offsetHeight) {
       case (96):
+         //var all = document.querySelectorAll("*");
+         //for (var i = 0; i < all.length; i++) {
+         //   if(all[i].style.fontSize != "") { alert(all[i].style.fontSize); }
+         //}
          break;
       default:
    }
@@ -1828,11 +1839,22 @@ function HandleOnLoad() {
    setColorInvert(document.getElementById("myVariableC"), true);
    setColorInvert(document.getElementById("myValueBC"), true);
    setColorInvert(document.getElementById("myValueC"), true);
+
+
+   NS.myFrameDiv = document.getElementById("MyFrameDiv");
+   NS.myWatch = document.getElementById("VariableWatch");
+   NS.myTerminal = document.getElementById("FrameTerminal");
+   NS.myResponse = document.getElementById("FrameResponse");
+   NS.myInfo = document.getElementById("FrameInfo");
+   showVariableWatchTab();
+   ClearTerminal();
+   CancelOptionsClick();
+   ShowSelection();
 }
 
 function MoveLineWarning() {
    var line = document.getElementById("MyFrame").contentDocument.getElementById("lineWarning");
-   line.style.left = (673.5 - NS.myText.scrollLeft);
+   line.style.left = (670.5 - NS.myText.scrollLeft);
    if (parseInt(line.style.left.replace("px")) > (NS.myText.offsetWidth - 12)) {
       line.style.display = "none";
    } else {
@@ -2018,10 +2040,10 @@ function UpdateColors() {
    NS.myResponse.style.backgroundColor = document.getElementById("myResponseBC").value;
    NS.myResponse.style.color = document.getElementById("myResponseC").value;
    for (var i = 1; i <= 10; i++) {
-      document.getElementById("MyFrame").contentDocument.getElementById("Input" + i).style.backgroundColor = document.getElementById("myVariableBC").value;
-      document.getElementById("MyFrame").contentDocument.getElementById("Input" + i).style.color = document.getElementById("myVariableC").value;
-      document.getElementById("MyFrame").contentDocument.getElementById("Result" + i).style.backgroundColor = document.getElementById("myValueBC").value;
-      document.getElementById("MyFrame").contentDocument.getElementById("Result" + i).style.color = document.getElementById("myValueC").value;
+      document.getElementById("Input" + i).style.backgroundColor = document.getElementById("myVariableBC").value;
+      document.getElementById("Input" + i).style.color = document.getElementById("myVariableC").value;
+      document.getElementById("Result" + i).style.backgroundColor = document.getElementById("myValueBC").value;
+      document.getElementById("Result" + i).style.color = document.getElementById("myValueC").value;
    }
 }
 
@@ -2034,12 +2056,11 @@ function CancelOptionsClick() {
    NS.myTerminal.style.color = NS.terminalC;
    NS.myResponse.style.backgroundColor = NS.responseBC;
    NS.myResponse.style.color = NS.responseC;
-   var frm = document.getElementById("MyFrame").contentDocument;
    for (var i = 1; i <= 10; i++) {
-      frm.getElementById("Input" + i).style.backgroundColor = NS.variableBC;
-      frm.getElementById("Input" + i).style.color = NS.variableC;
-      frm.getElementById("Result" + i).style.backgroundColor = NS.valueBC;
-      frm.getElementById("Result" + i).style.color = NS.valueC;
+      document.getElementById("Input" + i).style.backgroundColor = NS.variableBC;
+      document.getElementById("Input" + i).style.color = NS.variableC;
+      document.getElementById("Result" + i).style.backgroundColor = NS.valueBC;
+      document.getElementById("Result" + i).style.color = NS.valueC;
    }
 
    //set options to saved values
@@ -2955,7 +2976,7 @@ function ReplacePort() {
 
 function FindShow() {
    if (document.getElementById("findform").style.display == "none") {
-      if (NS.myText.style.display == "none") { return; }
+      if (NS.myFrameDiv.style.display == "none") { return; }
       CancelOptionsClick();
       CloseComForm();
       document.getElementById("findcount").innerHTML = "";
@@ -3062,7 +3083,7 @@ function CountMatch(text, findText) {
 
 function GoToLineNum() {
    if (NS.myText.value == "") { return; }
-   if (NS.myText.style.display == "none") { return; }
+   if (NS.myFrameDiv.style.display == "none") { return; }
 
    var goLine = prompt("Please Enter A Number From 1 to " + NS.totalLines, 1);
    if (goLine == null) {
@@ -3108,7 +3129,7 @@ function ReturnToLine() {
 }
 
 function FindLabel(optLabel) {
-   if (NS.myText.style.display == "none") { return; }
+   if (NS.myFrameDiv.style.display == "none") { return; }
    var label;
    if (optLabel == null) {
       label = NS.myText.value.substring(NS.startSel, NS.endSel).replace(/\r/g,"").replace(/\n/g,"");
@@ -3178,7 +3199,7 @@ function SetSelection() {
 }
 
 function ShowSelection() {
-   var tempHTML = ["<TABLE wrap='off'; style=\"font-family:'Arial';font-size:1.25rem;width:100%;display:flex;overflow:none;\"><TR>",
+   var tempHTML = ["<TABLE wrap='off'; style=\"font-family:'Arial';font-size:1.25rem;width:100%;display:block;overflow:none;\"><TR>",
                    "<TD style='width:90px;';>Length: " + NS.totalChars + "</TD>",
                    "<TD style='width:70px;';>Lines: " + NS.totalLines + "</TD>",
                    "<TD style='width:100px;';>Ln: " + NS.lineNumber + " | Col:" + NS.column + "</TD>"];
@@ -3352,11 +3373,10 @@ function DownloadFromGalil() {
 
 function PollVariable() {
    if (NS.galil.address == "OFFLINE") { return; }
-   var frame = document.getElementById("MyFrame").contentDocument;
    var temp, input;
    for(var i = 1; i <= 10; i++) {
       // limit to 76 characters
-      input = frame.getElementById("Input" + i).value.substring(0,76);
+      input = document.getElementById("Input" + i).value.substring(0,76);
       try {
          if (input != "") {
             if (input.indexOf("{") == -1) {
@@ -3374,7 +3394,7 @@ function PollVariable() {
       } catch(e) {
          temp = "";
       }
-      frame.getElementById("Result" + i).value = temp;
+      document.getElementById("Result" + i).value = temp;
    }
 }
 
@@ -3606,296 +3626,39 @@ function ChangeIFrame() {
    var str = ["<style>",
               "*{ cursor: inherit;}",
               "html { font-size:62.5%; }",
-              "TR {   width:100%; }",
-              ".ioCell {   height:20px; width:12%; }",
-              ".ioON {   font-size:1rem; padding:0px 0px; border-radius:4px; background-color:#00FF00; height:100%; width:100% }",
-              ".ioOF {   font-size:1rem; padding:0px 0px; border-radius:4px; background-color:#FF0000; height:100%; width:100% }",
               "</style>",
               "<div id=\"lineWarning\"; style=\"position:absolute;height:calc(100% - 62px);top:10px;left:673.5px;border-left:1px solid red;user-select:none;\"></div>",
-              "<textarea id=\"FrameText\"; wrap=\"off\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"parent.Modified(true)\"; onclick=\"parent.HideMenu()\"; onchange=\"parent.Modified(true)\"; onmouseup=\"parent.SetSelection()\"; onfocusout=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:calc(100% - 24px);display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
-              "</textarea>",
-              "<table align=\"right\"; id=\"VariableWatch\"; style=\"width:50%;height:calc(100% - 47px);display:none;vertical-align:top;\">",
-              "<tr>",
-                 "<button style=\"width:25%;\"; id=\"variableWatchTab\"; onclick=\"parent.showVariableWatchTab()\">Watch</button>",
-                 "<button style=\"width:25%;\"; id=\"mainIOTab\"; onclick=\"parent.showMainIOTab()\">Main IO</button>",
-                 "<button style=\"width:25%;\"; id=\"inputsTab\"; onclick=\"parent.showInputsTab()\">Inputs</button>",
-                 "<button style=\"width:25%;\"; id=\"outputsTab\"; onclick=\"parent.showOutputsTab()\">Outputs</button>",
-              "</tr>",
-              "<tr style=\"width:100%;height:150px\";>",
-                  "<td id=\"varWatch\"; onkeydown=\"parent.KeyCapture(this, event)\";>",
-                     "<table style=\"width:100%;vertical-align:top;\">",
-                     "<tr><th style=\"width:80px;\";>VARIABLE</th><th style=\"width:20px;\";></th><th style=\"width:100%\";>VALUE</th></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input1\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result1\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input2\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result2\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input3\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result3\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input4\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result4\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input5\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result5\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input6\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result6\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input7\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result7\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input8\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result8\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input9\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly tabindex=\"-1\"; id=\"Result9\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "<tr><td style=\"width:80px;\";><input onfocus=\"parent.GoToEnd(this)\"; maxlength=\"77\"; size=\"15\"; id=\"Input10\"; style=\"font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";\";></input></td><td style=\"text-align:center;width:20px;\";>=</td><td style=\"width:100%;\";><input readonly  tabindex=\"-1\"; id=\"Result10\"; style=\"display:table-cell;width:100%;font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";\";></input></td></tr>",
-                     "</table>",
-                  "</td>",
-                  "<td id=\"mainIO\";>",
-                     "<table style=\"width:100%;\";>",
-                     "<tr>OUTPUTS</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT1\"; onclick=\"parent.toggleOutput(this)\">1</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT2\"; onclick=\"parent.toggleOutput(this)\">2</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT3\"; onclick=\"parent.toggleOutput(this)\">3</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT4\"; onclick=\"parent.toggleOutput(this)\">4</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT5\"; onclick=\"parent.toggleOutput(this)\">5</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT6\"; onclick=\"parent.toggleOutput(this)\">6</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7\"; onclick=\"parent.toggleOutput(this)\">7</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT8\"; onclick=\"parent.toggleOutput(this)\">8</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT9\"; onclick=\"parent.toggleOutput(this)\">9</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT10\"; onclick=\"parent.toggleOutput(this)\">10</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT11\"; onclick=\"parent.toggleOutput(this)\">11</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT12\"; onclick=\"parent.toggleOutput(this)\">12</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT13\"; onclick=\"parent.toggleOutput(this)\">13</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT14\"; onclick=\"parent.toggleOutput(this)\">14</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT15\"; onclick=\"parent.toggleOutput(this)\">15</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT16\"; onclick=\"parent.toggleOutput(this)\">16</button></td>",
-                     "</tr>",
-                     "</table>",
-                     "<table style=\"width:100%;\";>",
-                     "<tr>INPUTS</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN1\"; disabled>1</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN2\"; disabled>2</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN3\"; disabled>3</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN4\"; disabled>4</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN5\"; disabled>5</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN6\"; disabled>6</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7\"; disabled>7</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN8\"; disabled>8</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN9\"; disabled>9</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN10\"; disabled>10</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN11\"; disabled>11</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN12\"; disabled>12</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN13\"; disabled>13</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN14\"; disabled>14</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN15\"; disabled>15</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN16\"; disabled>16</button></td>",
-                     "</tr>",
-                     "</table>",
-                     "<table style=\"width:100%;\";>",
-                     "<tr>EXTENDED I/O</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT17\"; onclick=\"parent.toggleOutput(this)\">17</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT18\"; onclick=\"parent.toggleOutput(this)\">18</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT19\"; onclick=\"parent.toggleOutput(this)\">19</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT20\"; onclick=\"parent.toggleOutput(this)\">20</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT21\"; onclick=\"parent.toggleOutput(this)\">21</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT22\"; onclick=\"parent.toggleOutput(this)\">22</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT23\"; onclick=\"parent.toggleOutput(this)\">23</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT24\"; onclick=\"parent.toggleOutput(this)\">24</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT25\"; onclick=\"parent.toggleOutput(this)\">25</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT26\"; onclick=\"parent.toggleOutput(this)\">26</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT27\"; onclick=\"parent.toggleOutput(this)\">27</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT28\"; onclick=\"parent.toggleOutput(this)\">28</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT29\"; onclick=\"parent.toggleOutput(this)\">29</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT30\"; onclick=\"parent.toggleOutput(this)\">30</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT31\"; onclick=\"parent.toggleOutput(this)\">31</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT32\"; onclick=\"parent.toggleOutput(this)\">32</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT33\"; onclick=\"parent.toggleOutput(this)\">33</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT34\"; onclick=\"parent.toggleOutput(this)\">34</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT35\"; onclick=\"parent.toggleOutput(this)\">35</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT36\"; onclick=\"parent.toggleOutput(this)\">36</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT37\"; onclick=\"parent.toggleOutput(this)\">37</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT38\"; onclick=\"parent.toggleOutput(this)\">38</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT39\"; onclick=\"parent.toggleOutput(this)\">39</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT40\"; onclick=\"parent.toggleOutput(this)\">40</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT41\"; onclick=\"parent.toggleOutput(this)\">41</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT42\"; onclick=\"parent.toggleOutput(this)\">42</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT43\"; onclick=\"parent.toggleOutput(this)\">43</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT44\"; onclick=\"parent.toggleOutput(this)\">44</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT45\"; onclick=\"parent.toggleOutput(this)\">45</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT46\"; onclick=\"parent.toggleOutput(this)\">46</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT47\"; onclick=\"parent.toggleOutput(this)\">47</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"EXT48\"; onclick=\"parent.toggleOutput(this)\">48</button></td>",
-                     "</tr>",
-                     "</table>",
-                     "</td>",
-                     "<td id=\"inputs\";>",
-                     "<table style=\"width:100%;\";>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7000\"; disabled>7000</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7001\"; disabled>7001</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7002\"; disabled>7002</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7003\"; disabled>7003</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7004\"; disabled>7004</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7005\"; disabled>7005</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7006\"; disabled>7006</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7007\"; disabled>7007</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7008\"; disabled>7008</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7009\"; disabled>7009</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7010\"; disabled>7010</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7011\"; disabled>7011</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7012\"; disabled>7012</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7013\"; disabled>7013</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7014\"; disabled>7014</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7015\"; disabled>7015</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7016\"; disabled>7016</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7017\"; disabled>7017</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7018\"; disabled>7018</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7019\"; disabled>7019</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7020\"; disabled>7020</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7021\"; disabled>7021</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7022\"; disabled>7022</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7023\"; disabled>7023</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7024\"; disabled>7024</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7025\"; disabled>7025</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7026\"; disabled>7026</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7027\"; disabled>7027</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7028\"; disabled>7028</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7029\"; disabled>7029</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7030\"; disabled>7030</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7031\"; disabled>7031</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7032\"; disabled>7032</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7033\"; disabled>7033</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7034\"; disabled>7034</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7035\"; disabled>7035</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7036\"; disabled>7036</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7037\"; disabled>7037</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7038\"; disabled>7038</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7039\"; disabled>7039</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7040\"; disabled>7040</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7041\"; disabled>7041</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7042\"; disabled>7042</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7043\"; disabled>7043</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7044\"; disabled>7044</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7045\"; disabled>7045</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7046\"; disabled>7046</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"IN7047\"; disabled>7047</button></td>",
-                     "</tr>",
-                     "</table>",
-                     "</td>",
-                     "<td id=\"outputs\";>",
-                     "<table style=\"width:100%;\";>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7000\"; onclick=\"parent.toggleOutput(this)\">7000</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7001\"; onclick=\"parent.toggleOutput(this)\">7001</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7002\"; onclick=\"parent.toggleOutput(this)\">7002</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7003\"; onclick=\"parent.toggleOutput(this)\">7003</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7004\"; onclick=\"parent.toggleOutput(this)\">7004</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7005\"; onclick=\"parent.toggleOutput(this)\">7005</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7006\"; onclick=\"parent.toggleOutput(this)\">7006</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7007\"; onclick=\"parent.toggleOutput(this)\">7007</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7008\"; onclick=\"parent.toggleOutput(this)\">7008</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7009\"; onclick=\"parent.toggleOutput(this)\">7009</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7010\"; onclick=\"parent.toggleOutput(this)\">7010</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7011\"; onclick=\"parent.toggleOutput(this)\">7011</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7012\"; onclick=\"parent.toggleOutput(this)\">7012</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7013\"; onclick=\"parent.toggleOutput(this)\">7013</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7014\"; onclick=\"parent.toggleOutput(this)\">7014</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7015\"; onclick=\"parent.toggleOutput(this)\">7015</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7016\"; onclick=\"parent.toggleOutput(this)\">7016</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7017\"; onclick=\"parent.toggleOutput(this)\">7017</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7018\"; onclick=\"parent.toggleOutput(this)\">7018</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7019\"; onclick=\"parent.toggleOutput(this)\">7019</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7020\"; onclick=\"parent.toggleOutput(this)\">7020</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7021\"; onclick=\"parent.toggleOutput(this)\">7021</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7022\"; onclick=\"parent.toggleOutput(this)\">7022</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7023\"; onclick=\"parent.toggleOutput(this)\">7023</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7024\"; onclick=\"parent.toggleOutput(this)\">7024</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7025\"; onclick=\"parent.toggleOutput(this)\">7025</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7026\"; onclick=\"parent.toggleOutput(this)\">7026</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7027\"; onclick=\"parent.toggleOutput(this)\">7027</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7028\"; onclick=\"parent.toggleOutput(this)\">7028</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7029\"; onclick=\"parent.toggleOutput(this)\">7029</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7030\"; onclick=\"parent.toggleOutput(this)\">7030</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7031\"; onclick=\"parent.toggleOutput(this)\">7031</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7032\"; onclick=\"parent.toggleOutput(this)\">7032</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7033\"; onclick=\"parent.toggleOutput(this)\">7033</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7034\"; onclick=\"parent.toggleOutput(this)\">7034</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7035\"; onclick=\"parent.toggleOutput(this)\">7035</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7036\"; onclick=\"parent.toggleOutput(this)\">7036</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7037\"; onclick=\"parent.toggleOutput(this)\">7037</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7038\"; onclick=\"parent.toggleOutput(this)\">7038</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7039\"; onclick=\"parent.toggleOutput(this)\">7039</button></td>",
-                     "</tr>",
-                     "<tr>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7040\"; onclick=\"parent.toggleOutput(this)\">7040</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7041\"; onclick=\"parent.toggleOutput(this)\">7041</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7042\"; onclick=\"parent.toggleOutput(this)\">7042</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7043\"; onclick=\"parent.toggleOutput(this)\">7043</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7044\"; onclick=\"parent.toggleOutput(this)\">7044</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7045\"; onclick=\"parent.toggleOutput(this)\">7045</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7046\"; onclick=\"parent.toggleOutput(this)\">7046</button></td>",
-                     "<td class=\"ioCell\";><button class=\"ioOF\"; id=\"OUT7047\"; onclick=\"parent.toggleOutput(this)\">7047</button></td>",
-                     "</tr>",
-                     "</table>",
-                     "</td>",
-              "</tr>",
-              "<tr style=\"width:100%;height:100%;\";><td><textarea ID=\"FrameTerminal\"; wrap=\"off\"; onkeydown=\"parent.KeyCapture(this, event)\"; style=\"width:100%;height:100%;vertical-align:top;background-color:" + NS.terminalBC + ";color:" + NS.terminalC + ";overflow-x:hidden;\"></textarea></td></tr>",
-              "<tr style=\"width:100%;height:100%;\";><td><textarea readonly ID=\"FrameResponse\"; wrap=\"off\"; style=\"width:100%;height:100%;vertical-align:top;background-color:" + NS.responseBC + ";color:" + NS.responseC + ";overflow-x:hidden;\"></textarea></td></tr>",
-              "</table>",
-              "<div id=\"FrameInfo\"; style=\"width:100%;height:20px;clear:left;\";></div>"].join("");
-   var frm = document.getElementById("MyFrame");
+              "<textarea id=\"FrameText\"; wrap=\"off\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"parent.Modified(true)\"; onclick=\"parent.HideMenu()\"; onchange=\"parent.Modified(true)\"; onmouseup=\"parent.SetSelection()\"; onfocusout=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:100%;display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
+              "</textarea>"].join("");
+   NS.myFrame = document.getElementById("MyFrame");
 
-   frm.contentDocument.body.innerHTML = str;
-   frm.style.marginLeft = "0"
-   frm.style.marginTop = "0";
-   frm.style.marginRight = "0";
-   frm.style.marginBottom = "0";
+   NS.myFrame.contentDocument.body.innerHTML = str;
+   NS.myFrame.style.marginLeft = "0"
+   NS.myFrame.style.marginTop = "0";
+   NS.myFrame.style.marginRight = "0";
+   NS.myFrame.style.marginBottom = "0";
 
-   NS.myText = frm.contentDocument.getElementById("FrameText");
-   NS.myWatch = frm.contentDocument.getElementById("VariableWatch");
-   NS.myTerminal = frm.contentDocument.getElementById("FrameTerminal");
-   NS.myResponse = frm.contentDocument.getElementById("FrameResponse");
-   NS.myInfo = frm.contentDocument.getElementById("FrameInfo");
+   NS.myText = NS.myFrame.contentDocument.getElementById("FrameText");
 
    NS.myText.style.fontFamily = "Fixedsys, Verdana, Arial, sans-serif";
-   NS.myText.style.fontSize = "1.6rem";
+   NS.myText.style.fontSize = "1.4rem";
 
-   showVariableWatchTab();
-   ClearTerminal();
    document.getElementById("labels").innerHTML = "";
 
-   switch(frm.contentWindow.location.href.toLowerCase()) {
+   switch(NS.myFrame.contentWindow.location.href.toLowerCase()) {
       case ("about:blank"):
          NS.FileName="";
          DisplayTitle();
          break;
       default:
-         NS.FileName = frm.contentWindow.location.href.substring(8).replace(/\//g,"\\").replace(/%20/g," ");
+         NS.FileName = NS.myFrame.contentWindow.location.href.substring(8).replace(/\//g,"\\").replace(/%20/g," ");
          OpenIt();
-         ShowMainText();
+         //ShowMainText();
          break;
    }
 
    // add event listener to backup current text if you drag a new file over the frame without saving
-   frm.contentWindow.addEventListener("beforeunload", PreventLoss, false);
+   NS.myFrame.contentWindow.addEventListener("beforeunload", PreventLoss, false);
    SetSelection();
 }
 
@@ -3913,24 +3676,26 @@ function PreventLoss() {
 }
 
 function showVariableWatchTab() {
-   var frm = document.getElementById("MyFrame").contentDocument;
    document.getElementById("resetWatch").disabled = false;
-   frm.getElementById("varWatch").style.display = "inline-block";
-   frm.getElementById("mainIO").style.display = "none";
-   frm.getElementById("inputs").style.display = "none";
-   frm.getElementById("outputs").style.display = "none";
+   document.getElementById("varWatch").style.display = "block";
+   document.getElementById("mainIO").style.display = "none";
+   document.getElementById("inputs").style.display = "none";
+   document.getElementById("outputs").style.display = "none";
    document.getElementById("pollTime").value = NS.watchPoll;
+   document.getElementById("vwdiv").style.height = "300px";
+   document.getElementById("terminaldiv").style.height = "calc(100% - 345px)";
    if (NS.myWatch.style.display != "none") { UpdatePoll(); }
 }
 
 function showMainIOTab() {
    var co, i, j, k;
-   var frm = document.getElementById("MyFrame").contentDocument;
    document.getElementById("resetWatch").disabled = true;
-   frm.getElementById("varWatch").style.display = "none";
-   frm.getElementById("mainIO").style.display = "inline-block";
-   frm.getElementById("inputs").style.display = "none";
-   frm.getElementById("outputs").style.display = "none";
+   document.getElementById("varWatch").style.display = "none";
+   document.getElementById("mainIO").style.display = "block";
+   document.getElementById("inputs").style.display = "none";
+   document.getElementById("outputs").style.display = "none";
+   document.getElementById("vwdiv").style.height = "270px";
+   document.getElementById("terminaldiv").style.height = "calc(100% - 314px)";
    ConfigureExtendedIO();
    document.getElementById("pollTime").value = NS.mainIOPoll;
    UpdatePoll();
@@ -3948,9 +3713,9 @@ function ConfigureExtendedIO() {
       for (j = 1; j <= 8; j++) {
          k = ((i + 1) * 8) + j;
          if (co & Math.pow(2, i - 1)) {
-            document.getElementById("MyFrame").contentDocument.getElementById("EXT" + k).disabled = false;
+            document.getElementById("EXT" + k).disabled = false;
          } else {
-            document.getElementById("MyFrame").contentDocument.getElementById("EXT" + k).disabled = true;
+            document.getElementById("EXT" + k).disabled = true;
          }
       }
    }
@@ -3958,23 +3723,25 @@ function ConfigureExtendedIO() {
 }
 
 function showInputsTab() {
-   var frm = document.getElementById("MyFrame").contentDocument;
    document.getElementById("resetWatch").disabled = true;
-   frm.getElementById("varWatch").style.display = "none";
-   frm.getElementById("mainIO").style.display = "none";
-   frm.getElementById("inputs").style.display = "inline-block";
-   frm.getElementById("outputs").style.display = "none";
+   document.getElementById("varWatch").style.display = "none";
+   document.getElementById("mainIO").style.display = "none";
+   document.getElementById("inputs").style.display = "block";
+   document.getElementById("outputs").style.display = "none";
+   document.getElementById("vwdiv").style.height = "165px";
+   document.getElementById("terminaldiv").style.height = "calc(100% - 207px)";
    document.getElementById("pollTime").value = NS.inputsPoll;
    UpdatePoll();
 }
 
 function showOutputsTab() {
-   var frm = document.getElementById("MyFrame").contentDocument;
    document.getElementById("resetWatch").disabled = true;
-   frm.getElementById("varWatch").style.display = "none";
-   frm.getElementById("mainIO").style.display = "none";
-   frm.getElementById("inputs").style.display = "none";
-   frm.getElementById("outputs").style.display = "inline-block";
+   document.getElementById("varWatch").style.display = "none";
+   document.getElementById("mainIO").style.display = "none";
+   document.getElementById("inputs").style.display = "none";
+   document.getElementById("outputs").style.display = "block";
+   document.getElementById("vwdiv").style.height = "165px";
+   document.getElementById("terminaldiv").style.height = "calc(100% - 207px)";
    document.getElementById("pollTime").value = NS.outputsPoll;
    UpdatePoll();
 }
@@ -4004,7 +3771,7 @@ function pollMainIO() {
 
    //Main Outputs 1-16
    for (i = 1; i <= 16; i++) {
-      element = document.getElementById("MyFrame").contentDocument.getElementById("OUT" + i);
+      element = document.getElementById("OUT" + i);
       try {
          rsp = NS.galil.commandValue("MG @OUT[" + i + "]");
          if (rsp == 1) {
@@ -4025,7 +3792,7 @@ function pollMainIO() {
 
    //Main Inputs 1-16
    for (i = 1; i <= 16; i++) {
-      element = document.getElementById("MyFrame").contentDocument.getElementById("IN" + i);
+      element = document.getElementById("IN" + i);
       try {
          rsp = NS.galil.commandValue("MG @IN[" + i + "]");
          if (rsp == 1) {
@@ -4047,7 +3814,7 @@ function pollMainIO() {
    //Extended IO
    ConfigureExtendedIO();
    for (i = 17; i <= 48; i++) {
-      element = document.getElementById("MyFrame").contentDocument.getElementById("EXT" + i);
+      element = document.getElementById("EXT" + i);
       try {
          rsp = NS.galil.commandValue("MG @OUT[" + i + "]");
          if (rsp == 1) {
@@ -4070,7 +3837,7 @@ function pollMainIO() {
 function pollInputs() {
    var element, i, rsp;
    for (i = 7000; i <= 7047; i++) {
-      element = document.getElementById("MyFrame").contentDocument.getElementById("IN" + i);
+      element = document.getElementById("IN" + i);
       try {
          rsp = NS.galil.commandValue("MG @IN[" + i + "]");
          if (rsp == 1) {
@@ -4093,7 +3860,7 @@ function pollInputs() {
 function pollOutputs() {
    var element, i, rsp;
    for (i = 7000; i <= 7047; i++) {
-      element = document.getElementById("MyFrame").contentDocument.getElementById("OUT" + i);
+      element = document.getElementById("OUT" + i);
       try {
          rsp = NS.galil.commandValue("MG @OUT[" + i + "]");
          if (rsp == 1) {
@@ -4114,7 +3881,7 @@ function pollOutputs() {
 }
 
 function ToggleVariableWatch() {
-   if ((NS.myText.style.display != "none") && (NS.myWatch.style.display != "none")) {
+   if ((NS.myFrameDiv.style.display != "none") && (NS.myWatch.style.display != "none")) {
       ShowVariableWatch();
    } else {
       SplitScreen();
@@ -4123,7 +3890,7 @@ function ToggleVariableWatch() {
 }
 
 function ToggleMainText() {
-   if ((NS.myText.style.display != "none") && (NS.myWatch.style.display != "none")) {
+   if ((NS.myFrameDiv.style.display != "none") && (NS.myWatch.style.display != "none")) {
       ShowMainText();
    } else {
       SplitScreen();
@@ -4132,9 +3899,9 @@ function ToggleMainText() {
 }
 
 function ShowVariableWatch() {
-   NS.myText.style.display = "none";
+   NS.myFrameDiv.style.display = "none";
    NS.myWatch.style.width = "100%";
-   NS.myWatch.style.display = "inline-block";
+   NS.myWatch.style.display = "block";
    document.getElementById("sidebarFull").style.display = "none";
    document.getElementById("splitscreen").style.display = "inline-block";
    document.getElementById("maintextFull").style.display = "inline-block";
@@ -4146,8 +3913,8 @@ function ShowVariableWatch() {
 }
 
 function ShowMainText() {
-   NS.myText.style.width = "100%";
-   NS.myText.style.display = "inline-block";
+   NS.myFrameDiv.style.width = "100%";
+   NS.myFrameDiv.style.display = "block";
    NS.myWatch.style.display = "none";
    document.getElementById("sidebarFull").style.display = "inline-block";
    document.getElementById("splitscreen").style.display = "inline-block";
@@ -4160,10 +3927,10 @@ function ShowMainText() {
 }
 
 function SplitScreen() {
-   NS.myWatch.style.width = "50%";
-   NS.myText.style.width = "50%";
+   NS.myWatch.style.width = "49%";
+   NS.myFrameDiv.style.width = "49%";
    NS.myWatch.style.display = "inline-block";
-   NS.myText.style.display = "inline-block";
+   NS.myFrameDiv.style.display = "inline-block";
    document.getElementById("sidebarFull").style.display = "inline-block";
    document.getElementById("splitscreen").style.display = "none";
    document.getElementById("maintextFull").style.display = "inline-block";
@@ -4175,18 +3942,17 @@ function SplitScreen() {
 
 function UpdatePoll() {
    var temp = document.getElementById("pollTime").value;
-   var frm = document.getElementById("MyFrame").contentDocument;
 
-   if (frm.getElementById("varWatch").style.display != "none") {
+   if (document.getElementById("varWatch").style.display != "none") {
       NS.watchPoll = Bound(temp, 50, 5000);
       document.getElementById("pollTime").value = NS.watchPoll;
-   } else if (frm.getElementById("mainIO").style.display != "none") {
+   } else if (document.getElementById("mainIO").style.display != "none") {
       NS.mainIOPoll = Bound(temp, 200, 5000);
       document.getElementById("pollTime").value = NS.mainIOPoll;
-   } else if (frm.getElementById("inputs").style.display != "none") {
+   } else if (document.getElementById("inputs").style.display != "none") {
       NS.inputsPoll = Bound(temp, 200, 5000);
       document.getElementById("pollTime").value = NS.inputsPoll;
-   } else if (frm.getElementById("outputs").style.display != "none") {
+   } else if (document.getElementById("outputs").style.display != "none") {
       NS.outputsPoll = Bound(temp, 200, 5000);
       document.getElementById("pollTime").value = NS.outputsPoll;
    }
@@ -4202,15 +3968,14 @@ function Bound(val, min, max) {
 }
 
 function StartPoll() {
-   var frm = document.getElementById("MyFrame").contentDocument;
    clearInterval(NS.myPoll);
-   if (frm.getElementById("varWatch").style.display != "none") {
+   if (document.getElementById("varWatch").style.display != "none") {
       NS.myPoll = setInterval(PollVariable, NS.watchPoll);
-   } else if (frm.getElementById("mainIO").style.display != "none") {
+   } else if (document.getElementById("mainIO").style.display != "none") {
       NS.myPoll = setInterval(pollMainIO, NS.mainIOPoll);
-   } else if (frm.getElementById("inputs").style.display != "none") {
+   } else if (document.getElementById("inputs").style.display != "none") {
       NS.myPoll = setInterval(pollInputs, NS.inputsPoll);
-   } else if (frm.getElementById("outputs").style.display != "none") {
+   } else if (document.getElementById("outputs").style.display != "none") {
       NS.myPoll = setInterval(pollOutputs, NS.outputsPoll);
    }
 }
@@ -4298,8 +4063,8 @@ function ShowReference(reference) {
 
 function ResetWatch() {
    for(var i = 1; i <= 10; i++) {
-      document.getElementById("MyFrame").contentDocument.getElementById("Input" + i).value = "";
-      document.getElementById("MyFrame").contentDocument.getElementById("Result" + i).value = "";
+      document.getElementById("Input" + i).value = "";
+      document.getElementById("Result" + i).value = "";
    }
 }
 
@@ -4550,12 +4315,12 @@ function CheckMainProg() {
    } else {
       //vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText, 0, "Error Check");
       ShowModeless(["<table>",
-                    "<col width=\"50\">",
-                    "<col width=\"250\">",
-                    "<col width=\"190\">",
+                    "<col width=\"50px\">",
+                    "<col width=\"250px\">",
+                    "<col width=\"220px\">",
                     "<tr style=\"cursor:default;\";><td><b>Line</b></td><td><b>Error Type</b></td><td><b>Element Text</b></td></tr>",
                     errorText,
-                    "</table>"].join(""), "Error Check", "div", 470, 300);
+                    "</table>"].join(""), "Error Check", "div", 550, 300);
    }
 }
 
@@ -4739,7 +4504,7 @@ function JumpInLine(element) {
    var trimmed = element.trim();
    var jumpCommand = trimmed.substring(0,3);
    var isJump = ((jumpCommand == "JS#") || (jumpCommand == "XQ#") || (jumpCommand == "JP#"));
-   
+
    if (!isJump) { return ""; }
 
    var endOfJump1 = trimmed.indexOf("(");
@@ -4903,7 +4668,7 @@ function ShowModeless(text, title, type, width, height) {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var modeless = fso.CreateTextFile(NS.TempPath + ".htm");
    if(type.toLowerCase() != "textarea") {
-      style = ["table { font-family:Fixedsys, Verdana, Arial, sans-serif; font-size:1rem; background-color:" + NS.popupBC + "; color:" + NS.popupC + ";border-collapse:collapse;border:1px solid " + NS.popupC + ";} ",
+      style = ["table { font-family:\"Arial\"; font-size:0.75rem; background-color:" + NS.popupBC + "; color:" + NS.popupC + ";border-collapse:collapse;border:1px solid " + NS.popupC + ";} ",
                "tr { background-color:" + NS.popupBC + "; cursor:pointer; }",
                "th { border-collapse:collapse;border:1px solid " + NS.popupC + "; }",
                "td { border-collapse:collapse;border:1px solid " + NS.popupC + "; }",
@@ -5535,9 +5300,270 @@ End Function
 </div>
 <!-- END OF BUTTONS -->
 
-<iframe id="MyFrame"; application="yes"; scrolling="no"; onload="ChangeIFrame()"></iframe>
+<div style="height:calc(100% - 83px);">
+   <div id="MyFrameDiv" style="height:100%;width:100%;">
+      <iframe id="MyFrame"; application="yes"; scrolling="no"; onload="ChangeIFrame()"; style="width:100%;height:100%;padding:0px 0px 0px 0px;display:block;"></iframe>
+   </div>
 
-<div id="comform"; style="z-index:3000;position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:80px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div id="VariableWatch"; style="width:49%;height:100%;display:none;vertical-align:top;">
+      <div id="vwbuttons"; style="width:100%;height:40px;">
+         <br/>
+         <button class="button"; style="width:24%;"; id="variableWatchTab"; onclick="showVariableWatchTab()">Watch</button>
+         <button class="button"; style="width:24%;"; id="mainIOTab"; onclick="showMainIOTab()">Main IO</button>
+         <button class="button"; style="width:24%;"; id="inputsTab"; onclick="showInputsTab()">Inputs</button>
+         <button class="button"; style="width:24%;"; id="outputsTab"; onclick="showOutputsTab()">Outputs</button>
+      </div>
+      <div id="vwdiv"; style="width:100%;height:300px;">
+         <div id="varWatch"; onkeydown="KeyCapture(this, event)";>
+            <table style="width:100%;">
+               <tr><th style="width:80px;";>VARIABLE</th><th style="width:20px;";></th><th style="width:100%";>VALUE</th></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input1"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result1"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input2"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result2"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input3"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result3"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input4"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result4"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input5"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result5"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input6"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result6"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input7"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result7"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input8"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result8"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input9"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly tabindex="-1"; id="Result9"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+               <tr><td style="width:80px;";><input onfocus="GoToEnd(this)"; maxlength="77"; size="15"; id="Input10"; style="font-family:monospace;background-color:" + NS.variableBC + ";color:" + NS.variableC + ";";></input></td><td style="text-align:center;width:20px;";>=</td><td style="width:100%;";><input readonly  tabindex="-1"; id="Result10"; style="display:table-cell;width:calc(100% - 5px);font-family:monospace;background-color:" + NS.valueBC + ";color:" + NS.valueC + ";";></input></td></tr>
+            </table>
+         </div>
+         <div id="mainIO"; style="display:none;";>
+            <table style="width:100%;";>
+               <tr>OUTPUTS</tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="OUT1"; onclick="toggleOutput(this)">1</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT2"; onclick="toggleOutput(this)">2</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT3"; onclick="toggleOutput(this)">3</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT4"; onclick="toggleOutput(this)">4</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT5"; onclick="toggleOutput(this)">5</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT6"; onclick="toggleOutput(this)">6</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7"; onclick="toggleOutput(this)">7</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT8"; onclick="toggleOutput(this)">8</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="OUT9"; onclick="toggleOutput(this)">9</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT10"; onclick="toggleOutput(this)">10</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT11"; onclick="toggleOutput(this)">11</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT12"; onclick="toggleOutput(this)">12</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT13"; onclick="toggleOutput(this)">13</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT14"; onclick="toggleOutput(this)">14</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT15"; onclick="toggleOutput(this)">15</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT16"; onclick="toggleOutput(this)">16</button></td>
+               </tr>
+            </table>
+            <table style="width:100%;";>
+               <tr>INPUTS</tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="IN1"; disabled>1</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN2"; disabled>2</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN3"; disabled>3</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN4"; disabled>4</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN5"; disabled>5</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN6"; disabled>6</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7"; disabled>7</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN8"; disabled>8</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="IN9"; disabled>9</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN10"; disabled>10</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN11"; disabled>11</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN12"; disabled>12</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN13"; disabled>13</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN14"; disabled>14</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN15"; disabled>15</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN16"; disabled>16</button></td>
+               </tr>
+            </table>
+            <table style="width:100%;";>
+               <tr>EXTENDED I/O</tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="EXT17"; onclick="toggleOutput(this)">17</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT18"; onclick="toggleOutput(this)">18</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT19"; onclick="toggleOutput(this)">19</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT20"; onclick="toggleOutput(this)">20</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT21"; onclick="toggleOutput(this)">21</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT22"; onclick="toggleOutput(this)">22</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT23"; onclick="toggleOutput(this)">23</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT24"; onclick="toggleOutput(this)">24</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="EXT25"; onclick="toggleOutput(this)">25</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT26"; onclick="toggleOutput(this)">26</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT27"; onclick="toggleOutput(this)">27</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT28"; onclick="toggleOutput(this)">28</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT29"; onclick="toggleOutput(this)">29</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT30"; onclick="toggleOutput(this)">30</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT31"; onclick="toggleOutput(this)">31</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT32"; onclick="toggleOutput(this)">32</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="EXT33"; onclick="toggleOutput(this)">33</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT34"; onclick="toggleOutput(this)">34</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT35"; onclick="toggleOutput(this)">35</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT36"; onclick="toggleOutput(this)">36</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT37"; onclick="toggleOutput(this)">37</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT38"; onclick="toggleOutput(this)">38</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT39"; onclick="toggleOutput(this)">39</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT40"; onclick="toggleOutput(this)">40</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="EXT41"; onclick="toggleOutput(this)">41</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT42"; onclick="toggleOutput(this)">42</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT43"; onclick="toggleOutput(this)">43</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT44"; onclick="toggleOutput(this)">44</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT45"; onclick="toggleOutput(this)">45</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT46"; onclick="toggleOutput(this)">46</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT47"; onclick="toggleOutput(this)">47</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="EXT48"; onclick="toggleOutput(this)">48</button></td>
+               </tr>
+            </table>
+         </div>
+         <div id="inputs"; style="display:none;";>
+            <table style="width:100%;";>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="IN7000"; disabled>7000</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7001"; disabled>7001</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7002"; disabled>7002</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7003"; disabled>7003</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7004"; disabled>7004</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7005"; disabled>7005</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7006"; disabled>7006</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7007"; disabled>7007</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="IN7008"; disabled>7008</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7009"; disabled>7009</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7010"; disabled>7010</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7011"; disabled>7011</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7012"; disabled>7012</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7013"; disabled>7013</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7014"; disabled>7014</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7015"; disabled>7015</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="IN7016"; disabled>7016</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7017"; disabled>7017</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7018"; disabled>7018</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7019"; disabled>7019</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7020"; disabled>7020</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7021"; disabled>7021</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7022"; disabled>7022</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7023"; disabled>7023</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="IN7024"; disabled>7024</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7025"; disabled>7025</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7026"; disabled>7026</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7027"; disabled>7027</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7028"; disabled>7028</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7029"; disabled>7029</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7030"; disabled>7030</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7031"; disabled>7031</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="IN7032"; disabled>7032</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7033"; disabled>7033</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7034"; disabled>7034</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7035"; disabled>7035</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7036"; disabled>7036</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7037"; disabled>7037</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7038"; disabled>7038</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7039"; disabled>7039</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="IN7040"; disabled>7040</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7041"; disabled>7041</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7042"; disabled>7042</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7043"; disabled>7043</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7044"; disabled>7044</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7045"; disabled>7045</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7046"; disabled>7046</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="IN7047"; disabled>7047</button></td>
+               </tr>
+            </table>
+         </div>
+         <div id="outputs"; style="display:none;";>
+            <table style="width:100%;";>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7000"; onclick="toggleOutput(this)">7000</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7001"; onclick="toggleOutput(this)">7001</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7002"; onclick="toggleOutput(this)">7002</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7003"; onclick="toggleOutput(this)">7003</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7004"; onclick="toggleOutput(this)">7004</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7005"; onclick="toggleOutput(this)">7005</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7006"; onclick="toggleOutput(this)">7006</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7007"; onclick="toggleOutput(this)">7007</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7008"; onclick="toggleOutput(this)">7008</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7009"; onclick="toggleOutput(this)">7009</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7010"; onclick="toggleOutput(this)">7010</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7011"; onclick="toggleOutput(this)">7011</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7012"; onclick="toggleOutput(this)">7012</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7013"; onclick="toggleOutput(this)">7013</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7014"; onclick="toggleOutput(this)">7014</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7015"; onclick="toggleOutput(this)">7015</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7016"; onclick="toggleOutput(this)">7016</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7017"; onclick="toggleOutput(this)">7017</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7018"; onclick="toggleOutput(this)">7018</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7019"; onclick="toggleOutput(this)">7019</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7020"; onclick="toggleOutput(this)">7020</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7021"; onclick="toggleOutput(this)">7021</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7022"; onclick="toggleOutput(this)">7022</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7023"; onclick="toggleOutput(this)">7023</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7024"; onclick="toggleOutput(this)">7024</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7025"; onclick="toggleOutput(this)">7025</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7026"; onclick="toggleOutput(this)">7026</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7027"; onclick="toggleOutput(this)">7027</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7028"; onclick="toggleOutput(this)">7028</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7029"; onclick="toggleOutput(this)">7029</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7030"; onclick="toggleOutput(this)">7030</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7031"; onclick="toggleOutput(this)">7031</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7032"; onclick="toggleOutput(this)">7032</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7033"; onclick="toggleOutput(this)">7033</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7034"; onclick="toggleOutput(this)">7034</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7035"; onclick="toggleOutput(this)">7035</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7036"; onclick="toggleOutput(this)">7036</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7037"; onclick="toggleOutput(this)">7037</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7038"; onclick="toggleOutput(this)">7038</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7039"; onclick="toggleOutput(this)">7039</button></td>
+               </tr>
+               <tr>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7040"; onclick="toggleOutput(this)">7040</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7041"; onclick="toggleOutput(this)">7041</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7042"; onclick="toggleOutput(this)">7042</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7043"; onclick="toggleOutput(this)">7043</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7044"; onclick="toggleOutput(this)">7044</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7045"; onclick="toggleOutput(this)">7045</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7046"; onclick="toggleOutput(this)">7046</button></td>
+                  <td class="ioCell";><button class="ioOF"; id="OUT7047"; onclick="toggleOutput(this)">7047</button></td>
+               </tr>
+            </table>
+          </div>
+      </div>
+      <div id="terminaldiv"; style="width:100%;display:block;">
+         <div style="width:99%;height:49%;">
+            <textarea id="FrameTerminal"; wrap="off"; onkeydown="KeyCapture(this, event)"; style="width:100%;height:100%;overflow-x:hidden;"></textarea>
+         </div>
+         <div style="width:99%;height:49%;">
+            <textarea readonly id="FrameResponse"; wrap="off"; style="width:100%;height:100%;overflow-x:hidden;"></textarea>
+         </div>
+      </div>
+   </div>
+</div>
+<div id="FrameInfo"; style="width:100%;height:20px;display:block;";></div>
+
+
+
+<div id="comform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:80px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
    <div style="width:100px;display:inline-block;"><b>Library</b></div>
    <div style="width:50px;display:inline-block;"><b>Dev. #</b></div>
    <div style="width:calc(100% - 160px);display:inline-block;"><b>Port</b></div>
@@ -5551,8 +5577,8 @@ End Function
    <button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
 </div>
 
-<div id="findform"; style="position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:110px;width:300px;top:70px;left:calc(50% - 150px);display:none">
-   <div>Find what: </div>
+<div id="findform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:110px;width:300px;top:70px;left:calc(50% - 150px);display:none">
+   <div style="font-size:1.2rem;";>Find what: </div>
    <div><textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea></div>
    <div style="width:100%;height:10px;">&nbsp;</div>
    <div>
@@ -5565,7 +5591,7 @@ End Function
    <div><p id="findcount"><p></div>
 </div>
 
-<div id="optionsform"; style="position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:285px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
+<div id="optionsform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:285px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
    Post-Download Start Label:
    <select id="myStartLabel">
       <option value="Smart">Smart Detect</option>
@@ -5608,15 +5634,15 @@ End Function
    <button class="button"; onclick="DefaultOptionsClick()"; style="width:49%;";>Restore Defaults</button>
 </div>
 
-<div id="logoform"; style="z-index:3000;position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:60px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
-   <div style="width:100px;display:inline-block;"><b>Custom Logo:</b></div>
+<div id="logoform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:60px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div style="width:100px;font-size:1.2rem;display:inline-block;"><b>Custom Logo:</b></div>
    <input id="customlogoname"; maxlength="15"; style="width:calc(100% - 110px);display:inline-block;"></input>
    <br/><br/>
    <button class="button"; onclick="CloseCustomLogo()"; style="width:49%;";>Cancel</button>
    <button class="button"; onclick="CustomLogoChange()"; style="width:49%;";>Update</button>
 </div>
 
-<div id="moduleform"; style="z-index:3000;position:fixed;font-size:1rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:80px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+<div id="moduleform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:80px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
    <div style="width:150px;display:inline-block;"><b>Custom Module Name:</b></div>
    <input id="modulename"; maxlength="25"; style="width:calc(100% - 160px);display:inline-block;"></input>
    <br>
@@ -5628,7 +5654,7 @@ End Function
 </div>
 
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
-   <div id="overlayText"; style="position:absolute;top:50%;left:50%;font-size:2rem;text-align:center;color:white;transform:translate(-50%, -50%)";>Checking For New Version<br/>Please Wait...</div>
+   <div id="overlayText"; style="position:absolute;top:50%;left:50%;font-family:arial;font-size:2.5rem;text-align:center;color:white;transform:translate(-50%, -50%)";>Checking For New Version<br/>Please Wait...</div>
 </div>
 
 <div id="dpi"></div>
