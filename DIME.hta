@@ -203,7 +203,7 @@ NS = {
    startLabel: "Smart",        //post-download start label (Smart = #AUTO/#AUTO1)
    textBC: "#FFFFFF",          //main text background color
    textC: "#000000",           //main text font color
-   popupBC: "#4682B4",         //popup background color
+   popupBC: "#FFFFFF",         //popup background color
    popupC: "#000000",          //popup text font color
    terminalBC: "#B4CFEC",      //terminal window background color
    terminalC: "#000000",       //terminal window font color
@@ -3627,8 +3627,8 @@ function ChangeIFrame() {
               "*{ cursor: inherit;}",
               "html { font-size:62.5%; }",
               "</style>",
-              "<div id=\"lineWarning\"; style=\"position:absolute;height:calc(100% - 62px);top:10px;left:673.5px;border-left:1px solid red;user-select:none;\"></div>",
-              "<textarea id=\"FrameText\"; wrap=\"off\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"parent.Modified(true)\"; onclick=\"parent.HideMenu()\"; onchange=\"parent.Modified(true)\"; onmouseup=\"parent.SetSelection()\"; onfocusout=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:100%;display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
+              "<div id=\"lineWarning\"; onmousewheel=\"parent.PreventZoom(event);\"; style=\"position:absolute;height:calc(100% - 62px);top:10px;left:673.5px;border-left:1px solid red;user-select:none;\"></div>",
+              "<textarea id=\"FrameText\"; wrap=\"off\"; onmousewheel=\"parent.PreventZoom(event);\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"parent.Modified(true)\"; onclick=\"parent.HideMenu()\"; onchange=\"parent.Modified(true)\"; onmouseup=\"parent.SetSelection()\"; onfocusout=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:100%;display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
               "</textarea>"].join("");
    NS.myFrame = document.getElementById("MyFrame");
 
@@ -4851,6 +4851,10 @@ function padZero(str, len) {
    return (zeros + str).slice(-len);
 }
 
+function PreventZoom(e) {
+   if(e.ctrlKey){ e.preventDefault(); }
+}
+
 </script>
 
 <script type="text/VBScript">
@@ -4861,7 +4865,7 @@ End Function
 
 </script>
 
-<body onload="HandleOnLoad()"; onbeforeunload="HandleOnUnload(event)"; onkeydown="KeyCapture(this, event)"; onkeypress="PressCapture(event)"; onfocus="MaintainSelection()"; leftmargin="0"; topmargin="0"; rightmargin="0">
+<body onload="HandleOnLoad()"; onbeforeunload="HandleOnUnload(event)"; onkeydown="KeyCapture(this, event)"; onkeypress="PressCapture(event)"; onfocus="MaintainSelection()"; onmousewheel="PreventZoom(event);"; leftmargin="0"; topmargin="0"; rightmargin="0">
 
 <TABLE id=MenuTable>
    <TR>
@@ -4882,7 +4886,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyFileMenu"; class="submenu"; style="left:4px;display:none;">
+<TABLE ID="MyFileMenu"; class="submenu"; style="left:2px;display:none;">
    <TR onclick="HideMenu();NewText()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> New</TD>
       <TD align="right"> Ctrl+N</TD>
@@ -4940,7 +4944,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyFindMenu"; class="submenu"; style="left:54px;display:none;">
+<TABLE ID="MyFindMenu"; class="submenu"; style="left:55px;display:none;">
    <TR onclick="HideMenu();FindShow()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Find</TD>
       <TD align="right"> Ctrl+F</TD>
@@ -4959,7 +4963,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyGalilMenu"; class="submenu"; style="left:82px;display:none;">
+<TABLE ID="MyGalilMenu"; class="submenu"; style="left:85px;display:none;">
    <TR id="menuConnect"; onclick="HideMenu();GalilConnect()"; style="display:none;"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD colspan="2"> Connect</TD>
       <!-- <TD align="right"></TD> -->
@@ -4987,7 +4991,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyDebugMenu"; class="submenu"; style="left:111px;display:none;">
+<TABLE ID="MyDebugMenu"; class="submenu"; style="left:116px;display:none;">
    <TR onclick="HideMenu();CheckMainProg()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Error Check</TD>
       <TD align="right">F7</TD>
@@ -5006,7 +5010,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyUtilityMenu"; class="submenu"; style="left:154px;display:none;">
+<TABLE ID="MyUtilityMenu"; class="submenu"; style="left:159px;display:none;">
    <TR id="logos"; onclick="HideMenu()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Logo Change</TD>
       <TD align="right">></TD>
@@ -5043,7 +5047,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MySettingsMenu"; class="submenu"; style="left:200px;display:none;">
+<TABLE ID="MySettingsMenu"; class="submenu"; style="left:205px;display:none;">
    <!-- <TR disabled id="ontop"; onclick="HideMenu();OnTopClick()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)"> -->
       <!-- <TD> Always On Top</TD> -->
       <!-- <TD align="right"><input id="ontopcheckbox"; type="radio"></input></TD> -->
@@ -5058,7 +5062,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyHelpMenu"; class="submenu"; style="left:246px;display:none;">
+<TABLE ID="MyHelpMenu"; class="submenu"; style="left:256px;display:none;">
    <TR onclick="HideMenu();ShowHelp()"; onmouseover="SubMenuOver(this)" onmouseout="SubMenuOut(this)">
       <TD>Help</TD>
       <TD align="right">F1</TD>
@@ -5069,7 +5073,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:225px;top:95px;display:none;">
+<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:239px;top:91px;display:none;">
    <TR id="quickref"; onclick="HideMenu();ShowReference(NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Error Codes</TD>
    </TR>
@@ -5081,7 +5085,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyLogoMenu"; class="submenu"; style="left:294px;top:29px;display:none;">
+<TABLE ID="MyLogoMenu"; class="submenu"; style="left:306px;top:29px;display:none;">
    <TR id="logos"; onclick="HideMenu();LogoChange('Delta6');"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Delta 6</TD>
    </TR>
@@ -5093,7 +5097,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MySnippetMenu"; class="submenu"; style="left:294px;top:93px;display:none;">
+<TABLE ID="MySnippetMenu"; class="submenu"; style="left:306px;top:91px;display:none;">
    <TR id="snippet"; onclick="HideMenu();ShowReference(NS.MotorTuning)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Motor Tuning Module</TD>
    </TR>
@@ -5108,7 +5112,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:294px;top:115px;display:none;">
+<TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:306px;top:111px;display:none;">
    <TR id="weblink"; onclick="HideMenu();Run(Link.Jira, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Jira</TD>
    </TR>
@@ -5120,7 +5124,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:294px;top:137px;display:none;">
+<TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:306px;top:132px;display:none;">
    <TR id="serverlink"; onclick="HideMenu();Run(Link.JumpStart, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> JumpStart</TD>
    </TR>
