@@ -185,7 +185,7 @@ NS = {
    indent: false,              //auto-indent setting
    myPoll: {},                 //used to set/clear polling interval
    myWindow: {},               //used to monitor minimum window size
-   myFrame: {},               //gets set to object pointing to the main text frame
+   myFrame: {},                //gets set to object pointing to the main text frame
    myFrameDiv: {},             //gets set to object pointing to the main text frame div
    myText: {},                 //gets set to object pointing to the main text
    myInfo: {},                 //gets set to object pointing to bottom line of app
@@ -1775,6 +1775,8 @@ function HandleOnLoad() {
 
    switch (document.getElementById("dpi").offsetHeight) {
       case (96):
+         //var html = document.getElementsByTagName('html');
+         //alert(html[0].style.fontSize);
          //var all = document.querySelectorAll("*");
          //for (var i = 0; i < all.length; i++) {
          //   if(all[i].style.fontSize != "") { alert(all[i].style.fontSize); }
@@ -2191,7 +2193,7 @@ function KeyCapture(element, e) {
             switch (element.id) {
                case (""):
                   e.preventDefault();
-                  ShowHelp("some help text");
+                  //ShowHelp("some help text");
                   break;
                default:
                   e.preventDefault();
@@ -2495,12 +2497,6 @@ function SaveAs() {
    if (path == "") {
       return false;
    }
-
-   // Overwrite confirmation is part of the powershell savefiledialog
-   // if (fso.fileExists(path)) {
-   //    var rsp = vMsgBox("File \"" + path + "\" already exists.\r\nDo you want to replace it?", 1, "Overwrite?");
-   //    if (rsp == 2) { return false; }  //exit if canceled
-   // }
 
    var f = fso.OpenTextFile(path, 2, true);
    f.Write(NS.myText.value.replace(/\n/g,"\r\n"));
@@ -3220,7 +3216,12 @@ function ShowSelection() {
 }
 
 function MaintainSelection() {
-   var type = document.activeElement.nodeName.toLowerCase();
+   var type;
+   try {
+      type = document.activeElement.nodeName.toLowerCase();
+   } catch(e) {
+      type = "null"
+   }
    if((type != "input") && (type != "textarea") && (type != "select")) {
       NS.myText.setSelectionRange(NS.startSel, NS.endSel);
    }
@@ -4639,18 +4640,18 @@ function ShowHelp(text) {
    switch (text) {
       case NS.mShortcuts:
          title = "General Help";
-         w = 500;
-         h = 760;
+         w = 400;
+         h = 610;
          break;
       case NS.tShortcuts:
          title = "Terminal Help";
-         w = 500;
-         h = 310;
+         w = 390;
+         h = 250;
          break;
       case NS.wShortcuts:
          title = "Variable Watch Help";
-         w = 460;
-         h = 160;
+         w = 390;
+         h = 120;
          break;
       default:
          title = "Help";
@@ -4693,7 +4694,7 @@ function ShowModeless(text, title, type, width, height) {
    modeless.Write(html);
    modeless.Close();
    window.showModelessDialog(NS.TempPath + ".htm", window, "resizable:1;dialogWidth:" + w + "px;dialogHeight:" + h + "px;dialogTop:" + t + "px;dialogLeft:" + l + "px");
-   //fso.DeleteFile(NS.TempPath + ".htm");
+   fso.DeleteFile(NS.TempPath + ".htm");
 }
 
 function ShowAbout() {
@@ -5304,7 +5305,7 @@ End Function
 </div>
 <!-- END OF BUTTONS -->
 
-<div style="height:calc(100% - 83px);">
+<div style="height:calc(100% - 83px);" onclick="HideMenu();">
    <div id="MyFrameDiv" style="height:100%;width:100%;">
       <iframe id="MyFrame"; application="yes"; scrolling="no"; onload="ChangeIFrame()"; style="width:100%;height:100%;padding:0px 0px 0px 0px;display:block;"></iframe>
    </div>
@@ -5563,7 +5564,8 @@ End Function
       </div>
    </div>
 </div>
-<div id="FrameInfo"; style="width:100%;height:20px;display:block;";></div>
+
+<div id="FrameInfo"; style="width:100%;height:20px;display:block;"; onclick="HideMenu();";></div>
 
 
 
@@ -5581,7 +5583,7 @@ End Function
    <button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
 </div>
 
-<div id="findform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:110px;width:300px;top:70px;left:calc(50% - 150px);display:none">
+<div id="findform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:110px;width:320px;top:70px;left:calc(50% - 160px);display:none">
    <div style="font-size:1.2rem;";>Find what: </div>
    <div><textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea></div>
    <div style="width:100%;height:10px;">&nbsp;</div>
