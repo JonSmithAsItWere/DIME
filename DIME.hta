@@ -2490,8 +2490,8 @@ function SaveAs() {
    var file = fso.OpenTextFile(tempTXT, 1);
    var path = file.ReadLine();
    file.Close();
-   fso.DeleteFile(tempPS1);
-   fso.DeleteFile(tempTXT);
+   setTimeout(function() { DeleteFile(tempPS1); }, 250);
+   setTimeout(function() { DeleteFile(tempTXT); }, 250);
    document.getElementById("overlay").style.display = "none";
 
    if (path == "") {
@@ -2537,7 +2537,7 @@ function OpenIt() {
    NS.myText.value = f.ReadAll();
    f.Close();
    if (NS.FileName == NS.TempPath) {
-      fso.deleteFile(NS.TempPath);
+      setTimeout(function() { DeleteFile(NS.TempPath); }, 250);
    } else {
       Modified(false);
    }
@@ -2577,7 +2577,7 @@ function BrowseForFile() {
    wScript.Run(tempFolder + "\\" + tempName, 1, true);
    var ret = wScript.RegRead(path);
    wScript.RegDelete(path);
-   fso.DeleteFile(tempFolder + "\\" + tempName);
+   setTimeout(function() { DeleteFile(tempFolder + "\\" + tempName); }, 250);
    return ret;
 }
 
@@ -3197,7 +3197,7 @@ function SetSelection() {
 function ShowSelection() {
    var tempHTML = ["<TABLE wrap='off'; style=\"font-family:'Arial';font-size:1.25rem;width:100%;display:block;overflow:none;\"><TR>",
                    "<TD style='width:90px;';>Length: " + NS.totalChars + "</TD>",
-                   "<TD style='width:70px;';>Lines: " + NS.totalLines + "</TD>",
+                   "<TD style='width:80px;';>Lines: " + NS.totalLines + "</TD>",
                    "<TD style='width:100px;';>Ln: " + NS.lineNumber + " | Col:" + NS.column + "</TD>"];
 
    if (NS.indent) {
@@ -4680,7 +4680,7 @@ function ShowModeless(text, title, type, width, height) {
    w = Min(width, window.innerWidth);
    h = Min(height, window.innerHeight);
    t = window.screenY;
-   l = Min(window.screenX + window.outerWidth, window.screen.availWidth - window.outerWidth);
+   l = Min(window.screenX + window.innerWidth + 1, window.screen.availWidth - window.outerWidth);
    var html = ["<title>" + title + "</title>",
                "<style>" + style + "</style>",
                "<script>" + script + "<",
@@ -4694,7 +4694,12 @@ function ShowModeless(text, title, type, width, height) {
    modeless.Write(html);
    modeless.Close();
    window.showModelessDialog(NS.TempPath + ".htm", window, "resizable:1;dialogWidth:" + w + "px;dialogHeight:" + h + "px;dialogTop:" + t + "px;dialogLeft:" + l + "px");
-   fso.DeleteFile(NS.TempPath + ".htm");
+   setTimeout(function() { DeleteFile(NS.TempPath + ".htm"); }, 250);
+}
+
+function DeleteFile(filename) {
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   try { fso.DeleteFile(NS.TempPath + ".htm"); } catch(e) {}
 }
 
 function ShowAbout() {
@@ -5555,10 +5560,11 @@ End Function
           </div>
       </div>
       <div id="terminaldiv"; style="width:100%;display:block;">
-         <div style="width:99%;height:49%;">
+         <div style="width:99%;height:calc(49% - 7px);">
             <textarea id="FrameTerminal"; wrap="off"; onkeydown="KeyCapture(this, event)"; style="width:100%;height:100%;overflow-x:hidden;"></textarea>
          </div>
-         <div style="width:99%;height:49%;">
+         <br/>
+         <div style="width:99%;height:calc(49% - 7px);">
             <textarea readonly id="FrameResponse"; wrap="off"; style="width:100%;height:100%;overflow-x:hidden;"></textarea>
          </div>
       </div>
