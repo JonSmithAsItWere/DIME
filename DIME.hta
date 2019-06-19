@@ -165,6 +165,7 @@ INI = {
 
 NS = {
    HTA: document.getElementById("DIME"),
+   UserName: new ActiveXObject("WScript.Network").UserName,  //windows username
    PortalVersion: "",          //default Portal Version
    PortalBuild: "",            //default Portal Build
    FileName: "",               //filepath and filename of the text file
@@ -4337,6 +4338,7 @@ function CheckMainProg() {
 }
 
 function CompressMain() {
+   if (NS.myText.value == "") { return; }
    var text = Compress(NS.myText.value);
    var newMain = NS.TempPath;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
