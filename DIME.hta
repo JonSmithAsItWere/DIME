@@ -3292,7 +3292,7 @@ function UploadToGalil() {
       if (errorText != "") {
          //var rsp = vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText + "\r\n\r\nWould you like to download anyway?", 4, "Error Found. Continue?");
          var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to download anyway?", 4, "Warning");
-         if (rsp == 7) { //no npdnpd
+         if (rsp == 7) { //no
             document.getElementById("overlay").style.display = "none";
             return;
          }
@@ -4648,8 +4648,8 @@ function ShowHelp(text) {
    switch (text) {
       case NS.mShortcuts:
          title = "General Help";
-         w = 400;
-         h = 610;
+         w = 420;
+         h = 580;
          break;
       case NS.tShortcuts:
          title = "Terminal Help";
@@ -4701,7 +4701,7 @@ function ShowModeless(text, title, type, width, height) {
                ""].join("")
    modeless.Write(html);
    modeless.Close();
-   window.showModelessDialog(NS.TempPath + ".htm", window, "resizable:1;dialogWidth:" + w + "px;dialogHeight:" + h + "px;dialogTop:" + t + "px;dialogLeft:" + l + "px");
+   window.showModelessDialog(NS.TempPath + ".htm", window, "resizable:1;dialogWidth:" + w + "px;dialogHeight:" + h + "px;dialogTop:" + t + "px;dialogLeft:" + l + "px;");
    setTimeout(function() { DeleteFile(NS.TempPath + ".htm"); }, 250);
 }
 
@@ -4814,8 +4814,7 @@ function IndentLines(shift) {
 }
 
 function ConditionalString(str, bool) {
-   if (bool) { return str; }
-   return "";
+   return (bool) ? str : "";
 }
 
 function UpdateColor(element) {
