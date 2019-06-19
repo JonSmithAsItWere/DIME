@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.0"
+   version="1.00"
    windowState="normal"
 />
 
@@ -2092,12 +2092,10 @@ function DefaultOptionsClick() {
 }
 
 function Run(link, type) {;
-   ChangeCursor("wait");
    if (type == 1) {  // website link
       var temp = CheckInternet();
       if (temp == false) {
          vMsgBox("Navigation failed. You are not connected to the internet.", 0, "Web Links");
-         ChangeCursor("default");
          setTimeout(HideMenu,10);
          return;
       }
@@ -2106,7 +2104,6 @@ function Run(link, type) {;
       var fso = new ActiveXObject("Scripting.FileSystemObject")
       if (!fso.FolderExists("\\\\pva.local\\shared")) {
          vMsgBox("Navigation failed. You are not connected to the server.", 0, "Server Links");
-         ChangeCursor("default");
          setTimeout(HideMenu,10);
          return;
       }
@@ -2116,11 +2113,9 @@ function Run(link, type) {;
    try{
       wScript.run(link);
    } catch(e) {
-      ChangeCursor("default");
       vMsgBox("Navigation failed. Unknown Error.", 0, "Links");
    }
 
-   ChangeCursor("default");
    setTimeout(HideMenu,10);
 }
 
@@ -2651,7 +2646,6 @@ function BackupMachineFiles() {
       folder = shell.BrowseForFolder(0, "Choose Folder. A new dated folder will be created containing Config, Dep, and Lib Portal folders, mains from the desktop, PathMaster Plugins, and the DEFAULT.ini", 0, 17).Items().Item().Path;
    } catch(e) {
       document.getElementById("overlay").style.display = "none";
-      ChangeCursor("default");
       return;
    }
 
@@ -2661,13 +2655,11 @@ function BackupMachineFiles() {
       var rsp = vMsgBox("Backup already exists for today's date in the selected folder. Do you want to continue?", 4, "Backup");
       if (rsp == 7) {  // no
          document.getElementById("overlay").style.display = "none";
-         ChangeCursor("default");
          return;
       }
    }
 
    document.getElementById("overlayText").innerHTML = "Backup In Progress<br/>Please Wait...";
-   ChangeCursor("wait");
    setTimeout(function() { CreatePortalBackup(backup); }, 50);
 }
 
@@ -2724,7 +2716,6 @@ function CreatePortalBackup(backup) {
    try { fso.CopyFolder("C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\Plugins", backup + "\\Plugins"); } catch(e) {}
 
    document.getElementById("overlay").style.display = "none";
-   ChangeCursor("default");
    Run(backup, 0);
 }
 
@@ -2743,7 +2734,6 @@ function UploadMachineFiles() {
       return;
    }
 
-   ChangeCursor("wait");
    document.getElementById("overlayText").innerHTML = "Upload In Progress<br/>Please Wait...";
    document.getElementById("overlay").style.display = "block";
    setTimeout(function() { UploadFilesToPortal(folder); }, 50);
@@ -2771,7 +2761,6 @@ function UploadFilesToPortal(folder) {
    try { fso.CopyFile(folder + "\\a*.dmc", desktop); } catch(e) {}
    try { fso.CopyFile(folder + "\\s*.dmc", desktop); } catch(e) {}
 
-   ChangeCursor("default");
    document.getElementById("overlay").style.display = "none";
    vMsgBox("Upload Complete! Perform logo swap if necessary", 0, "Upload Machine Files");
 }
@@ -3294,57 +3283,67 @@ function UploadToGalil() {
       GalilConnect();
       if (NS.connection == "OFFLINE") { return; }
    }
-   var tCon = NS.galil.address;
-   var errorText = ErrorCheck();
-   if (errorText != "") {
-      //var rsp = vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText + "\r\n\r\nWould you like to download anyway?", 4, "Error Found. Continue?");
-      var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to download anyway?", 4, "Warning");
-      if (rsp == 7) { return; } //no
-   }
 
-   var label = NS.startLabel;
-   // if using "Smart Detect"
-   if (label.charAt(0) != "#") {
-      // see if #AUTO1 exists. if it does, start there, else start at #AUTO
-      var auto1 = -1;
-      try{
-         auto1 = NS.galil.commandValue("MG #AUTO1");
+   document.getElementById("overlayText").innerHTML = "";
+   document.getElementById("overlay").style.display = "block";
+   setTimeout(function() {
+      var tCon = NS.galil.address;
+      var errorText = ErrorCheck();
+      if (errorText != "") {
+         //var rsp = vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText + "\r\n\r\nWould you like to download anyway?", 4, "Error Found. Continue?");
+         var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to download anyway?", 4, "Warning");
+         if (rsp == 7) { //no npdnpd
+            document.getElementById("overlay").style.display = "none";
+            return;
+         }
+      }
+
+      var label = NS.startLabel;
+      // if using "Smart Detect"
+      if (label.charAt(0) != "#") {
+         // see if #AUTO1 exists. if it does, start there, else start at #AUTO
+         var auto1 = -1;
+         try{
+            auto1 = NS.galil.commandValue("MG #AUTO1");
+         } catch(e) {
+            //do nothing
+         }
+         if (auto1 == -1) {
+            label = "#AUTO"
+         } else {
+            label = "#AUTO1"
+         }
+      }
+      NS.galil.command("AB;CB1");
+      var temp = Compress(NS.myText.value);
+      if (temp.indexOf("\r") == -1) {
+         temp = temp.replace(/\n/g,"\r");
+      } else {
+         temp = temp.replace(/\n/g,"");
+      }
+
+      var gcompressed = false;
+      try {
+         NS.galil.programDownload(temp);
       } catch(e) {
-         //do nothing
+         if (e.number == 8060) {
+            gcompressed = true;
+         } else {
+            vMsgBox(e.description.substring(e.description.lastIndexOf("TC1")), 0, "Error Received");
+            document.getElementById("overlay").style.display = "none";
+            return;
+         }
       }
-      if (auto1 == -1) {
-         label = "#AUTO"
+
+      NS.galil.command("HX;BP0;XQ" + label);
+
+      if (gcompressed) {
+         vMsgBox("Warning - The Galil attempted to compress the program. All whitespace removed.\r\n\r\nUpload Complete!", 0, "Upload");
       } else {
-         label = "#AUTO1"
+         vMsgBox("Upload Complete!", 0, "Upload");
       }
-   }
-   NS.galil.command("AB;CB1");
-   var temp = Compress(NS.myText.value);
-   if (temp.indexOf("\r") == -1) {
-      temp = temp.replace(/\n/g,"\r");
-   } else {
-      temp = temp.replace(/\n/g,"");
-   }
-
-   var gcompressed = false;
-   try {
-      NS.galil.programDownload(temp);
-   } catch(e) {
-      if (e.number == 8060) {
-         gcompressed = true;
-      } else {
-         vMsgBox(e.description.substring(e.description.lastIndexOf("TC1")), 0, "Error Received");
-         return;
-      }
-   }
-
-   NS.galil.command("HX;BP0;XQ" + label);
-
-   if (gcompressed) {
-      vMsgBox("Warning - The Galil attempted to compress the program. All whitespace removed.\r\n\r\nUpload Complete!", 0, "Upload");
-   } else {
-      vMsgBox("Upload Complete!", 0, "Upload");
-   }
+      document.getElementById("overlay").style.display = "none";
+   }, 100);
 }
 
 function DownloadFromGalil() {
@@ -3445,18 +3444,8 @@ function Terminal(command) {
    }
    var r = "";
    if (command == "^R^S") {
-      ChangeCursor("wait");
-      document.getElementById("overlayText").innerHTML = "Performing Master Reset<br/>Please Wait...";
-      document.getElementById("overlay").style.display = "block";
-      NS.galil.write(String.fromCharCode(18) + String.fromCharCode(19) + "\r"); // write <ctrl>R<ctrl>S to controller
-      GalilDisconnect();
-      while (NS.connection == "OFFLINE") {
-         GalilConnect(true)
-      }
-      NS.galil.command("RS");
-      document.getElementById("overlay").style.display = "none";
-      ChangeCursor("default");
-      r = "Master Reset Complete!\r:"
+      MasterReset(true)
+      return;
    } else if (command == "^R^V") {
       var buffer = "";
       NS.galil.write(String.fromCharCode(18) + String.fromCharCode(22) + "\r") // write <ctrl>R<ctrl>V to controller
@@ -3466,7 +3455,7 @@ function Terminal(command) {
       r = buffer;
    } else if (command.charAt(0) == "^") {
       r = arraySet(command.substring(1)) + "\r:";
-   } else if (command.charAt(0) == "~") {
+   } else if ((command.charAt(0) == "~") & (command.length > 4)) {
       r = arrayReset(command.substring(1)) + "\r:";
    } else {
       try {
@@ -3477,6 +3466,25 @@ function Terminal(command) {
       if (r == ":") { r = "\r:"; }
    }
    NS.myResponse.value = NS.myResponse.value + r;
+}
+
+function MasterReset(fromTerminal) {
+   document.getElementById("overlayText").innerHTML = "Performing Master Reset<br/>Please Wait...";
+   document.getElementById("overlay").style.display = "block";
+   setTimeout(function() {
+      NS.galil.write(String.fromCharCode(18) + String.fromCharCode(19) + "\r"); // write <ctrl>R<ctrl>S to controller
+      GalilDisconnect();
+      while (NS.connection == "OFFLINE") {
+         GalilConnect(true)
+      }
+      NS.galil.command("RS");
+      document.getElementById("overlay").style.display = "none";
+      if (fromTerminal) {
+         NS.myResponse.value = NS.myResponse.value + "Master Reset Complete!\r:";
+      } else {
+         vMsgBox("Master Reset Complete!", 0, "Master Reset");
+      }
+   }, 100);
 }
 
 function arraySet(str) {
@@ -4978,6 +4986,7 @@ End Function
       <TD colspan="2"> Disconnect</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
+   <TR><TD colspan="2"><HR></TD></TR>
    <TR onclick="HideMenu();UploadToGalil()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Upload To Galil</TD>
       <TD align="right"> Ctrl+U</TD>
@@ -4987,13 +4996,9 @@ End Function
       <TD align="right"> Ctrl+D</TD>
    </TR>
    <TR><TD colspan="2"><HR></TD></TR>
-   <TR onclick="HideMenu();ToggleVariableWatch()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
-      <TD> Toggle Sidebar View</TD>
-      <TD align="right">Ctrl+W</TD>
-   </TR>
-   <TR onclick="HideMenu();ToggleMainText()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
-      <TD> Toggle Main Text View</TD>
-      <TD align="right">Ctrl+T</TD>
+   <TR onclick="HideMenu();MasterReset(false)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD colspan="2"> Master Reset</TD>
+      <!-- <TD align="right"> Ctrl+D</TD> -->
    </TR>
 </TABLE>
 
@@ -5013,6 +5018,15 @@ End Function
    <TR id="quickref"; onclick=""; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Quick Reference</TD>
       <TD align="right">></TD>
+   </TR>
+   <TR><TD colspan="2"><HR></TD></TR>
+   <TR onclick="HideMenu();ToggleVariableWatch()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Toggle Sidebar View</TD>
+      <TD align="right">Ctrl+W</TD>
+   </TR>
+   <TR onclick="HideMenu();ToggleMainText()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Toggle Main Text View</TD>
+      <TD align="right">Ctrl+T</TD>
    </TR>
 </TABLE>
 
@@ -5079,7 +5093,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:239px;top:91px;display:none;">
+<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:296px;top:91px;display:none;">
    <TR id="quickref"; onclick="HideMenu();ShowReference(NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Error Codes</TD>
    </TR>
