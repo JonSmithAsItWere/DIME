@@ -1691,9 +1691,9 @@ function DisplayTitle() {
       NS.FileName="";
    }
    if (NS.FileName == "") {
-      document.title = NS.HTA.applicationName + " " + NS.HTA.version;
+      document.title = NS.HTA.applicationName + " v" + NS.HTA.version;
    } else {
-      document.title = NS.HTA.applicationName + " " + NS.HTA.version + " - " + NS.FileName.replace(/%20/g," ");
+      document.title = NS.HTA.applicationName + " v" + NS.HTA.version + " - " + NS.FileName.replace(/%20/g," ");
    }
 }
 
