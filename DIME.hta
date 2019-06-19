@@ -1723,11 +1723,12 @@ function UpdateToNewVersion(latest) {
    }
    f.Write(latest);
    f.Close();
-   //CancelOptionsClick();
+   CancelOptionsClick();
    SaveOptionsClick(false);
    var wScript = new ActiveXObject("WScript.Shell");
    wScript.Run(NS.HTA.commandLine);
-   window.Close();
+   window.close();
+   return true;
 }
 
 // returns array of [bool version matches, string latest file]
@@ -1773,6 +1774,33 @@ function CheckInternet() {
 
 function HandleOnLoad() {
 
+   NS.myFrameDiv = document.getElementById("MyFrameDiv");
+   NS.myWatch = document.getElementById("VariableWatch");
+   NS.myTerminal = document.getElementById("FrameTerminal");
+   NS.myResponse = document.getElementById("FrameResponse");
+   NS.myInfo = document.getElementById("FrameInfo");
+
+
+// color option stuff
+   PopulateOptionsLists();
+   setColorInvert(document.getElementById("myTextBC"), true);
+   setColorInvert(document.getElementById("myTextC"), true);
+   setColorInvert(document.getElementById("myPopupBC"), true);
+   setColorInvert(document.getElementById("myPopupC"), true);
+   setColorInvert(document.getElementById("myTerminalBC"), true);
+   setColorInvert(document.getElementById("myTerminalC"), true);
+   setColorInvert(document.getElementById("myResponseBC"), true);
+   setColorInvert(document.getElementById("myResponseC"), true);
+   setColorInvert(document.getElementById("myVariableBC"), true);
+   setColorInvert(document.getElementById("myVariableC"), true);
+   setColorInvert(document.getElementById("myValueBC"), true);
+   setColorInvert(document.getElementById("myValueC"), true);
+
+   showVariableWatchTab();
+   ClearTerminal();
+   CancelOptionsClick();
+   ShowSelection();
+
    switch (document.getElementById("dpi").offsetHeight) {
       case (96):
          //var html = document.getElementsByTagName('html');
@@ -1800,11 +1828,12 @@ function HandleOnLoad() {
          document.getElementById("overlay").style.display = "block";
          var ver = VersionMatch();
          if (ver[0] == false) {
-            UpdateToNewVersion(ver[1]);
-            return;
+            var updated = UpdateToNewVersion(ver[1]);
+            if (updated) { return; }
+            vMsgBox("Update failed for unknown reason.", 0, "Update");
          } else {
             if(ver[1].substring(0, 6) == "Failed") {
-               vMsgBox(ver[1], 0, "Update Failed");
+               vMsgBox(ver[1], 0, "Update");
             }
          }
       }
@@ -1826,32 +1855,6 @@ function HandleOnLoad() {
       GalilDisconnect();
    }
    window.addEventListener('resize',CheckWindowSize, false);
-
-// color option stuff
-   PopulateOptionsLists();
-   setColorInvert(document.getElementById("myTextBC"), true);
-   setColorInvert(document.getElementById("myTextC"), true);
-   setColorInvert(document.getElementById("myPopupBC"), true);
-   setColorInvert(document.getElementById("myPopupC"), true);
-   setColorInvert(document.getElementById("myTerminalBC"), true);
-   setColorInvert(document.getElementById("myTerminalC"), true);
-   setColorInvert(document.getElementById("myResponseBC"), true);
-   setColorInvert(document.getElementById("myResponseC"), true);
-   setColorInvert(document.getElementById("myVariableBC"), true);
-   setColorInvert(document.getElementById("myVariableC"), true);
-   setColorInvert(document.getElementById("myValueBC"), true);
-   setColorInvert(document.getElementById("myValueC"), true);
-
-
-   NS.myFrameDiv = document.getElementById("MyFrameDiv");
-   NS.myWatch = document.getElementById("VariableWatch");
-   NS.myTerminal = document.getElementById("FrameTerminal");
-   NS.myResponse = document.getElementById("FrameResponse");
-   NS.myInfo = document.getElementById("FrameInfo");
-   showVariableWatchTab();
-   ClearTerminal();
-   CancelOptionsClick();
-   ShowSelection();
 }
 
 function MoveLineWarning() {
