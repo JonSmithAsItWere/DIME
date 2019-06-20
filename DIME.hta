@@ -169,6 +169,8 @@ NS = {
    PortalVersion: "",          //default Portal Version
    PortalBuild: "",            //default Portal Build
    FileName: "",               //filepath and filename of the text file
+   SavedText: "",              //for comparison
+   Modified: {},               //used to monitor modified status
    fModif: false,              //boolean for if the text has been modified
    LastChildMenu: null,        //used for menu navigation
    LastMenu: null,             //used for menu navigation
@@ -1688,7 +1690,6 @@ Colors = {"#FAEBD7": "AntiqueWhite",
 
 function DisplayTitle() {
    if ((NS.FileName == NS.TempPath) && (NS.TempPath != "")) {
-      Modified(true);
       NS.FileName="";
    }
    if (NS.FileName == "") {
@@ -1698,16 +1699,19 @@ function DisplayTitle() {
    }
 }
 
-function Modified(bool) {
-   NS.fModif = bool;
-   if (bool) {
-      NS.returnLines = [];
-      document.getElementById("savebutton").style.display = "inline-block";
-      document.getElementById("xsavebutton").style.display = "none";
-   } else {
-      document.getElementById("savebutton").style.display = "none";
-      document.getElementById("xsavebutton").style.display = "inline-block";
-   }
+function CheckModified() {
+   clearTimeout(NS.Modified);
+   NS.Modified = setTimeout(function() {
+      NS.fModif = (NS.myText.value != NS.SavedText);
+      if (NS.fModif) {
+         NS.returnLines = [];
+         document.getElementById("savebutton").style.display = "inline-block";
+         document.getElementById("xsavebutton").style.display = "none";
+      } else {
+         document.getElementById("savebutton").style.display = "none";
+         document.getElementById("xsavebutton").style.display = "inline-block";
+      }
+   }, 10)
 }
 
 function UpdateToNewVersion(latest) {
@@ -1824,7 +1828,7 @@ function HandleOnLoad() {
 
    // check for new version if not opening a temp file (compress, decompress, download from galil, etc.)
    var temp = NS.FileName.substring(NS.FileName.lastIndexOf("\\") + 1, NS.FileName.lastIndexOf("."));
-   if (temp != "temp") {
+   if ((temp != "temp") && (NS.UserName != "ndouty")) {
       if (CheckInternet() == true) { //connected to the internet
          document.getElementById("overlay").style.display = "block";
          var ver = VersionMatch();
@@ -2130,7 +2134,6 @@ function KeyCapture(element, e) {
       if (element == NS.myText) {
          //backspace or delete
          if ((e.keyCode == 8) || (e.keyCode == 46)) {
-            Modified(true);
             return;
          }
          //tab
@@ -2502,7 +2505,7 @@ function SaveAs() {
    f.Close();
    NS.FileName = path;
    DisplayTitle();
-   Modified(false);
+   NS.SavedText = NS.myText.value;
    return true;
 }
 
@@ -2520,7 +2523,7 @@ function Save() {
    } else {
       return SaveAs();
    }
-   Modified(false);
+   NS.SavedText = NS.myText.value;
    return true;
 }
 
@@ -2538,7 +2541,7 @@ function OpenIt() {
    if (NS.FileName == NS.TempPath) {
       setTimeout(function() { DeleteFile(NS.TempPath); }, 250);
    } else {
-      Modified(false);
+      NS.SavedText = NS.myText.value;
    }
    DisplayTitle();
 }
@@ -2555,7 +2558,7 @@ function Open() {
    if (filePath != "") {
       NS.FileName = filePath;
       OpenIt();
-      Modified(false);
+      NS.SavedText = NS.myText.value;
    }
 }
 
@@ -2588,7 +2591,7 @@ function NewTextSameFile() {
    NS.myText.value="";
    NS.FileName="";
    DisplayTitle();
-   Modified(false);
+   NS.SavedText = NS.myText.value;
 }
 
 function NewText() {
@@ -3159,32 +3162,33 @@ function FindLabel(optLabel) {
 }
 
 function SetSelection() {
-   var tempChar = 0;
-   var type = document.activeElement.nodeName.toLowerCase();
-   if((type != "input") && (type != "textarea")) {
-      NS.startSel = NS.myText.selectionStart;
-      NS.endSel = NS.myText.selectionEnd;
-   }
-   if (NS.myText.value == 0) {
-      NS.totalLines = 1;
-      NS.totalChars = 0;
-      NS.lineNumber = 1;
-      NS.column = 1;
-   } else {
-      var tempLines = NS.myText.value.split("\n");
-      NS.totalLines = tempLines.length;
-      NS.totalChars = NS.myText.value.length + NS.totalLines - 1;
-      for (var i = 0; i < tempLines.length; i++) {
-         if ((tempChar + tempLines[i].length) < NS.startSel) {
-            tempChar = tempChar + tempLines[i].length + 1;
-         } else {
-            NS.column = NS.startSel - tempChar + 1;
-            NS.lineNumber = i + 1;
-            break;
-         }
+   clearTimeout(NS.Selection);
+   NS.Selection = setTimeout(function() {
+      var type = document.activeElement.nodeName.toLowerCase();
+      if((type != "input") && (type != "textarea")) {
+         NS.startSel = NS.myText.selectionStart;
+         NS.endSel = NS.myText.selectionEnd;
       }
-   }
-   ShowSelection();
+      if (NS.myText.value == "") {
+         NS.totalLines = 1;
+         NS.totalChars = 0;
+         NS.lineNumber = 1;
+         NS.column = 1;
+      } else {
+         var tempLines = NS.myText.value.split("\n");
+         NS.totalLines = tempLines.length;
+         NS.totalChars = NS.myText.value.length + NS.totalLines - 1;
+         var tempChar = 0;
+         var i = 0;
+         while ((tempChar + tempLines[i].length) < NS.startSel) {
+            tempChar += tempLines[i].length + 1;
+            i++;
+         }
+         NS.column = NS.startSel - tempChar + 1;
+         NS.lineNumber = i + 1;
+      }
+      ShowSelection();
+   }, 10);
 }
 
 function ShowSelection() {
@@ -3206,6 +3210,7 @@ function ShowSelection() {
    }
    tempHTML.push("</TR></TABLE>");
    NS.myInfo.innerHTML = tempHTML.join("");
+   CheckModified();
 }
 
 function MaintainSelection() {
@@ -3371,7 +3376,6 @@ function DownloadFromGalil() {
          vMsgBox("Failed to download main from Galil.", 0, "Download");
          return;
       }
-      Modified(true);
    }
 }
 
@@ -3640,8 +3644,8 @@ function ChangeIFrame() {
               "*{ cursor: inherit;}",
               "html { font-size:62.5%; }",
               "</style>",
-              "<div id=\"lineWarning\"; onmousewheel=\"parent.PreventZoom(event);\"; style=\"position:absolute;height:calc(100% - 62px);top:10px;left:673.5px;border-left:1px solid red;user-select:none;\"></div>",
-              "<textarea id=\"FrameText\"; wrap=\"off\"; onmousewheel=\"parent.PreventZoom(event);\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"parent.Modified(true)\"; onclick=\"parent.HideMenu()\"; onchange=\"parent.Modified(true)\"; onmouseup=\"parent.SetSelection()\"; onfocusout=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:100%;display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
+              "<div id=\"lineWarning\"; onmousewheel=\"parent.PreventZoom(event);\"; style=\"position:absolute;height:calc(100% - 36px);top:10px;left:673.5px;border-left:1px solid red;user-select:none;\"></div>",
+              "<textarea autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\" id=\"FrameText\"; wrap=\"off\"; onmousewheel=\"parent.PreventZoom(event);\"; onscroll=\"parent.MoveLineWarning()\"; oninput=\"\"; onclick=\"parent.HideMenu()\"; onchange=\"\"; onmouseup=\"parent.SetSelection()\"; onfocusout=\"parent.SetSelection()\"; onkeydown=\"parent.KeyCapture(this, event)\"; onkeypress=\"parent.PressCapture(event)\"; onkeyup=\"parent.SetSelection()\"; style=\"width:100%;height:100%;display:inline-block;background-color:" + NS.textBC + ";color:" + NS.textC + ";\">",
               "</textarea>"].join("");
    NS.myFrame = document.getElementById("MyFrame");
 
@@ -4318,7 +4322,7 @@ function ErrorCheck() {
 }
 
 function ErrorReturn(line, type, element) {
-   return "<tr onclick=\"ReturnLine(" + line + ")\";><td>" + line + "</td><td>" + type + "</td><td>" + element.replace("/\t/", "").substring(0, 20) + "</td></tr>";
+   return "<tr onclick=\"ReturnLine(" + line + ")\";><td>" + line + "</td><td>" + type + "</td><td>" + element.substring(0, 20) + "</td></tr>";
 }
 
 function CheckMainProg() {
@@ -4326,7 +4330,6 @@ function CheckMainProg() {
    if (errorText == "") {
       vMsgBox("No Errors Found!", 0, "Error Check");
    } else {
-      //vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText, 0, "Error Check");
       ShowModeless(["<table>",
                     "<col width=\"50px\">",
                     "<col width=\"250px\">",
@@ -4506,14 +4509,6 @@ function LabelInLine(line) {
    return "";
 }
 
-function Min(x, y) {
-   return (x < y) ? x : y;
-}
-
-function Max(x, y) {
-   return (x > y) ? x : y;
-}
-
 function JumpInLine(element) {
    var trimmed = element.trim();
    var jumpCommand = trimmed.substring(0,3);
@@ -4647,6 +4642,15 @@ function CheckAndPopulateDupLab(fileText) {
 // End CheckMainProg Functions
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
+
+function Min(x, y) {
+   return (x < y) ? x : y;
+}
+
+function Max(x, y) {
+   return (x > y) ? x : y;
+}
+
 function ShowHelp(text) {
    var title, w, h;
    if(text == null) { text = NS.mShortcuts; }
@@ -4726,7 +4730,7 @@ function ShowAbout() {
             "It is delivered on the express condition that it not be",
             "used, disclosed, or reproduced in whole or in part, for",
             "any reason withoutprior written consent of Precision",
-            "Valve & Automation, Inc."].join("\r\n"),64,"About");
+            "Valve & Automation, Inc."].join("\r\n"), 64, "About");
 }
 
 function SelectAll() {
