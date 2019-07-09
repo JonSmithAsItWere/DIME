@@ -186,6 +186,51 @@ NS = {
    labels: [],                 //labels that have been jump to
    co: -1,                     //used to monitor _CO when the main IO tab is up
    indent: false,              //auto-indent setting
+   inFind: false,
+   find: {},
+   lastFind: "",
+   lastMatch: false,
+   FindPath: "",
+   FindHTM: ["<title>Find</title>",
+            "<style></style>",
+            "<script type=\"text/javascript\">",
+            "function KeyCatch(e) {",
+            "if ((e.keyCode == 13) && (!e.ctrlKey)) {",
+            "Find(e.shiftKey);",
+            "return false;",
+            "}",
+            "if (e.keyCode == 27) {",
+            "close();",
+            "return false;",
+            "}",
+            "}",
+            "function Find(reverse) {",
+            "document.getElementById(\"findcount\").innerHTML = window.dialogArguments.Find(document.getElementById(\"findtext\").value, document.getElementById(\"matchcase\").checked, reverse);",
+            "document.getElementById(\"findtext\").focus();",
+            "document.getElementById(\"findtext\").select();",
+            "}",
+            "function FindCount() {",
+            "var count = window.dialogArguments.FindCount(document.getElementById(\"findtext\").value, document.getElementById(\"matchcase\").checked);",
+            "document.getElementById(\"findcount\").innerHTML = \"Count: \" + count + \" match\" + window.dialogArguments.ConditionalString(\"es\", (count != 1)) + \".\";",
+            "document.getElementById(\"findtext\").focus();",
+            "document.getElementById(\"findtext\").select();",
+            "}",
+            "<",
+            "/script>",
+            "<body onkeypress=\"KeyCatch(event)\"; onunload=\"window.dialogArguments.NS.inFind=false\"; style=\"overflow:hidden;\";>",
+            "<div id=\"findform\"; style=\"position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:155px;width:350px;top:0px;left:0px;display:block\">",
+            "<div style=\"font-size:1.2rem;\";>Find what: </div>",
+            "<div><input type=\"text\"; id=\"findtext\"; style=\"overflow:hidden;height:25px;width:95%;\"></input></div>",
+            "<div style=\"width:100%;height:10px;\">&nbsp;</div>",
+            "<div>",
+            "Match case:<input id=\"matchcase\" type=\"checkbox\"></input>",
+            "<button class=\"button\"; onclick=\"Find(false)\";>Find Next</button>&nbsp;",
+            "<button class=\"button\"; onclick=\"Find(true)\";>Find Prev</button>&nbsp;",
+            "<button class=\"button\"; onclick=\"FindCount()\";>Count</button>&nbsp;",
+            "</div>",
+            "<div><p id=\"findcount\" style=\"color:#FF0000;\"></p></div>",
+            "</div>",
+            "</body>"].join(""),
    myPoll: {},                 //used to set/clear polling interval
    myWindow: {},               //used to monitor minimum window size
    myFrame: {},                //gets set to object pointing to the main text frame
@@ -1849,6 +1894,11 @@ function HandleOnLoad() {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    NS.Path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("\\") + 1);
    NS.TempPath = fso.GetSpecialFolder(2) + "\\temp.txt";
+   NS.FindPath = fso.GetSpecialFolder(2) + "\\temp.htm";
+
+   var findWindow = fso.createTextFile(NS.FindPath, true);
+   findWindow.Write(NS.FindHTM.replace(/></g,">\r\n<").replace(/function/g,"\r\nfunction"));
+   findWindow.Close();
 
    if (NS.FileName != "") { OpenIt(); }
    NS.myText.focus();
@@ -2158,11 +2208,6 @@ function KeyCapture(element, e) {
       }
       switch (e.keyCode) {
          case (13):  //enter
-            if (document.getElementById("findform").style.display != "none") {
-               e.preventDefault();
-               Find(e.shiftKey);
-               return;
-            }
             if (element == NS.myText) {
                switch (ParseChar()) {
                   case ("^"):
@@ -2178,9 +2223,10 @@ function KeyCapture(element, e) {
             }
             break;
          case (27):  //escape
-            if (document.getElementById("findform").style.display != "none") {
+            if (NS.inFind) {
                e.preventDefault();
                FindClose();
+               NS.inFind = false;
             }
             if (document.getElementById("optionsform").style.display != "none") {
                e.preventDefault();
@@ -2205,7 +2251,11 @@ function KeyCapture(element, e) {
             return;
          case (114):  //F3
             e.preventDefault();
-            Find(e.shiftKey);
+            if (NS.inFind) {
+               NS.find.Find(e.shiftKey);
+            } else {
+               if (NS.lastFind != "") { Find(NS.lastFind, NS.lastMatch, e.shiftKey); }
+            }
             return;
          case (118):  //F7
             e.preventDefault();
@@ -2700,11 +2750,15 @@ function CreatePortalBackup(backup) {
    while(!myEnum.atEnd()) {
       fName = backup + "\\Lib\\" + myEnum.item().Name;
       if (!fso.FolderExists(fName)) { fso.CreateFolder(fName); }
-      if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(fName + "\\Config"))) { fso.CreateFolder(fName + "\\Config"); }
-      if ((fso.FolderExists(myEnum.item().Path + "\\Docs")) && (!fso.FolderExists(fName + "\\Docs"))) { fso.CreateFolder(fName + "\\Docs"); }
-      try { fso.CopyFile(myEnum.item().Path + "\\*.ini", fName); } catch(e) {}
-      try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", fName + "\\Config"); } catch(e) {}
-      try { fso.CopyFile(myEnum.item().Path + "\\Docs\\*.txt", fName + "\\Docs"); } catch(e) {}
+      if (myEnum.item().Name == "Vision") {
+         try { fso.CopyFolder(myEnum.item().Path, fName) } catch(e) {}
+      } else {
+         if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(fName + "\\Config"))) { fso.CreateFolder(fName + "\\Config"); }
+         if ((fso.FolderExists(myEnum.item().Path + "\\Docs")) && (!fso.FolderExists(fName + "\\Docs"))) { fso.CreateFolder(fName + "\\Docs"); }
+         try { fso.CopyFile(myEnum.item().Path + "\\*.ini", fName); } catch(e) {}
+         try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", fName + "\\Config"); } catch(e) {}
+         try { fso.CopyFile(myEnum.item().Path + "\\Docs\\*.txt", fName + "\\Docs"); } catch(e) {}
+      }
       myEnum.moveNext();
    }
 
@@ -2719,6 +2773,7 @@ function CreatePortalBackup(backup) {
    try { fso.CopyFile(desktop + "\\c*.dmc", backup); } catch(e) {}
    try { fso.CopyFile(desktop + "\\a*.dmc", backup); } catch(e) {}
    try { fso.CopyFile(desktop + "\\s*.dmc", backup); } catch(e) {}
+   try { fso.CopyFile("C:\\Program Files (x86)\\PVA\\PathMaster\\*.ini", backup); } catch(e) {}
    try { fso.CopyFile("C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\*.ini", backup); } catch(e) {}
    try { fso.CopyFolder("C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\Plugins", backup + "\\Plugins"); } catch(e) {}
 
@@ -2732,7 +2787,7 @@ function UploadMachineFiles() {
    vMsgBox(["Choose Folder to Upload. The following actions will occur:",
             "",
             "1.) Copy \"\\Config\", \"\\Dep\", and \"\\Lib\" folders to the correct Portal locations",
-            "2.) Copy \"DEFAULT.ini\" file and \"\\Plugins\" folder to the correct PathMaster locations",
+            "2.) Copy \"DEFAULT.ini\" file, \"PathMaster.ini\" and \"\\Plugins\" folder to the correct PathMaster locations",
             "3.) Delete Log.dat Portal file to update the default log headers",
             "4.) Copy any main files to the desktop (any .TXT or .DMC files that start with W, C, A, or S)"].join("\r\n"), 0, "Upload Machine Files")
    try {
@@ -2754,6 +2809,7 @@ function UploadFilesToPortal(folder) {
    if (fso.FolderExists(folder + "\\Plugins")) { fso.CopyFolder(folder + "\\Plugins", "C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\Plugins"); }
 
    try { fso.DeleteFile("C:\\Program Files (x86)\\PVAPortal\\Data\\Log.dat"); } catch(e) {}
+   try { fso.CopyFile(folder + "\\PathMaster.ini", "C:\\Program Files (x86)\\PVA\\PathMaster\\PathMaster.INI") } catch(e) {}
    try { fso.CopyFile(folder + "\\DEFAULT.ini", "C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\DEFAULT.INI") } catch(e) {}
 
    var wScript = new ActiveXObject("WScript.Shell");
@@ -2769,7 +2825,7 @@ function UploadFilesToPortal(folder) {
    try { fso.CopyFile(folder + "\\s*.dmc", desktop); } catch(e) {}
 
    document.getElementById("overlay").style.display = "none";
-   vMsgBox("Upload Complete! Perform logo swap if necessary", 0, "Upload Machine Files");
+   vMsgBox("Upload Complete! Perform logo swap if necessary.", 0, "Upload Machine Files");
 }
 
 function UploadToServer() {
@@ -2967,41 +3023,40 @@ function ReplacePort() {
 }
 
 function FindShow() {
-   if (document.getElementById("findform").style.display == "none") {
+   if (NS.inFind == false) {
       if (NS.myFrameDiv.style.display == "none") { return; }
       CancelOptionsClick();
       CloseComForm();
-      document.getElementById("findcount").innerHTML = "";
-      if (NS.myText.value.substring(NS.startSel, NS.endSel).indexOf("\n") == -1) {
-         document.getElementById("findtext").value = NS.myText.value.substring(NS.startSel, NS.endSel);
-      } else {
-         //document.getElementById("findtext").value = "";
-      }
-      document.getElementById("findform").style.display = "block";
-      document.getElementById("findtext").focus();
-   } else {
-      FindClose()
+      var w = 350, h = 155
+      NS.find = window.showModelessDialog(NS.FindPath, window, "resizable:0;dialogWidth:" + w + "px;dialogHeight:" + h + "px;");
+      NS.inFind = true
    }
+   var f = NS.find.document.getElementById("findtext");
+   if (NS.myText.selectionStart != NS.myText.selectionEnd) {
+      f.value = NS.myText.value.substring(NS.myText.selectionStart, NS.myText.selectionEnd);
+   } else {
+      f.value = NS.lastFind;
+   }
+   f.focus();
+   f.select();
 }
 
 function FindClose() {
-   document.getElementById("findform").style.display = "none";
+   NS.find.close();
 }
 
-function Find(reverse) {
-   var text, findText, pos, lines, chr;
+function Find(findText, matchCase, reverse) {
+   var pos, lines, chr;
    var rsp = "";
-   if (document.getElementById("matchcase").checked == true) {
-      text = NS.myText.value;
-      findText = document.getElementById("findtext").value;
-   } else {
-      text = NS.myText.value.toLowerCase();
-      findText = document.getElementById("findtext").value.toLowerCase();
+   var text = NS.myText.value;
+   if (!matchCase) {
+      text = text.toLowerCase();
+      findText = findText.toLowerCase();
    }
 
-   if ((text == "") || (findText == "")) { return; }
+   if ((text == "") || (findText == "")) { return rsp; }
 
-   if (reverse == true) {
+   if (reverse) {
       pos = text.substring(0, NS.startSel).lastIndexOf(findText);
       if (pos == -1) {
          pos = text.substring(NS.startSel).lastIndexOf(findText);
@@ -3033,31 +3088,35 @@ function Find(reverse) {
          scroll -= half;
       }
 
-      document.getElementById("findcount").innerHTML = rsp;
       NS.myText.focus();
       MaintainSelection();
       NS.myText.scrollTop = scroll;
    } else {
-      document.getElementById("findcount").innerHTML = "\"" + findText + "\" not found.";
+      rsp = "\"" + findText + "\" not found.";
    }
+
+   try {
+      var f = NS.find.document.getElementById("findtext");
+      f.focus();
+      f.select();
+   } catch(e) {
+      //do nothing
+   }
+
+   NS.lastFind = findText;
+   NS.lastMatch = matchCase;
+   return rsp;
 }
 
-function FindCount() {
-   var text, findText
+function FindCount(findText, matchCase) {
+   var text = NS.myText.value;
 
-   if (document.getElementById("matchcase").checked == true) {
-      text = NS.myText.value;
-      findText = document.getElementById("findtext").value;
-   } else {
-      text = NS.myText.value.toLowerCase();
-      findText = document.getElementById("findtext").value.toLowerCase();
+   if (!matchCase) {
+      text = text.toLowerCase();
+      findText = findText.toLowerCase();
    }
 
-   var count = CountMatch(text, findText);
-
-   if(count != 0) {
-      document.getElementById("findcount").innerHTML = "\"" + findText + "\" Count: " + count + " matches.";
-   }
+   return CountMatch(text, findText);
 }
 
 function CountMatch(text, findText) {
@@ -3195,7 +3254,7 @@ function ShowSelection() {
    var tempHTML = ["<TABLE wrap='off'; style=\"font-family:'Arial';font-size:1.25rem;width:100%;display:block;overflow:none;\"><TR>",
                    "<TD style='width:90px;';>Length: " + NS.totalChars + "</TD>",
                    "<TD style='width:80px;';>Lines: " + NS.totalLines + "</TD>",
-                   "<TD style='width:100px;';>Ln: " + NS.lineNumber + " | Col:" + NS.column + "</TD>"];
+                   "<TD style='width:110px;';>Ln: " + NS.lineNumber + " | Col:" + NS.column + "</TD>"];
 
    if (NS.indent) {
       tempHTML.push("<TD style='width:20px;'; title='Auto-Indent';>IND</TD>");
@@ -4093,71 +4152,75 @@ function ClearTerminal() {
 
 function LogoChange(logo) {
    var mName, start, finish, remove, rsp;
-   var logos = [];
+   var D6Logo = "C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg";
+   var D8Logo = "C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg";
+   var PVALogo = "C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg";
+   var LLogo = "C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg";
+   var SLogo = "C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg";
+   var RLogo = "C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg";
    var errors = [];
    var fso = new ActiveXObject("Scripting.FileSystemObject")
    switch (logo) {
       case ("Delta6"):
          rsp = vMsgBox("Are you sure you want to use Delta 6 logos?", 4, "Logo Change");
-         if (rsp == 7) { return; }
-         logos.push("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg",
-                   "C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-6-Logo.jpg",
-                   "C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg");
+         if (rsp == 7) {
+            setTimeout(HideMenu, 10);
+            return;
+         }
+         try { fso.copyFile(D6Logo,LLogo) } catch(e) { errors.push("Delta 6 logo to LLogo failed") }
+         try { fso.copyFile(D6Logo,SLogo) } catch(e) { errors.push("Delta 6 logo to SLogo failed") }
+         try { fso.copyFile(PVALogo,RLogo) } catch(e) { errors.push("PVA logo to RLogo failed") }
          mName = "";
          break;
       case ("Delta8"):
          rsp = vMsgBox("Are you sure you want to use Delta 8 logos?", 4, "Logo Change");
-         if (rsp == 7) { return; }
-         logos.push("C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg",
-                   "C:\\Program Files (x86)\\PVAPortal\\Logos\\Delta-8-Logo.jpg",
-                   "C:\\Program Files (x86)\\PVAPortal\\Logos\\PVA-Logo.jpg");
+         if (rsp == 7) {
+            setTimeout(HideMenu, 10);
+            return;
+         }
+         try { fso.copyFile(D8Logo,LLogo) } catch(e) { errors.push("Delta 8 logo to LLogo failed") }
+         try { fso.copyFile(D8Logo,SLogo) } catch(e) { errors.push("Delta 8 logo to SLogo failed") }
+         try { fso.copyFile(PVALogo,RLogo) } catch(e) { errors.push("PVA logo to RLogo failed") }
          mName = "";
          break;
       default:
+         try { fso.deleteFile(LLogo) } catch(e) { errors.push("LLogo delete failed") }
+         try { fso.deleteFile(SLogo) } catch(e) { errors.push("SLogo delete failed") }
+         try { fso.deleteFile(RLogo) } catch(e) { errors.push("RLogo delete failed") }
          mName = logo;
-         if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\LLogo.jpg", false); }
-         if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\SLogo.jpg", false); }
-         if (fso.fileExists("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg")) { fso.deleteFile("C:\\Program Files (x86)\\PVAPortal\\Logos\\RLogo.jpg", false); }
-   }
-
-   for (var i = 0; i < logos.length; i++) {
-      if (!fso.fileExists(logos[i])) { errors.push(logos[i]); }
-   }
-
-   if (errors.length > 0) {
-      var errorMsg = "Operation canceled. Could not locate the following logo file(s):"
-      for (var i = 0; i < errors.length; i++) {
-         errorMsg += "\r\n" + (i+1) + ".) \"" + errors[i] + "\"";
-      }
-      vMsgBox(errorMsg, 0, "Logo Change");
-      setTimeout(HideMenu, 10);
-      return;
    }
 
    var objFile = fso.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 1);
    var strText = objFile.ReadAll();
    objFile.Close();
    start = strText.indexOf("\r\nModel=");
-   if (start == -1) {
-      vMsgBox("Failed to update SysConfig.ini", 0, "Logo Change");
-      setTimeout(HideMenu, 10);
-      return;
-   }
    finish = strText.indexOf("\r\n", start + 1)
-   if (finish == -1) {
-      vMsgBox("Failed to update SysConfig.ini", 0, "Logo Change");
+   if ((start == -1) || (finish == -1)) {
+      errors.push("Could not locate logo information in System.ini");
+   } else {
+      remove = strText.substring(start, finish);
+      strText = strText.replace(remove, "\r\nModel=\"" + mName + "\"");
+      try {
+         objFile = fso.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 2)
+         objFile.Write(strText);
+         objFile.Close();
+      } catch(e) {
+         errors.push("Failed to update System.ini");
+      }
+
+      MaintainSelection();
+      if (errors.length == 0) { vMsgBox("Logo change complete!", 0, "Logo Change"); }
+   }
+
+   if (errors.length > 0) {
+      var errorMsg = "Operation incomplete. The following errors occurred:"
+      for (var i = 0; i < errors.length; i++) {
+         errorMsg += "\r\n" + (i+1) + ".) " + errors[i];
+      }
+      vMsgBox(errorMsg, 0, "Logo Change");
       setTimeout(HideMenu, 10);
       return;
    }
-   remove = strText.substring(start, finish);
-   strText = strText.replace(remove, "\r\nModel=\"" + mName + "\"");
-
-   objFile = fso.OpenTextFile("C:\\Program Files (x86)\\PVAPortal\\Config\\SysConfig.ini", 2)
-   objFile.Write(strText);
-   objFile.Close
-
-   MaintainSelection();
-   vMsgBox("Logo change complete!", 0, "Logo Change");
    setTimeout(HideMenu, 10);
 }
 
@@ -4284,7 +4347,7 @@ function ErrorCheck() {
          element = SubLine[j];
          errorText += CheckREM(element, lineNum);
          element = SubLine[j].trim();
-         errorText += CheckParen(element, lineNum);
+         errorText += CheckQuotesThenParen(element, lineNum);
          errorText += CheckTab(element, lineNum);
          errorText += CheckJumpToLabel(element, lineNum, UniqueLabels);
          errorText += CheckLabelLength(element, lineNum);
@@ -4558,15 +4621,29 @@ function VarAssignInLine(line) {
    return "";
 }
 
+function CheckQuotesThenParen(element, line) {
+   var quote = CheckQuotes(element, line);
+   return (quote != "") ? quote : CheckParen(element, line);
+}
+
 function CheckParen(element, line) {
    if (element.substring(0,3) == "REM") { return ""; }
 
    var leftParen = 0;
    var rightParen = 0;
+   var openQuote = false;
    var tChar = "";
 
    for (var i = 0; i < element.length; i++) {
       tChar = element.charAt(i);
+      if ((openQuote == false) && (tChar == "\"")) {
+         openQuote = true;
+         continue;
+      }
+      if (openQuote == true) {
+         if (tChar == "\"") { openQuote = false; }
+         continue;
+      }
       if (tChar == "(") { leftParen++; }
       if (tChar == ")") { rightParen++; }
    }
@@ -4589,6 +4666,14 @@ function CheckTab(element, line) {
       return ErrorReturn(line, "Tab present", element);
    }
    return "";
+}
+
+function CheckQuotes(element, line) {
+   var quotes = 0
+   for (var i = 0; i < element.length; i++) {
+      if (element.charAt(i) == "\"") { quotes++ }
+   }
+   return (quotes % 2 == 0) ? "" : ErrorReturn(line, "Mismatched quotes", element);
 }
 
 function CheckAndPopulateDupLab(fileText) {
@@ -4971,7 +5056,7 @@ End Function
       <TD> Find</TD>
       <TD align="right"> Ctrl+F</TD>
    </TR>
-   <TR onclick="HideMenu()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR onclick="HideMenu();TextEdit('{F3}')"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Find Next</TD>
       <TD align="right"> F3</TD>
    </TR>
@@ -5609,20 +5694,6 @@ End Function
    <button class="button"; onclick="ReplacePort()"; style="width:32%;";>Update</button>
    <button class="button"; onclick="CloseComForm();ComSetupClick();"; style="width:32%;";>Refresh List</button>
    <button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
-</div>
-
-<div id="findform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:110px;width:320px;top:70px;left:calc(50% - 160px);display:none">
-   <div style="font-size:1.2rem;";>Find what: </div>
-   <div><textarea id="findtext" style="overflow:hidden;height:16px;width:95%;"></textarea></div>
-   <div style="width:100%;height:10px;">&nbsp;</div>
-   <div>
-      Match case:<input id="matchcase" type="checkbox"></input>
-      <button class="button"; onclick="Find(false)";>Find Next</button>&nbsp;
-      <button class="button"; onclick="Find(true)";>Find Prev</button>&nbsp;
-      <button class="button"; onclick="FindCount()";>Count</button>&nbsp;
-      <button class="button"; onclick="FindClose()";>Close</button>
-   </div>
-   <div><p id="findcount"><p></div>
 </div>
 
 <div id="optionsform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:285px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
