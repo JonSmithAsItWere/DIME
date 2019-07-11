@@ -2696,7 +2696,7 @@ function ChangeCursor(type) {
 
 function BackupMachineFiles() {
    var shell = new ActiveXObject("Shell.Application");
-   var folder;
+   var folder, rsp;
    document.getElementById("overlayText").innerHTML = "";
    document.getElementById("overlay").style.display = "block";
    try {
@@ -2709,18 +2709,30 @@ function BackupMachineFiles() {
    var backup = folder + "\\" + Today(1);
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    if (fso.FolderExists(backup)) {
-      var rsp = vMsgBox("Backup already exists for today's date in the selected folder. Do you want to continue?", 4, "Backup");
-      if (rsp == 7) {  // no
+      rsp = vMsgBox("Backup already exists for today's date in the selected folder. Do you want to continue?", 4, "Backup");
+      if (rsp == 7) { //no
          document.getElementById("overlay").style.display = "none";
          return;
       }
    }
 
+   rsp = vMsgBox(["Do you want to perform a quick backup?",
+                  "",
+                  "Please Note:",
+                  "- Clicking \"No\" will perform a standard backup.",
+                  "- Quick backups most notably omit .LLB's from the Dep and Lib folders.",
+                  "- The Vision folder (if present) will always be backed up in it's entirety."].join("\r\n"), 3, "Backup");
+
+   if (rsp == 2) { //cancel
+      document.getElementById("overlay").style.display = "none";
+      return;
+   }
+
    document.getElementById("overlayText").innerHTML = "Backup In Progress<br/>Please Wait...";
-   setTimeout(function() { CreatePortalBackup(backup); }, 50);
+   setTimeout(function() { CreatePortalBackup(backup, (rsp == 6)); }, 50);
 }
 
-function CreatePortalBackup(backup) {
+function CreatePortalBackup(backup, quick) {
    var path = "C:\\Program Files (x86)\\PVAPortal"
    var fldr, myEnum, path, fName
    var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -2731,35 +2743,40 @@ function CreatePortalBackup(backup) {
 
    fso.CopyFolder(path + "\\Config", backup + "\\Config")
 
-   fldr = fso.GetFolder(path + "\\Dep");
-   myEnum = new Enumerator(fldr.SubFolders);
-   while(!myEnum.atEnd()) {
-      fName = backup + "\\Dep\\" + myEnum.item().Name;
-      if (!fso.FolderExists(fName)) { fso.CreateFolder(fName); }
-      if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(fName + "\\Config"))) { fso.CreateFolder(fName + "\\Config"); }
-      if ((fso.FolderExists(myEnum.item().Path + "\\Docs")) && (!fso.FolderExists(fName + "\\Docs"))) { fso.CreateFolder(fName + "\\Docs"); }
-      try { fso.CopyFile(myEnum.item().Path + "\\*.ini", fName); } catch(e) {}
-      try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", fName + "\\Config"); } catch(e) {}
-      try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.cfg", fName + "\\Config"); } catch(e) {}  // for PartDataType.cfg in _PartManager
-      try { fso.CopyFile(myEnum.item().Path + "\\Docs\\*.txt", fName + "\\Docs"); } catch(e) {}
-      myEnum.moveNext();
-   }
-
-   fldr = fso.GetFolder(path + "\\Lib");
-   myEnum = new Enumerator(fldr.SubFolders);
-   while(!myEnum.atEnd()) {
-      fName = backup + "\\Lib\\" + myEnum.item().Name;
-      if (!fso.FolderExists(fName)) { fso.CreateFolder(fName); }
-      if (myEnum.item().Name == "Vision") {
-         try { fso.CopyFolder(myEnum.item().Path, fName) } catch(e) {}
-      } else {
+   if (quick) {
+      fldr = fso.GetFolder(path + "\\Dep");
+      myEnum = new Enumerator(fldr.SubFolders);
+      while(!myEnum.atEnd()) {
+         fName = backup + "\\Dep\\" + myEnum.item().Name;
+         if (!fso.FolderExists(fName)) { fso.CreateFolder(fName); }
          if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(fName + "\\Config"))) { fso.CreateFolder(fName + "\\Config"); }
          if ((fso.FolderExists(myEnum.item().Path + "\\Docs")) && (!fso.FolderExists(fName + "\\Docs"))) { fso.CreateFolder(fName + "\\Docs"); }
          try { fso.CopyFile(myEnum.item().Path + "\\*.ini", fName); } catch(e) {}
          try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", fName + "\\Config"); } catch(e) {}
+         try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.cfg", fName + "\\Config"); } catch(e) {}  // for PartDataType.cfg in _PartManager
          try { fso.CopyFile(myEnum.item().Path + "\\Docs\\*.txt", fName + "\\Docs"); } catch(e) {}
+         myEnum.moveNext();
       }
-      myEnum.moveNext();
+
+      fldr = fso.GetFolder(path + "\\Lib");
+      myEnum = new Enumerator(fldr.SubFolders);
+      while(!myEnum.atEnd()) {
+         fName = backup + "\\Lib\\" + myEnum.item().Name;
+         if (!fso.FolderExists(fName)) { fso.CreateFolder(fName); }
+         if (myEnum.item().Name == "Vision") {
+            try { fso.CopyFolder(myEnum.item().Path, fName) } catch(e) {}
+         } else {
+            if ((fso.FolderExists(myEnum.item().Path + "\\Config")) && (!fso.FolderExists(fName + "\\Config"))) { fso.CreateFolder(fName + "\\Config"); }
+            if ((fso.FolderExists(myEnum.item().Path + "\\Docs")) && (!fso.FolderExists(fName + "\\Docs"))) { fso.CreateFolder(fName + "\\Docs"); }
+            try { fso.CopyFile(myEnum.item().Path + "\\*.ini", fName); } catch(e) {}
+            try { fso.CopyFile(myEnum.item().Path + "\\Config\\*.ini", fName + "\\Config"); } catch(e) {}
+            try { fso.CopyFile(myEnum.item().Path + "\\Docs\\*.txt", fName + "\\Docs"); } catch(e) {}
+         }
+         myEnum.moveNext();
+      }
+   } else {
+      fso.CopyFolder(path + "\\Dep", backup + "\\Dep")
+      fso.CopyFolder(path + "\\Lib", backup + "\\Lib")
    }
 
    var wScript = new ActiveXObject("WScript.Shell");
@@ -2783,11 +2800,11 @@ function CreatePortalBackup(backup) {
 
 function UploadMachineFiles() {
    var shell = new ActiveXObject("Shell.Application");
-   var folder;
-   vMsgBox(["Choose Folder to Upload. The following actions will occur:",
+
+   vMsgBox(["Choose Folder to Upload. The following actions will be attempted:",
             "",
             "1.) Copy \"\\Config\", \"\\Dep\", and \"\\Lib\" folders to the correct Portal locations",
-            "2.) Copy \"DEFAULT.ini\" file, \"PathMaster.ini\" and \"\\Plugins\" folder to the correct PathMaster locations",
+            "2.) Copy \"DEFAULT.ini\", \"PathMaster.ini\" and \"\\Plugins\" folder to the correct PathMaster locations",
             "3.) Delete Log.dat Portal file to update the default log headers",
             "4.) Copy any main files to the desktop (any .TXT or .DMC files that start with W, C, A, or S)"].join("\r\n"), 0, "Upload Machine Files")
    try {
@@ -2803,12 +2820,43 @@ function UploadMachineFiles() {
 
 function UploadFilesToPortal(folder) {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
-   if (fso.FolderExists(folder + "\\Config")) { fso.CopyFolder(folder + "\\Config", "C:\\Program Files (x86)\\PVAPortal\\Config"); }
-   if (fso.FolderExists(folder + "\\Dep")) { fso.CopyFolder(folder + "\\Dep", "C:\\Program Files (x86)\\PVAPortal\\Dep"); }
-   if (fso.FolderExists(folder + "\\Lib")) { fso.CopyFolder(folder + "\\Lib", "C:\\Program Files (x86)\\PVAPortal\\Lib"); }
+   var path = "C:\\Program Files (x86)\\PVAPortal";
+   var extra = [];
+   var rsp = 0;
+
+   if (fso.FolderExists(folder + "\\Lib")) {
+
+      try {
+         var current = fso.GetFolder(path + "\\Lib");
+      } catch(e) {
+         document.getElementById("overlay").style.display = "none";
+         vMsgBox("\"" + path + "\\Lib\" folder missing. Operation canceled.", 0, "Upload Machine Files");
+         return;
+      }
+      myEnum = new Enumerator(current.SubFolders);
+      while(!myEnum.atEnd()) {
+         if (!fso.FolderExists(folder + "\\Lib\\" + myEnum.item().Name)) { extra.push(myEnum.item().Name) }
+         myEnum.moveNext();
+      }
+
+      if (extra.length > 0) {
+         rsp = vMsgBox("The following Portal Lib folders are missing from the Upload folder selection:\r\n\r\n" + extra.join("\r\n") + "\r\n\r\nDo you want to delete the extra folders on upload?", 4, "Upload Machine Files")
+      }
+
+      if(rsp == 6) {
+         for (var i = 0; i < extra.length; i++) {
+            fso.DeleteFolder(path + "\\Lib\\" + extra[i]);
+         }
+      }
+
+      fso.CopyFolder(folder + "\\Lib", path + "\\Lib");
+   }
+
+   if (fso.FolderExists(folder + "\\Config")) { fso.CopyFolder(folder + "\\Config", path + "\\Config"); }
+   if (fso.FolderExists(folder + "\\Dep")) { fso.CopyFolder(folder + "\\Dep", path + "\\Dep"); }
    if (fso.FolderExists(folder + "\\Plugins")) { fso.CopyFolder(folder + "\\Plugins", "C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\Plugins"); }
 
-   try { fso.DeleteFile("C:\\Program Files (x86)\\PVAPortal\\Data\\Log.dat"); } catch(e) {}
+   try { fso.DeleteFile(path + "\\Data\\Log.dat"); } catch(e) {}
    try { fso.CopyFile(folder + "\\PathMaster.ini", "C:\\Program Files (x86)\\PVA\\PathMaster\\PathMaster.INI") } catch(e) {}
    try { fso.CopyFile(folder + "\\DEFAULT.ini", "C:\\Program Files (x86)\\PVA\\PathMaster\\DB\\DEFAULT.INI") } catch(e) {}
 
@@ -3042,7 +3090,7 @@ function FindShow() {
 }
 
 function FindClose() {
-   NS.find.close();
+   try { NS.find.close(); } catch(e) {}
 }
 
 function Find(findText, matchCase, reverse) {
@@ -3306,7 +3354,7 @@ function GalilConnect(init) {
             case (7): //no
                setTimeout(GalilConnect, 30);
                return;
-            default: //no and cancel do nothing
+            default: //cancel (do nothing)
          }
          GalilDisconnect();
          return;
@@ -3406,7 +3454,7 @@ function UploadToGalil() {
       NS.galil.command("HX;BP0;XQ" + label);
 
       if (gcompressed) {
-         vMsgBox("Warning - The Galil attempted to compress the program. All whitespace removed.\r\n\r\nUpload Complete!", 0, "Upload");
+         vMsgBox("WARNING! The main downloaded had too many lines after being compressed. The main was further compressed to compensate. All whitespace was removed as well as \"'\" comments.\r\n\r\nUpload Complete!", 16, "Upload");
       } else {
          vMsgBox("Upload Complete!", 0, "Upload");
       }
