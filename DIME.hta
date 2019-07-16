@@ -1589,6 +1589,7 @@ NS = {
                "",
                "REM===============================Check Variables===============================",
                "#YYY_CHK",
+               "   INIT=0",
                "EN",
                "",
                "REM===============================Reset Variables===============================",
@@ -1613,9 +1614,9 @@ NS = {
                "#YYY_SUB",
                "EN",
                "",
-               "REM==============================Module Messages=================================",
+               "REM==============================Module Messages================================",
                "",
-               "REM===============================End of Module=================================="].join("\r\n"),
+               "REM===============================End of Module================================="].join("\r\n"),
    tShortcuts: ["<table>",
                 "<tr><td><b>Key</b></td><td><b>Description</b></td></tr>",
                 "<tr><td>Up</td><td>Scrolls up through command history</td></tr>",
@@ -1645,9 +1646,9 @@ NS = {
                 "<tr><td>Ctrl+G</td><td>GoTo Line</td></tr>",
                 "<tr><td>Ctrl+I</td><td>Toggle Auto-Indent</td></tr>",
                 "<tr><td>Ctrl+L</td><td>Jump To Label</td></tr>",
+                "<tr><td>Ctrl+Shift+L</td><td>Return From Label Jump</td></tr>",
                 "<tr><td>Ctrl+N</td><td>New</td></tr>",
                 "<tr><td>Ctrl+O</td><td>Open</td></tr>",
-                "<tr><td>Ctrl+R</td><td>Return From Label Jump</td></tr>",
                 "<tr><td>Ctrl+S</td><td>Save</td></tr>",
                 "<tr><td>Ctrl+T</td><td>Toggle Main Text View</td></tr>",
                 "<tr><td>Ctrl+U</td><td>Upload Main To Galil</td></tr>",
@@ -2480,16 +2481,17 @@ function PressCapture(e) {
          ToggleIndent();
          break;
       case 12:
-         FindLabel();
+         if(e.shiftKey) {
+            ReturnToLine();
+         } else {
+            FindLabel();
+         }
          break;
       case 14:
          NewText();
          break;
       case 15:
          Open();
-         break;
-      case 18:
-         ReturnToLine();
          break;
       case 19:
          Save();
@@ -2594,6 +2596,8 @@ function OpenIt() {
       NS.SavedText = NS.myText.value;
    }
    DisplayTitle();
+   NS.myText.setSelectionRange(0,0);
+   SetSelection();
 }
 
 function Open() {
@@ -2676,9 +2680,9 @@ function formatDateTime(date) {
       month = '' + (d.getMonth() + 1),
       day = '' + d.getDate(),
       year = d.getFullYear(),
-      hour = d.getHours(),
-      minute = d.getMinutes(),
-      second = d.getSeconds();
+      hour = d.getHours().toString(),
+      minute = d.getMinutes().toString(),
+      second = d.getSeconds().toString();
 
    if (month.length < 2) month = '0' + month;
    if (day.length < 2) day = '0' + day;
@@ -3071,7 +3075,7 @@ function ReplacePort() {
 }
 
 function FindShow() {
-   if (NS.inFind == false) {
+   if (!NS.inFind) {
       if (NS.myFrameDiv.style.display == "none") { return; }
       CancelOptionsClick();
       CloseComForm();
@@ -3287,12 +3291,21 @@ function SetSelection() {
          NS.totalChars = NS.myText.value.length + NS.totalLines - 1;
          var tempChar = 0;
          var i = 0;
-         while ((tempChar + tempLines[i].length) < NS.startSel) {
-            tempChar += tempLines[i].length + 1;
-            i++;
+         while (i < tempLines.length) {
+            if ((tempChar + tempLines[i].length) < NS.startSel) {
+               tempChar += tempLines[i].length + 1;
+               i++; 
+            } else {
+               break;
+            }
          }
-         NS.column = NS.startSel - tempChar + 1;
-         NS.lineNumber = i + 1;
+         if (i == tempLines.length) {
+            NS.column = tempLines[NS.totalLines-1].length + 1;
+            NS.lineNumber = NS.totalLines;
+         } else {
+            NS.column = NS.startSel - tempChar + 1;
+            NS.lineNumber = i + 1;
+         }
       }
       ShowSelection();
    }, 10);
@@ -3372,7 +3385,7 @@ function GalilConnect(init) {
    document.getElementById("menuConnect").style.display = "none";
    document.getElementById("disconnect").style.display = "inline-block";
    document.getElementById("menuDisconnect").style.display = "inline-block";
-   ShowSelection();
+   SetSelection();
 }
 
 function GalilDisconnect() {
@@ -3391,7 +3404,7 @@ function GalilDisconnect() {
    document.getElementById("menuConnect").style.display = "inline-block";
    document.getElementById("disconnect").style.display = "none";
    document.getElementById("menuDisconnect").style.display = "none";
-   ShowSelection();
+   SetSelection();
 }
 
 function UploadToGalil() {
@@ -4051,8 +4064,8 @@ function ShowMainText() {
 }
 
 function SplitScreen() {
-   NS.myWatch.style.width = "49%";
-   NS.myFrameDiv.style.width = "49%";
+   NS.myWatch.style.width = "320px";
+   NS.myFrameDiv.style.width = "calc(100% - 325px)";
    NS.myWatch.style.display = "inline-block";
    NS.myFrameDiv.style.display = "inline-block";
    document.getElementById("sidebarFull").style.display = "inline-block";
