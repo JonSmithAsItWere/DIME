@@ -155,12 +155,12 @@ Link = {   // NOTE: '"' and '\' characters in the links below must be escaped wi
 // Lib Name: [filepath, string to match device port, number of device port (initialized to 0)]
 INI = {
       IDReaders: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\IDReaders\\IDReaders.ini", "Port=com", 0],
-      Indicators: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\Indicators\\Indicators.ini", "Port=com", 0],
+      Indicators: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\Indicators\\Indicators.ini", "CommPort=\"COM", 0],
       Laser: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\Laser\\Laser.ini", "Port=com", 0],
       Scales: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\Scales\\Scales.ini", "Comm Port=", 0],
       SerialRelay: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\SerialRelay\\SerialRelay.ini", "Port=COM", 0],
-      ShotScale: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\ShotScale\\ShotScale.ini", "Port=COM", 0],
-      Watlow: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\Watlow\\Watlow.ini", "Port=COM", 0]
+      ShotScale: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\ShotScale\\ShotScale.ini", "Port=\"COM", 0],
+      Watlow: ["C:\\Program Files (x86)\\PVAPortal\\Lib\\Watlow\\Watlow.ini", "Port=", 0]
 };
 
 NS = {
@@ -3904,11 +3904,14 @@ function ReplacePort() {
    var iniPath = INI[ini][0];
    var deviceNum = document.getElementById("inidevice").value;
    var format = INI[ini][1];
+   var endQuote = "";
    var port = document.getElementById("comdevice").value;
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var oFile = fso.OpenTextFile(iniPath, 1);
    var sTemp = oFile.ReadAll();
    oFile.Close();
+
+   if (format.indexOf("\"") != -1) { endQuote = "\""; }
 
    var count = 0;
    var start = -1;
@@ -3923,7 +3926,7 @@ function ReplacePort() {
       vMsgBox("No change was needed!", 0, "COM Port Setup");
       return;
    }
-   newText = sTemp.substring(0, start) + newText.replace(replacement, format + port);
+   newText = sTemp.substring(0, start) + newText.replace(replacement, format + port + endQuote);
    if (newText != sTemp) {
       var newIniPath = iniPath + ".bak";
       // for (var i = 1; fso.FileExists(newIniPath); i++) {
@@ -4159,7 +4162,7 @@ function SetSelection() {
          while (i < tempLines.length) {
             if ((tempChar + tempLines[i].length) < NS.startSel) {
                tempChar += tempLines[i].length + 1;
-               i++; 
+               i++;
             } else {
                break;
             }
@@ -4284,10 +4287,16 @@ function UploadToGalil() {
       var tCon = NS.galil.address;
       var errorText = ErrorCheck();
       if (errorText != "") {
-         //var rsp = vMsgBox("Line\tError Type\t\tElement Text\r\n-------------------------------------------------------------------------------\r\n" + errorText + "\r\n\r\nWould you like to download anyway?", 4, "Error Found. Continue?");
          var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to download anyway?", 4, "Warning");
          if (rsp == 7) { //no
             document.getElementById("overlay").style.display = "none";
+            ShowModeless(["<table>",
+                          "<col width=\"50px\">",
+                          "<col width=\"250px\">",
+                          "<col width=\"220px\">",
+                          "<tr style=\"cursor:default;\";><td><b>Line</b></td><td><b>Error Type</b></td><td><b>Element Text</b></td></tr>",
+                          errorText,
+                          "</table>"].join(""), "Error Check", "div", 550, 300);
             return;
          }
       }
@@ -4400,7 +4409,7 @@ function arrayRead(val) {
    var arr, start, end, bound;
    var temp = "";
    var concat = [];
-   arr = val.substring(0,open);
+   arr = val.substring(0, open);
    try {
       bound = NS.galil.commandValue("MG " + arr + "[-1]") - 1;
    } catch(e) {
@@ -4415,8 +4424,8 @@ function arrayRead(val) {
    }
    if (isNaN(start) || isNaN(end)) { return ""; }
 
-   start = Max(start, 0);
-   end = Min(end, bound);
+   start = Max(parseInt(start), 0);
+   end = Min(parseInt(end), bound);
 
    for (var i = start; i <= end; i++) {
       concat.push(arr + "[" + i + "]");
@@ -4690,7 +4699,6 @@ function showVariableWatchTab() {
 }
 
 function showMainIOTab() {
-   var co, i, j, k;
    document.getElementById("resetWatch").disabled = true;
    document.getElementById("varWatch").style.display = "none";
    document.getElementById("mainIO").style.display = "block";
