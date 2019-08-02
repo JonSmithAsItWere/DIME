@@ -2659,9 +2659,9 @@ function VersionMatch() {
    var latest = DownloadFromBitBucket();
    if (latest[0].substring(0,6) != "Failed") {
       var str = "version=\"";
-      var start = latest.toLowerCase().indexOf(str) + str.length;
-      var end = start + latest.substring(start).indexOf("\"");
-      var ver = latest.substring(start, end);
+      var start = latest[0].toLowerCase().indexOf(str) + str.length;
+      var end = start + latest[0].substring(start).indexOf("\"");
+      var ver = latest[0].substring(start, end);
       if (ver != NS.HTA.version) {
          return [false, latest[0], latest[1]];
       }
