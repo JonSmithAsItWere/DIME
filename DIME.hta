@@ -2643,13 +2643,13 @@ function UpdateToNewVersion(latest, notes) {
    SaveOptionsClick(false);
    var wScript = new ActiveXObject("WScript.Shell");
    wScript.Run(NS.HTA.commandLine);
-   try {
-      var notesPath = NS.Path + "\\Version History.txt";
-      var f = fso.CreateTextFile(notesPath, true);
-      f.Write(notes);
-      f.Close();
-      wScript.Run(notesPath)
-   } catch(e) {}
+
+   var notesPath = NS.Path + "Version History.txt";
+   var n = fso.CreateTextFile(notesPath, true);
+   n.Write(notes);
+   n.Close();
+   wScript.Run("\"" + notesPath + "\"")
+
    window.close();
    return true;
 }
