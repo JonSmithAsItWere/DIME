@@ -2643,8 +2643,8 @@ function UpdateToNewVersion(latest, notes) {
    SaveOptionsClick(false);
    var wScript = new ActiveXObject("WScript.Shell");
    wScript.Run(NS.HTA.commandLine);
-   try { 
-      var notesPath = NS.FilePath + "\\Version History.txt";
+   try {
+      var notesPath = NS.Path + "\\Version History.txt";
       var f = fso.CreateTextFile(notesPath, true);
       f.Write(notes);
       f.Close();
@@ -2755,6 +2755,11 @@ function HandleOnLoad() {
       NS.FileName = cl.substring(x+2).trim();
    }
 
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   NS.Path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("\\") + 1);
+   NS.TempPath = fso.GetSpecialFolder(2) + "\\temp.txt";
+   NS.FindPath = fso.GetSpecialFolder(2) + "\\temp.htm";
+
    // check for new version if not opening a temp file (compress, decompress, download from galil, etc.)
    var temp = NS.FileName.substring(NS.FileName.lastIndexOf("\\") + 1, NS.FileName.lastIndexOf("."));
    if ((temp != "temp") && (NS.UserName != "ndouty")) {
@@ -2775,10 +2780,6 @@ function HandleOnLoad() {
 
    document.getElementById("overlay").style.display = "none";
 
-   var fso = new ActiveXObject("Scripting.FileSystemObject");
-   NS.Path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("\\") + 1);
-   NS.TempPath = fso.GetSpecialFolder(2) + "\\temp.txt";
-   NS.FindPath = fso.GetSpecialFolder(2) + "\\temp.htm";
 
    var findWindow = fso.createTextFile(NS.FindPath, true);
    findWindow.Write(NS.FindHTM.replace(/></g,">\r\n<").replace(/function/g,"\r\nfunction"));
