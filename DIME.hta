@@ -2625,7 +2625,7 @@ function CheckModified() {
    }, 10)
 }
 
-function UpdateToNewVersion(latest) {
+function UpdateToNewVersion(latest, notes) {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    try {
       fso.CopyFile(window.location.pathname, window.location.pathname + ".bak", true);
@@ -2643,6 +2643,13 @@ function UpdateToNewVersion(latest) {
    SaveOptionsClick(false);
    var wScript = new ActiveXObject("WScript.Shell");
    wScript.Run(NS.HTA.commandLine);
+   try { 
+      var notesPath = NS.FilePath + "\\Version History.txt";
+      var f = fso.CreateTextFile(notesPath, true);
+      f.Write(notes);
+      f.Close();
+      wScript.Run(notesPath)
+   } catch(e) {}
    window.close();
    return true;
 }
@@ -2650,21 +2657,23 @@ function UpdateToNewVersion(latest) {
 // returns array of [bool version matches, string latest file]
 function VersionMatch() {
    var latest = DownloadFromBitBucket();
-   if (latest.substring(0,6) != "Failed") {
+   if (latest[0].substring(0,6) != "Failed") {
       var str = "version=\"";
       var start = latest.toLowerCase().indexOf(str) + str.length;
       var end = start + latest.substring(start).indexOf("\"");
       var ver = latest.substring(start, end);
       if (ver != NS.HTA.version) {
-         return [false, latest];
+         return [false, latest[0], latest[1]];
       }
    }
-   return [true, latest];
+   return [true, latest[0], latest[1]];
 }
 
 function DownloadFromBitBucket() {
    var auth = "cndpbm5lOnB2YTEyMyEh"
    var filename = DIME.applicationName + ".hta";
+   var notes = "Version History.txt";
+   var return1, return2;
    try {
       var http = new ActiveXObject("WINHTTP.WinHTTPRequest.5.1");
       with (http) {
@@ -2672,13 +2681,22 @@ function DownloadFromBitBucket() {
          SetRequestHeader("Authorization", "Basic " + auth);
          Send();
          if (Status == 200) {
-            return ResponseText;
+            return1 = ResponseText;
          } else {
-            return "Failed to Retrieve From BitBucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
+            return1 = "Failed to Retrieve From BitBucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
          }
+         Open("GET", "https://bitbucket.org/!api/2.0/repositories/pvaprogramming/dime/src/master/" + notes, false)
+         SetRequestHeader("Authorization", "Basic " + auth);
+         Send();
+         if (Status == 200) {
+            return2 = ResponseText;
+         } else {
+            return2 = "Failed to Retrieve From BitBucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
+         }
+         return [return1, return2];
       }
    } catch (e) {
-      return "Failed to Retrieve From BitBucket!\r\n\r\n" + e.number + ": " + e.description;
+      return ["Failed to Retrieve From BitBucket!\r\n\r\n" + e.number + ": " + e.description, "Failed"];
    }
 }
 
@@ -2744,7 +2762,7 @@ function HandleOnLoad() {
          document.getElementById("overlay").style.display = "block";
          var ver = VersionMatch();
          if (ver[0] == false) {
-            var updated = UpdateToNewVersion(ver[1]);
+            var updated = UpdateToNewVersion(ver[1],ver[2]);
             if (updated) { return; }
             vMsgBox("Update failed for unknown reason.", 0, "Update");
          } else {
