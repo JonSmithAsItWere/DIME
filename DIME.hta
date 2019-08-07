@@ -3930,6 +3930,7 @@ function ShowIOForm() {
       document.getElementById("ioname").selectedIndex = 0;
       document.getElementById("ioassign").selectedIndex = 0;
       document.getElementById("ioform").style.display = "block";
+      document.getElementById("iovalue").value = document.getElementById("ioassign").value;
    } else {
       CloseIOForm();
    }
