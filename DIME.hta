@@ -3896,13 +3896,18 @@ function ShowIOForm() {
       var opt;
       var fso = new ActiveXObject("Scripting.FileSystemObject");
       var IO = GetAllIO();
-      
+
+      if (IO[0].length == 0) {
+         vMsgBox("No IO assignments found!", 0, "IO Setup");
+         return;
+      }
+
       if (IO[1].length != 0) {
          var i = 1;
          vMsgBox("The following IO have multiple assignments:\r\n" + i++ + ".) " + IO[1].join("\r\n" + i++ + ".) ") + "\r\n\r\nPlease resolve before using this feature.", 0, "IO Setup");
          return;
       }
-      
+
       IO[0].sort(sortFunction);
 
       document.getElementById("overlayText").innerHTML = "";
