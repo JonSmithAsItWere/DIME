@@ -1,17 +1,21 @@
 DIME
 Version History
 
+v1.06
+- Added "IO Setup" functionality under "Utilities"
+- Updated String Manipulation module in code snippets
+
 v1.05
-- Added "Reload" functionality to allow the user to update their current text with the saved text.
-  - This will allow users who edit in Notepad++ to reload there changes instantaneously.
-  - A backup is created in case of accidental clicks.
+- Added "Reload" functionality to allow the user to update their current text with the saved text
+  - This will allow users who edit in Notepad++ to reload there changes instantaneously
+  - A backup is created in case of accidental clicks
   - Shortcut is Ctrl+R
 - Fixed issue where "Return from Label Jump" was not working properly
 - Moved "Poll Interval" from the main button bar to the variable watch / IO button bar
 
 v1.04
 - Fixed Indicators, ShotScale, and Watlow COM port setup operations
-- Saying "no" to "Download anyway?" when download a main with errors will now display errors afterwards.
+- Saying "no" to "Download anyway?" when download a main with errors will now display errors afterwards
 - Fixed issue with displaying array contents in variable watch
 
 v1.03

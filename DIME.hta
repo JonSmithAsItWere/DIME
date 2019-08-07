@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.05"
+   version="1.06"
    windowState="normal"
 />
 
@@ -787,7 +787,6 @@ NS = {
                "   EXP=0",
                "   CUR_IDX=0",
                "   NUM=0",
-               "   POWRET=0",
                "   SuCHAR=0",
                "   tLEN=0",
                "   FndDec=0",
@@ -1179,8 +1178,8 @@ NS = {
                "REM    ^c &Return Char",
                "REM=============================================================================",
                "#GTA_CHR",
-               "   ^b=@INT[^b]%6",
-               "   POWRET=3-^b",
+               "   ^b=@INT[^b]",
+               "   POWRET=3-(^b%6)",
                "   JS#POW($100,POWRET,&POWRET)",
                "   IF(POWRET<>$01000000)",
                "      ^c=(($FF*(POWRET))&^a[@INT[^b/6]])",
@@ -3116,6 +3115,10 @@ function KeyCapture(element, e) {
                e.preventDefault();
                CloseComForm();
             }
+            if (document.getElementById("ioform").style.display != "none") {
+               e.preventDefault();
+               CloseIOForm();
+            }
             return;
          case (112):  //F1
             switch (element.id) {
@@ -3848,6 +3851,117 @@ function ServerUpload(folder, serverLocation) {
 
    Run("\"" + destination + "\"", 2);
    document.getElementById("overlay").style.display = "none";
+}
+
+function GetAllIO() {
+   var lines = NS.myText.value.split("\n");
+   var label = /^#\w{1,5}IO$/;    //regex for start of #xxx_IO labels
+   var io = /^[io]\w{1,7}=/;        //regex for input or output
+   var res = [];
+   var ret = [];
+   var error = [];
+   var line, name, val;
+   var exceptions = ["iNA", "oNA", "iLEFTSM", "iRIGHTSM", "iDNRD_SV", "iUPBA_SV"];
+   for (var i = 0; i < lines.length; i++) {
+      line = lines[i].trim();
+      if (label.test(line)) {
+         while (line != "EN") {
+            line = lines[i].trim()
+            if (io.test(line)) {
+               name = line.substring(0,line.indexOf("="));
+               val = line.substring(line.indexOf("=") + 1);
+               if (res.indexOf(name) == -1) {
+                  res.push(name);
+                  if (exceptions.indexOf(name) == -1) {
+                     ret.push([name, val]);
+                  }
+               } else {
+                  if (error.indexOf(name) == -1) {
+                     error.push(name);
+                  }
+               }
+            }
+            i++
+         }
+      }
+   }
+   return [ret, error];
+}
+
+function ShowIOForm() {
+   if (document.getElementById("ioform").style.display == "none") {
+      CancelOptionsClick();
+      FindClose();
+
+      var opt;
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var IO = GetAllIO();
+      
+      if (IO[1].length != 0) {
+         var i = 1;
+         vMsgBox("The following IO have multiple assignments:\r\n" + i++ + ".) " + IO[1].join("\r\n" + i++ + ".) ") + "\r\n\r\nPlease resolve before using this feature.", 0, "IO Setup");
+         return;
+      }
+      
+      IO[0].sort(sortFunction);
+
+      document.getElementById("overlayText").innerHTML = "";
+      document.getElementById("overlay").style.display = "block";
+      document.getElementById("ioname").innerHTML = "";
+      document.getElementById("ioassign").innerHTML = "";
+      document.getElementById("iovalue").value = "";
+
+      // get number of ports
+      for(var i = 0; i < IO[0].length; i++) {
+         opt = document.createElement("Option");
+         opt.value = IO[0][i][0];
+         opt.innerHTML = IO[0][i][0];
+         document.getElementById("ioname").add(opt);
+         opt = document.createElement("Option");
+         opt.value = IO[0][i][1];
+         opt.innerHTML = IO[0][i][1];
+         document.getElementById("ioassign").add(opt);
+      }
+      document.getElementById("ioname").selectedIndex = 0;
+      document.getElementById("ioassign").selectedIndex = 0;
+      document.getElementById("ioform").style.display = "block";
+   } else {
+      CloseIOForm();
+   }
+}
+
+function sortFunction(a, b) {
+    if (a[0] === b[0]) {
+        return 0;
+    }
+    else {
+        return (a[0] < b[0]) ? -1 : 1;
+    }
+}
+
+function CloseIOForm() {
+   document.getElementById("ioform").style.display = "none";
+   document.getElementById("overlay").style.display = "none";
+}
+
+function UpdateIO() {
+   var val = document.getElementById("iovalue").value;
+   var ioName = document.getElementById("ioname").options[document.getElementById("ioname").selectedIndex];
+   var ioAssign = document.getElementById("ioassign").options[document.getElementById("ioassign").selectedIndex];
+   NS.myText.value = NS.myText.value.replace(ioName.value + "=" + ioAssign.value + "\n", ioName.value + "=" + val + "\n")
+   ioAssign.value = val;
+   ioAssign.innerHTML = val;
+}
+
+function SetIOScroll(scroll) {
+   document.getElementById("ioname").scrollTop = scroll;
+   document.getElementById("ioassign").scrollTop = scroll;
+}
+
+function SetIOIndex(index) {
+   document.getElementById("ioname").selectedIndex = index;
+   document.getElementById("ioassign").selectedIndex = index;
+   document.getElementById("iovalue").value = document.getElementById("ioassign").value;
 }
 
 function ComSetupClick() {
@@ -6114,6 +6228,10 @@ End Function
       <TD colspan="2"> COM Port Setup</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
+   <TR onclick="HideMenu();ShowIOForm()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD colspan="2"> IO Setup</TD>
+      <!-- <TD align="right"></TD> -->
+   </TR>
    <TR><TD colspan="2"><HR></TD></TR>
    <TR id="snippet"; onclick=""; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Code Snippets</TD>
@@ -6748,6 +6866,17 @@ End Function
    <br/><br/>
    <button class="button"; onclick="CloseCustomModule()"; style="width:49%;";>Cancel</button>
    <button class="button"; onclick="SubmitCustomModule()"; style="width:49%;";>Continue</button>
+</div>
+
+<div id="ioform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:230px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <select id="ioname"; size="10"; onscroll="SetIOScroll(this.scrollTop)"; onchange="SetIOIndex(this.selectedIndex)"; style="overflow-y:hidden;width:110px;display:inline-block";></select>
+   <select id="ioassign"; size="10"; onscroll="SetIOScroll(this.scrollTop)"; onchange="SetIOIndex(this.selectedIndex)"; style="width:calc(100% - 115px);display:inline-block";></select>
+   <br/><br/>
+   <div style="width:50px;font-size:1.2rem;display:inline-block;"><b>Value:</b></div>
+   <input id="iovalue"; maxlength="80"; style="width:calc(100% - 60px);display:inline-block;"></input>
+   <br/><br/>
+   <button class="button"; onclick="UpdateIO()"; style="width:49%;";>Update</button>
+   <button class="button"; onclick="CloseIOForm()"; style="width:49%;";>Exit</button>
 </div>
 
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
