@@ -3929,20 +3929,19 @@ function ShowIOForm() {
       }
       document.getElementById("ioname").selectedIndex = 0;
       document.getElementById("ioassign").selectedIndex = 0;
-      document.getElementById("ioform").style.display = "block";
       document.getElementById("iovalue").value = document.getElementById("ioassign").value;
+      document.getElementById("ioform").style.display = "block";
    } else {
       CloseIOForm();
    }
 }
 
 function sortFunction(a, b) {
-    if (a[0] === b[0]) {
-        return 0;
-    }
-    else {
-        return (a[0] < b[0]) ? -1 : 1;
-    }
+   if (a[0] === b[0]) {
+      return 0;
+   } else {
+      return (a[0] < b[0]) ? -1 : 1;
+   }
 }
 
 function CloseIOForm() {
