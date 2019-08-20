@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.06"
+   version="1.07"
    windowState="normal"
 />
 
@@ -188,6 +188,8 @@ NS = {
    indent: false,              //auto-indent setting
    inFind: false,
    find: {},
+   labelCheck: {},
+   errorCheck: {},
    lastFind: "",
    lastMatch: false,
    FindPath: "",
@@ -1118,7 +1120,7 @@ NS = {
                "#LEN_LP",
                "   ^b=^b+1",
                "   ^c=^c*10",
-               "   JP#LEN_LP,(^c<^a)",
+               "   JP#LEN_LP,(^c<=^a)",
                "EN,,^b",
                "",
                "REM========================================================",
@@ -2524,6 +2526,7 @@ NS = {
                 "<tr><td>F1</td><td>Help Window (focus dependent)</td></tr>",
                 "<tr><td>F3</td><td>Find Next</td></tr>",
                 "<tr><td>F7</td><td>Error Check</td></tr>",
+                "<tr><td>F8</td><td>Label Check</td></tr>",
                 "</table><br/><table>",
                 "<tr><td><b>Command</b></td><td><b>Description</b></td></tr>",
                 "<tr><td>^array[x]=\"string\"</td><td>Parses array into string segments</td></tr>",
@@ -2933,31 +2936,35 @@ function SaveOptionsClick(bool) {
    NS.valueBC = document.getElementById("myValueBC").value;
    NS.valueC = document.getElementById("myValueC").value;
 
-   //overwrite HTA with new variable values
-   var fso = new ActiveXObject("Scripting.FileSystemObject");
-   var f = fso.OpenTextFile(window.location.pathname, 1);
-   var temp = f.ReadAll();
-   f.Close();
-   temp = ReplaceVar(temp, "startLabel", NS.startLabel);
-   temp = ReplaceVar(temp, "textBC", NS.textBC);
-   temp = ReplaceVar(temp, "textC", NS.textC);
-   temp = ReplaceVar(temp, "popupBC", NS.popupBC);
-   temp = ReplaceVar(temp, "popupC", NS.popupC);
-   temp = ReplaceVar(temp, "terminalBC", NS.terminalBC);
-   temp = ReplaceVar(temp, "terminalC", NS.terminalC);
-   temp = ReplaceVar(temp, "responseBC", NS.responseBC);
-   temp = ReplaceVar(temp, "responseC", NS.responseC);
-   temp = ReplaceVar(temp, "variableBC", NS.variableBC);
-   temp = ReplaceVar(temp, "variableC", NS.variableC);
-   temp = ReplaceVar(temp, "valueBC", NS.valueBC);
-   temp = ReplaceVar(temp, "valueC", NS.valueC);
-   f = new ActiveXObject("Scripting.FileSystemObject").OpenTextFile(window.location.pathname, 2, true);
-   f.Write(temp);
-   f.Close();
-   document.getElementById("optionsform").style.display = "none";
-   if (bool) {
-      vMsgBox("Options have been saved!", 0, "Options")
+   try {
+      //overwrite HTA with new variable values
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+      var f = fso.OpenTextFile(window.location.pathname, 1);
+      var temp = f.ReadAll();
+      f.Close();
+      temp = ReplaceVar(temp, "startLabel", NS.startLabel);
+      temp = ReplaceVar(temp, "textBC", NS.textBC);
+      temp = ReplaceVar(temp, "textC", NS.textC);
+      temp = ReplaceVar(temp, "popupBC", NS.popupBC);
+      temp = ReplaceVar(temp, "popupC", NS.popupC);
+      temp = ReplaceVar(temp, "terminalBC", NS.terminalBC);
+      temp = ReplaceVar(temp, "terminalC", NS.terminalC);
+      temp = ReplaceVar(temp, "responseBC", NS.responseBC);
+      temp = ReplaceVar(temp, "responseC", NS.responseC);
+      temp = ReplaceVar(temp, "variableBC", NS.variableBC);
+      temp = ReplaceVar(temp, "variableC", NS.variableC);
+      temp = ReplaceVar(temp, "valueBC", NS.valueBC);
+      temp = ReplaceVar(temp, "valueC", NS.valueC);
+      f = new ActiveXObject("Scripting.FileSystemObject").OpenTextFile(window.location.pathname, 2, true);
+      f.Write(temp);
+      f.Close();
+      if (bool) {
+         vMsgBox("Options have been saved!", 0, "Options")
+      }
+   } catch(e) {
+      vMsgBox("Warning! Options failed to save!", 16, "Options")
    }
+   document.getElementById("optionsform").style.display = "none";
 }
 
 // use this to replace string namespace global variables
@@ -3050,7 +3057,7 @@ function Run(link, type) {;
    try{
       wScript.run(link);
    } catch(e) {
-      vMsgBox("Navigation failed. Unknown Error.", 0, "Links");
+      vMsgBox("Navigation failed. Unknown Error.", 0, "Navigation");
    }
 
    setTimeout(HideMenu,10);
@@ -3143,6 +3150,10 @@ function KeyCapture(element, e) {
          case (118):  //F7
             e.preventDefault();
             CheckMainProg();
+            return;
+         case (119):  //F8
+            e.preventDefault();
+            CheckLabels();
             return;
          default:
       }
@@ -3947,6 +3958,7 @@ function sortFunction(a, b) {
 function CloseIOForm() {
    document.getElementById("ioform").style.display = "none";
    document.getElementById("overlay").style.display = "none";
+   SetSelection();
 }
 
 function UpdateIO() {
@@ -4285,7 +4297,7 @@ function FindLabel(optLabel) {
                      document.getElementById("labels").add(opt);
                   }
                }
-               GoToLine(i + 1, label.length, false);
+               GoToLine(i + 1, label.length, true);
                return;
             }
          }
@@ -4446,14 +4458,15 @@ function UploadToGalil() {
       if (errorText != "") {
          var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to download anyway?", 4, "Warning");
          if (rsp == 7) { //no
+            try { NS.errorCheck.close(); } catch(e) {}
             document.getElementById("overlay").style.display = "none";
-            ShowModeless(["<table>",
-                          "<col width=\"50px\">",
-                          "<col width=\"250px\">",
-                          "<col width=\"220px\">",
-                          "<tr style=\"cursor:default;\";><td><b>Line</b></td><td><b>Error Type</b></td><td><b>Element Text</b></td></tr>",
-                          errorText,
-                          "</table>"].join(""), "Error Check", "div", 550, 300);
+            NS.errorCheck = ShowModeless(["<table>",
+                                          "<col width=\"50px\">",
+                                          "<col width=\"250px\">",
+                                          "<col width=\"220px\">",
+                                          "<tr style=\"cursor:default;\";><td><b>Line</b></td><td><b>Error Type</b></td><td><b>Element Text</b></td></tr>",
+                                          errorText,
+                                          "</table>"].join(""), "Error Check", "div", 550, 300);
             return;
          }
       }
@@ -5486,16 +5499,17 @@ function ErrorReturn(line, type, element) {
 
 function CheckMainProg() {
    var errorText = ErrorCheck();
+   try { NS.errorCheck.close() } catch(e) {}
    if (errorText == "") {
       vMsgBox("No Errors Found!", 0, "Error Check");
    } else {
-      ShowModeless(["<table>",
-                    "<col width=\"50px\">",
-                    "<col width=\"250px\">",
-                    "<col width=\"220px\">",
-                    "<tr style=\"cursor:default;\";><td><b>Line</b></td><td><b>Error Type</b></td><td><b>Element Text</b></td></tr>",
-                    errorText,
-                    "</table>"].join(""), "Error Check", "div", 550, 300);
+      NS.errorCheck = ShowModeless(["<table>",
+                                    "<col width=\"50px\">",
+                                    "<col width=\"250px\">",
+                                    "<col width=\"220px\">",
+                                    "<tr style=\"cursor:default;\";><td><b>Line</b></td><td><b>Error Type</b></td><td><b>Element Text</b></td></tr>",
+                                    errorText,
+                                    "</table>"].join(""), "Error Check", "div", 550, 300);
    }
 }
 
@@ -5611,8 +5625,8 @@ function DecompressMain() {
 // Start CheckMainProg Functions
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 function Check80Char(element, line) {
-   if ((element.length > 80) && (element.substring(0, 3) != "REM")) {
-      return ErrorReturn(line, "Line over 80 characters", element);
+   if ((element.length >= 80) && (element.substring(0, 3) != "REM")) {
+      return ErrorReturn(line, "Line is 80 or more characters", element);
    }
    return "";
 }
@@ -5811,11 +5825,8 @@ function CheckAndPopulateDupLab(fileText) {
                        "#SRF_ER",
                        "#PRO_REQ"];
 
-   for (i = 0; i < ignoreLabels.length; i++) {
-      if (res2.indexOf(ignoreLabels[i]) == -1) {
-         res2.push(ignoreLabels[i]);
-      }
-   }
+   res2 = res2.concat(ignoreLabels);
+
    return [res1, res2];
 }
 
@@ -5823,6 +5834,147 @@ function CheckAndPopulateDupLab(fileText) {
 // End CheckMainProg Functions
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
+
+function LabelReturn(label, type) {
+   return "<tr onclick='ReturnLabel(\"" + label + "\")';><td>" + label + "</td><td>" + type + "</td></tr>";
+}
+
+function CheckLabels() {
+   try { NS.labelCheck.close() } catch(e) {}
+   var labels = LabelCheck();
+   if (labels != "") {
+      NS.labelCheck = ShowModeless(["<table>",
+                                    "<col width=\"150px\">",
+                                    "<col width=\"170px\">",
+                                    "<tr style=\"cursor:default;\";><td><b>Label</b></td><td><b>Type</b></td></tr>",
+                                    labels,
+                                    "</table>"].join(""), "Label Check", "div", 350, 300);
+   } else {
+      vMsgBox("All labels are utilized!", 0, "Label Check")
+   }
+   
+}
+
+function LabelCheck() {
+   var MainText = NS.myText.value.split("\n");  //.replace(/\\r/g, "")
+   var SubLine = [];
+   var line = "";
+   var labelToCheck = "";
+   var index = 0;
+   var UnusedLabels = [];
+   var FallenLabels = [];
+   var IgnoredLabels = [];
+   var checking = false;
+   var ret = "";
+
+   for (var i = 0; i < MainText.length; i++) {
+      SubLine = MainText[i].split(";");
+      for (var j = 0; j < SubLine.length; j++) {
+         line = SubLine[j].trim();
+         if (LabelInLine(line) != "") {
+            if (UnusedLabels.indexOf(line) == -1) {
+               UnusedLabels.push(line);
+            }
+         }
+      }
+   }
+
+   for (var i = 0; i < MainText.length; i++) {
+      SubLine = MainText[i].split(";");
+      for (var j = 0; j < SubLine.length; j++) {
+         line = SubLine[j].trim();
+         labelToCheck = JumpInLine(line);
+         if (labelToCheck != "") {
+            index = UnusedLabels.indexOf(labelToCheck);
+            if (index != -1) {
+               UnusedLabels.splice(index, 1);
+            }
+         }
+      }
+   }
+
+   var ignoreLabels = ["#AMPERR",
+                       "#AUTO",
+                       "#AUTOERR",
+                       "#CMDERR",
+                       "#COMINT",
+                       "#ININT",
+                       "#LIMSWI",
+                       "#MCTIME",
+                       "#POSERR",
+                       "#SERERR",
+                       "#TCPERR",
+                       "#CUR_PRT",
+                       "#RESTART",
+                       "#DTLRA",
+                       "#DTLRB",
+                       "#DTLUP",
+                       "#DTLDW",
+                       "#INSPCT0",
+                       "#INSPCT1",
+                       "#VS_SNAP",
+                       "#L_RCALL",
+                       "#CHK_SRF",
+                       "#PREPROF",
+                       "#PROFILE",
+                       "#CALC_AV",
+                       "#G_RCALL",
+                       "#EOM",
+                       "#ANCALC",
+                       "#EN_FLSH",
+                       "#ENDERR",
+                       "#TE_RS",
+                       "#TE_RS2",
+                       "#FIX",
+                       "#ARR_FIX",
+                       "#PARAM",
+                       "#SET_FLO",
+                       "#GET_FLO",
+                       "#JDX_SET",
+                       "#PMP_SET",
+                       "#VPX_SET"];
+
+   for (var i = 0; i < ignoreLabels.length; i++) {
+      index = UnusedLabels.indexOf(ignoreLabels[i]);
+      if (index != -1) {
+         IgnoredLabels = IgnoredLabels.concat(UnusedLabels.splice(index, 1));
+      }
+   }
+
+   for (var i = MainText.length - 1; i >= 0; i--) {
+      SubLine = MainText[i].split(";");
+      for (var j = SubLine.length - 1; j >= 0; j--) {
+         line = SubLine[j].trim();
+         if (checking) {
+            if ((line == "EN") || ((line.substring(0,2) == "JP") && (line.indexOf(",") == -1))) {
+               checking = false;
+            } else if ((line != "") && (line.substring(0,3) != "REM") && (line.substring(0,2) != "NO") && (line.substring(0,1) != "'")) {
+               checking = false;
+               temp = UnusedLabels.splice(index, 1);
+               FallenLabels = FallenLabels.concat(temp);
+            }
+         }
+         if (UnusedLabels.indexOf(line) != -1) {
+            checking = true;
+            index = UnusedLabels.indexOf(line);
+         }
+      }
+   }
+
+   UnusedLabels.forEach(function(el) {
+      ret += LabelReturn(el, "Unused");
+   });
+
+   FallenLabels.forEach(function(el) {
+      ret += LabelReturn(el, "Unused (Fallen Into)");
+   });
+
+   IgnoredLabels.forEach(function(el) {
+      ret += LabelReturn(el, "Ignored (Dependency)");
+   });
+
+   return ret;
+}
 
 function Min(x, y) {
    return (x < y) ? x : y;
@@ -5862,7 +6014,8 @@ function ShowHelp(text) {
 function ShowModeless(text, title, type, width, height) {
    var w, h, t, l;
    var style = "";
-   var script = "function ReturnLine(line) { window.dialogArguments.GoToLine(line, -1, true); this.close(); }"
+   var script = ["function ReturnLine(line) { window.dialogArguments.GoToLine(line, -1, true); this.close(); }",
+                 "function ReturnLabel(label) { window.dialogArguments.FindLabel(label); this.close(); }"].join("\r\n");
    var bodyStyle = "overflow-x:hidden;overflow-y:scroll;";
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var modeless = fso.CreateTextFile(NS.TempPath + ".htm");
@@ -5891,8 +6044,9 @@ function ShowModeless(text, title, type, width, height) {
                ""].join("")
    modeless.Write(html);
    modeless.Close();
-   window.showModelessDialog(NS.TempPath + ".htm", window, "resizable:1;dialogWidth:" + w + "px;dialogHeight:" + h + "px;dialogTop:" + t + "px;dialogLeft:" + l + "px;");
+   var ret = window.showModelessDialog(NS.TempPath + ".htm", window, "resizable:1;dialogWidth:" + w + "px;dialogHeight:" + h + "px;dialogTop:" + t + "px;dialogLeft:" + l + "px;");
    setTimeout(function() { DeleteFile(NS.TempPath + ".htm"); }, 250);
+   return ret;
 }
 
 function DeleteFile(filename) {
@@ -6058,6 +6212,28 @@ function PreventZoom(e) {
    if(e.ctrlKey){ e.preventDefault(); }
 }
 
+function CamCalBackup() {
+   var fso = new ActiveXObject("Scripting.FileSystemObject");
+   var backup = "C:\\Users\\Public\\Documents\\National Instruments\\NI-IMAQdx\\Data"
+   var vision = "C:\\Program Files (x86)\\PVAPortal\\Lib\\Vision\\Calibration";
+   var error = false;
+   if (fso.folderExists(vision)) {
+      vision += "\\CamCalBackup"
+      if (!fso.folderExists(vision)) { fso.createFolder(vision); }
+      try { fso.CopyFile(backup + "\\*.icd", vision) } catch(e) { error = true; }
+      try { fso.CopyFile(backup + "\\*.iid", vision) } catch(e) { error = true; }
+      if (error) {
+         vMsgBox("CamCalBackup failed!", 0, "Create CamCalBackup");
+         Run("\"" + vision + "\"", 0);
+      } else {
+         vMsgBox("CamCalBackup was successful!", 0, "Create CamCalBackup");
+         Run("\"" + vision + "\"", 0);
+      }
+   } else {
+      vMsgBox("Could not locate \"" + vision + "\" folder.", 0, "Create CamCalBackup");
+   }
+}
+
 </script>
 
 <script type="text/VBScript">
@@ -6209,6 +6385,10 @@ End Function
       <TD colspan="2"> Decompress</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
+   <TR onclick="HideMenu();CheckLabels()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Label Check</TD>
+      <TD align="right">F8</TD>
+   </TR>
    <TR id="quickref"; onclick=""; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Quick Reference</TD>
       <TD align="right">></TD>
@@ -6235,6 +6415,10 @@ End Function
    </TR>
    <TR onclick="HideMenu();ShowIOForm()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD colspan="2"> IO Setup</TD>
+      <!-- <TD align="right"></TD> -->
+   </TR>
+   <TR onclick="HideMenu();CamCalBackup()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD colspan="2"> Create CamCalBackup</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
    <TR><TD colspan="2"><HR></TD></TR>
@@ -6291,7 +6475,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:296px;top:91px;display:none;">
+<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:296px;top:111px;display:none;">
    <TR id="quickref"; onclick="HideMenu();ShowReference(NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Error Codes</TD>
    </TR>
@@ -6315,7 +6499,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MySnippetMenu"; class="submenu"; style="left:306px;top:91px;display:none;">
+<TABLE ID="MySnippetMenu"; class="submenu"; style="left:306px;top:131px;display:none;">
    <TR id="snippet"; onclick="HideMenu();ShowReference(NS.MotorTuning)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Motor Tuning Module</TD>
    </TR>
@@ -6333,7 +6517,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:306px;top:111px;display:none;">
+<TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:306px;top:151px;display:none;">
    <TR id="weblink"; onclick="HideMenu();Run(Link.Jira, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Jira</TD>
    </TR>
@@ -6345,7 +6529,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:306px;top:132px;display:none;">
+<TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:306px;top:171px;display:none;">
    <TR id="serverlink"; onclick="HideMenu();Run(Link.JumpStart, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> JumpStart</TD>
    </TR>

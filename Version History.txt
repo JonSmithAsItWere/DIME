@@ -1,6 +1,15 @@
 DIME
 Version History
 
+v1.07
+- Added "Label Check" functionality as a tool to help find unused labels
+  - Breaks down labels as "Unused", "Unused (Fallen Into)", and "Ignored (Dependency)"
+  - Shortcut is F8
+- Added error catching to saving options
+- Fixed issue where you could open more than one instance of "Error Check"
+- Changed error check for characters in a line from "more than 80" to "80 or more"
+- Added "Create CamCalBackup" functionality under "Utilities"
+
 v1.06
 - Added "IO Setup" functionality under "Utilities"
 - Updated String Manipulation module in code snippets
