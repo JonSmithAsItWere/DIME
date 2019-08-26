@@ -1,6 +1,13 @@
 DIME
 Version History
 
+v1.08
+- Added "Variable Check" functionality as a tool to help find potential variable errors
+  - Breaks errors down into types as "Variable", "Label", and "Array"
+  - Shortcut is F9
+- Added all current plugin labels to "Error Check" and "Label Check" where appropriate
+- Changed the font in the "Error Check" and "Label Check" dialogs to be monospace
+
 v1.07
 - Added "Label Check" functionality as a tool to help find unused labels
   - Breaks down labels as "Unused", "Unused (Fallen Into)", and "Ignored (Dependency)"

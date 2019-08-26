@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.07"
+   version="1.08"
    windowState="normal"
 />
 
@@ -189,6 +189,7 @@ NS = {
    inFind: false,
    find: {},
    labelCheck: {},
+   varCheck: {},
    errorCheck: {},
    lastFind: "",
    lastMatch: false,
@@ -2527,6 +2528,7 @@ NS = {
                 "<tr><td>F3</td><td>Find Next</td></tr>",
                 "<tr><td>F7</td><td>Error Check</td></tr>",
                 "<tr><td>F8</td><td>Label Check</td></tr>",
+                "<tr><td>F9</td><td>Varible Check</td></tr>",
                 "</table><br/><table>",
                 "<tr><td><b>Command</b></td><td><b>Description</b></td></tr>",
                 "<tr><td>^array[x]=\"string\"</td><td>Parses array into string segments</td></tr>",
@@ -3154,6 +3156,10 @@ function KeyCapture(element, e) {
          case (119):  //F8
             e.preventDefault();
             CheckLabels();
+            return;
+         case (120):  //F9
+            e.preventDefault();
+            CheckVar();
             return;
          default:
       }
@@ -3981,6 +3987,191 @@ function SetIOIndex(index) {
    document.getElementById("iovalue").value = document.getElementById("ioassign").value;
 }
 
+function VarCheck() {
+   var MainText = NS.myText.value.split("\n");
+   var SubLine = [];
+   var line = "";
+   var lineToCheck = "";
+   var varRegex = /^[A-Za-z@]\w{0,7}=/;
+   var labelRegex = /^#[A-Za-z0-9]\w{0,6}$/;
+   var arrRegex = /^DM/;
+   var jsRegex = /^JS#/;
+   var jpRegex = /^JP#/;
+   var xqRegex = /^XQ#/;
+   var ifRegex = /^IF\(/;
+   var variable = ["TIME",
+                   "~a",
+                   "~b",
+                   "~c",
+                   "~d",
+                   "~e",
+                   "~f",
+                   "~g",
+                   "~h",
+                   "^a",
+                   "^b",
+                   "^c",
+                   "^d",
+                   "^e",
+                   "^f",
+                   "^g",
+                   "^h"];
+   var label = ["#PROG",
+                "#IPROG"];
+   var arr = ["@ABS",
+              "@ACOS",
+              "@AN",
+              "@ASIN",
+              "@ATAN",
+              "@COM",
+              "@COS",
+              "@FLOT",
+              "@FRAC",
+              "@IN",
+              "@INT",
+              "@OUT",
+              "@REAL",
+              "@RND",
+              "@SIN",
+              "@SQR",
+              "@TAN",
+              "^a",
+              "^b",
+              "^c",
+              "^d",
+              "^e",
+              "^f",
+              "^g",
+              "^h"];
+   var varAssign = [];
+   var arrAssign = [];
+   var temp = 0;
+   var tempArr = [];
+   var varMissing = [];
+   var labelMissing = [];
+   var arrMissing = [];
+   var ret = "";
+
+   for (var i = 0; i < MainText.length; i++) {
+      SubLine = MainText[i].split(";");
+      for (var j = 0; j < SubLine.length; j++) {
+         line = SubLine[j].trim();
+
+         if (line.substring(0,3) == "REM") { continue; }
+
+         if (labelRegex.test(line)) {
+            if (label.indexOf(line) == -1) {
+               label.push(line);
+            }
+         }
+
+         if (arrRegex.test(line)) {
+            tempArr = line.substring(2).trim().split(",");
+            for (var k = 0; k < tempArr.length; k++) {
+               temp = tempArr[k].substring(0, tempArr[k].indexOf("["))
+               if (arr.indexOf(temp) == -1) {
+                  arr.push(temp);
+               }
+            }
+         }
+
+         if (varRegex.test(line)) {
+            temp = line.substring(0, line.indexOf("="));
+            if (variable.indexOf(temp) == -1) {
+               variable.push(temp);
+            }
+            temp = line.substring(line.indexOf("=") + 1).replace(/[\)\s\]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
+            tempArr = temp.split(",");
+
+            for (var k = 0; k < tempArr.length; k++) {
+               temp = tempArr[k].indexOf("[");
+               if (temp == -1) {
+                  if (tempArr[k] != "") {
+                     varAssign.push([tempArr[k], i + 1]);
+                  }
+               } else {
+                  arrAssign.push([tempArr[k].substring(0, temp), i + 1]);
+               }
+            }
+         }
+
+         if ((jsRegex.test(line)) || (jpRegex.test(line)) || (xqRegex.test(line)) || (ifRegex.test(line))) {
+            temp = line.substring(2).replace(/[\)\s\]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
+            tempArr = temp.split(",");
+
+            for (var k = 0; k < tempArr.length; k++) {
+               temp = tempArr[k].indexOf("[");
+               if (temp == -1) {
+                  if (tempArr[k] != "") {
+                     varAssign.push([tempArr[k], i + 1]);
+                  }
+               } else {
+                  arrAssign.push([tempArr[k].substring(0, temp), i + 1]);
+               }
+            }
+         }
+      }
+   }
+
+   for (var i = 0; i < varAssign.length; i++) {
+      if (!isNaN(varAssign[i][0])) { continue; }
+      if (varAssign[i][0][0] == "_") { continue; }
+      if (varAssign[i][0].indexOf("\"") != -1) { continue; }
+      if (varAssign[i][0][0] == "$") { continue; }
+
+      if (varAssign[i][0][0] == "#") {
+         if (label.indexOf(varAssign[i][0]) == -1) {
+            labelMissing.push(varAssign[i])
+         }
+      } else {
+         if (variable.indexOf(varAssign[i][0]) == -1) {
+            varMissing.push(varAssign[i])
+         }
+      }
+   }
+
+   for (var i = 0; i < arrAssign.length; i++) {
+      if (arr.indexOf(arrAssign[i][0]) == -1) {
+         arrMissing.push(arrAssign[i])
+      }
+   }
+
+   varMissing.forEach(function(el) {
+      ret += VarReturn(el, "Variable");
+   });
+
+   labelMissing.forEach(function(el) {
+      ret += VarReturn(el, "Label");
+   });
+
+   arrMissing.forEach(function(el) {
+      el[0] += "[]";
+      ret += VarReturn(el, "Array");
+   });
+
+   return ret;
+}
+
+function CheckVar() {
+   try { NS.varCheck.close() } catch(e) {}
+   var vars = VarCheck();
+   if (vars != "") {
+      NS.varCheck = ShowModeless(["<table style=\"font-family:'monospace';font-size:14px;\">",
+                                    "<col width=\"80px\">",
+                                    "<col width=\"70px\">",
+                                    "<col width=\"170px\">",
+                                    "<tr style=\"cursor:default;\";><td><b>Type</b></td><td><b>Line</b></td><td><b>Element</b></td></tr>",
+                                    vars,
+                                    "</table>"].join(""), "Variable Check", "div", 350, 300);
+   } else {
+      vMsgBox("No potential variable errors found!", 0, "Variable Check")
+   }
+}
+
+function VarReturn(el, type) {
+   return "<tr onclick='ReturnLine(\"" + el[1] + "\")';><td>" + type + "</td><td>" + el[1] + "</td><td>" + el[0] + "</td></tr>";
+}
+
 function ComSetupClick() {
    if (document.getElementById("comform").style.display == "none") {
       CancelOptionsClick();
@@ -4456,11 +4647,11 @@ function UploadToGalil() {
       var tCon = NS.galil.address;
       var errorText = ErrorCheck();
       if (errorText != "") {
-         var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to download anyway?", 4, "Warning");
+         var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to upload anyway?", 4, "Warning");
          if (rsp == 7) { //no
             try { NS.errorCheck.close(); } catch(e) {}
             document.getElementById("overlay").style.display = "none";
-            NS.errorCheck = ShowModeless(["<table>",
+            NS.errorCheck = ShowModeless(["<table style=\"font-family:'monospace';font-size:14px;\">",
                                           "<col width=\"50px\">",
                                           "<col width=\"250px\">",
                                           "<col width=\"220px\">",
@@ -5789,21 +5980,60 @@ function CheckQuotes(element, line) {
 function CheckAndPopulateDupLab(fileText) {
    var res1 = "";
    var res2 = [];
-   var element = "";
+   var label = "";
    var SubLine = [];
+   var pluginLabels = ["#HGTOFF",
+                       "#STDIM",
+                       "#PTINSP",
+                       "#MEASUR",
+                       "#PKPRT",
+                       "#CMPHGTO",
+                       "#CMPDIM",
+                       "#CMPINSP",
+                       "#CMPMEAS",
+                       "#CMPPRCW",
+                       "#SETOFF",
+                       "#BEFBND",
+                       "#TMOVER",
+                       "#SUBHGTO",
+                       "#SUBDIM",
+                       "#SUBINSP",
+                       "#SUBMEAS",
+                       "#SUBPRCW",
+                       "#BADMRK",
+                       "#FLO_OP",
+                       "#JET_SET",
+                       "#REFILL",
+                       "#STSPD",
+                       "#PUMP_ST",
+                       "#VX_SET",
+                       "#PM_LOG",
+                       "#PMLOG0",
+                       "#PMLOG1",
+                       "#PMLOG2",
+                       "#PMLOG3",
+                       "#PMLOG4",
+                       "#PMLOG5",
+                       "#PMLOG6",
+                       "#PMLOG7",
+                       "#PMLOGLP",
+                       "#PMLOGEN"];
 
    var lineNum = 1;
    var lineText = fileText.split("\n");
    for (var i = 0; i < lineText.length; i++) {
       SubLine = lineText[i].split(";");
       for (var j = 0; j < SubLine.length; j++) {
-         element = SubLine[j];
-         if (LabelInLine(element) != "") {
-            element = element.trim();
-            if (res2.indexOf(element) != -1) {
-               res1 += ErrorReturn(i + 1, "Duplicate label", element);
+         label = LabelInLine(SubLine[j].trim());
+         if (label != "") {
+            if (res2.indexOf(label) != -1) {
+               res1 += ErrorReturn(i + 1, "Duplicate label", label);
             } else {
-               res2.push(element);
+               if (pluginLabels.indexOf(label) != -1) {
+                  res1 += ErrorReturn(i + 1, "Duplicate label (from plugin)", label);
+               } else {
+                  res2.push(label);
+               }
             }
          }
       }
@@ -5843,20 +6073,19 @@ function CheckLabels() {
    try { NS.labelCheck.close() } catch(e) {}
    var labels = LabelCheck();
    if (labels != "") {
-      NS.labelCheck = ShowModeless(["<table>",
-                                    "<col width=\"150px\">",
+      NS.labelCheck = ShowModeless(["<table style=\"font-family:'monospace';font-size:14px;\">",
+                                    "<col width=\"100px\">",
                                     "<col width=\"170px\">",
                                     "<tr style=\"cursor:default;\";><td><b>Label</b></td><td><b>Type</b></td></tr>",
                                     labels,
-                                    "</table>"].join(""), "Label Check", "div", 350, 300);
+                                    "</table>"].join(""), "Label Check", "div", 300, 300);
    } else {
       vMsgBox("All labels are utilized!", 0, "Label Check")
    }
-   
 }
 
 function LabelCheck() {
-   var MainText = NS.myText.value.split("\n");  //.replace(/\\r/g, "")
+   var MainText = NS.myText.value.split("\n");
    var SubLine = [];
    var line = "";
    var labelToCheck = "";
@@ -5906,6 +6135,7 @@ function LabelCheck() {
                        "#TCPERR",
                        "#CUR_PRT",
                        "#RESTART",
+                       "#TLRC",
                        "#DTLRA",
                        "#DTLRB",
                        "#DTLUP",
@@ -5932,7 +6162,22 @@ function LabelCheck() {
                        "#GET_FLO",
                        "#JDX_SET",
                        "#PMP_SET",
-                       "#VPX_SET"];
+                       "#VPX_SET",
+                       "#HGTOFF1",
+                       "#STDIM1",
+                       "#VSINSP",
+                       "#MEASR",
+                       "#PWT_SET",
+                       "#CMP_ROT",
+                       "#SETOF1",
+                       "#PREBND",
+                       "#TMOVE",
+                       "#PKPRT1",
+                       "#ALLUP2",
+                       "#SAFE_ZG",
+                       "#SAFEF",
+                       "#LIMIT_X",
+                       "#CORSET"];
 
    for (var i = 0; i < ignoreLabels.length; i++) {
       index = UnusedLabels.indexOf(ignoreLabels[i]);
@@ -6064,7 +6309,7 @@ function ShowAbout() {
             "",
             "It is delivered on the express condition that it not be",
             "used, disclosed, or reproduced in whole or in part, for",
-            "any reason withoutprior written consent of Precision",
+            "any reason without prior written consent of Precision",
             "Valve & Automation, Inc."].join("\r\n"), 64, "About");
 }
 
@@ -6389,6 +6634,10 @@ End Function
       <TD> Label Check</TD>
       <TD align="right">F8</TD>
    </TR>
+   <TR onclick="HideMenu();CheckVar()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Variable Check</TD>
+      <TD align="right">F9</TD>
+   </TR>
    <TR id="quickref"; onclick=""; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Quick Reference</TD>
       <TD align="right">></TD>
@@ -6475,7 +6724,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:296px;top:111px;display:none;">
+<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:296px;top:131px;display:none;">
    <TR id="quickref"; onclick="HideMenu();ShowReference(NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Error Codes</TD>
    </TR>
