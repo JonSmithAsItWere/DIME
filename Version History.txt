@@ -1,6 +1,13 @@
 DIME
 Version History
 
+v1.09
+- Terminal and Responses now use text wrap
+- Capped Terminal commands to be less than 80 characters
+- Added "@" as a character as a valid variable character for "Variable Check"
+- Added condition to ignore certain 3D Profiling variables/labels/arrays for "Variable Check"
+- "Label Check" will no longer mark a label as "used" if it is a top level label that JP#'s to itself
+
 v1.08
 - Added "Variable Check" functionality as a tool to help find potential variable errors
   - Breaks errors down into types as "Variable", "Label", and "Array"

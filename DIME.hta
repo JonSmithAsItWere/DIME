@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.08"
+   version="1.09"
    windowState="normal"
 />
 
@@ -3281,6 +3281,9 @@ function TerminalKey(e) {
    if (NS.myTerminal.selectionStart < NS.myTerminal.value.lastIndexOf(":")) {
       NS.myTerminal.setSelectionRange(NS.myTerminal.value.length, NS.myTerminal.value.length)
    }
+   if ((NS.myTerminal.value.length - NS.myTerminal.value.lastIndexOf(":")) >= 79) {
+      NS.myTerminal.value = NS.myTerminal.value.substring(0, NS.myTerminal.value.lastIndexOf(":") + 78);
+   }
    var command = NS.myTerminal.value.substring(NS.myTerminal.value.lastIndexOf(":") + 1);
    // 13 is the "Enter" key on the keyboard, 186 and shift is ":"
    if ((e.keyCode === 13) || ((e.keyCode === 186) && (e.shiftKey))) {
@@ -3873,7 +3876,7 @@ function ServerUpload(folder, serverLocation) {
 function GetAllIO() {
    var lines = NS.myText.value.split("\n");
    var label = /^#\w{1,5}IO$/;    //regex for start of #xxx_IO labels
-   var io = /^[io]\w{1,7}=/;        //regex for input or output
+   var io = /^[io][\w@]{1,7}=/;        //regex for input or output
    var res = [];
    var ret = [];
    var error = [];
@@ -3992,7 +3995,7 @@ function VarCheck() {
    var SubLine = [];
    var line = "";
    var lineToCheck = "";
-   var varRegex = /^[A-Za-z@]\w{0,7}=/;
+   var varRegex = /^[A-Za-z@][\w@]{0,7}=/;
    var labelRegex = /^#[A-Za-z0-9]\w{0,6}$/;
    var arrRegex = /^DM/;
    var jsRegex = /^JS#/;
@@ -4051,6 +4054,24 @@ function VarCheck() {
    var labelMissing = [];
    var arrMissing = [];
    var ret = "";
+
+   if (MainText.indexOf(" PROFILE=1\n") == -1) {
+      variable.push("BSE_TYPE",
+                    "CNT_UNIT",
+                    "LSR_TYPE",
+                    "SRF_LOG");
+      label.push("#PRO_JOG",
+                 "#PRO_CNT",
+                 "#PRO_STP",
+                 "#PRO_REQ",
+                 "#PRO_CFG",
+                 "#PRO_BSE",
+                 "#PRO_TOP",
+                 "#PRO_CLC",
+                 "#A4001",
+                 "#SRF_ER");
+      arr.push("cPRO");
+   }
 
    for (var i = 0; i < MainText.length; i++) {
       SubLine = MainText[i].split(";");
@@ -6071,7 +6092,19 @@ function LabelReturn(label, type) {
 
 function CheckLabels() {
    try { NS.labelCheck.close() } catch(e) {}
-   var labels = LabelCheck();
+   var labels = "";
+   var ret = LabelCheck();
+
+   ret[0].forEach(function(el) {
+      labels += LabelReturn(el, "Unused");
+   });
+   ret[1].forEach(function(el) {
+      labels += LabelReturn(el, "Unused (Fallen Into)");
+   });
+   ret[2].forEach(function(el) {
+      labels += LabelReturn(el, "Ignored (Dependency)");
+   });
+
    if (labels != "") {
       NS.labelCheck = ShowModeless(["<table style=\"font-family:'monospace';font-size:14px;\">",
                                     "<col width=\"100px\">",
@@ -6089,6 +6122,7 @@ function LabelCheck() {
    var SubLine = [];
    var line = "";
    var labelToCheck = "";
+   var currentLabel = "";
    var index = 0;
    var UnusedLabels = [];
    var FallenLabels = [];
@@ -6112,12 +6146,18 @@ function LabelCheck() {
       SubLine = MainText[i].split(";");
       for (var j = 0; j < SubLine.length; j++) {
          line = SubLine[j].trim();
+         if (currentLabel == "") {
+            currentLabel = LabelInLine(line);
+         }
          labelToCheck = JumpInLine(line);
          if (labelToCheck != "") {
             index = UnusedLabels.indexOf(labelToCheck);
-            if (index != -1) {
+            if ((index != -1) && (currentLabel != labelToCheck)) {
                UnusedLabels.splice(index, 1);
             }
+         }
+         if ((line == "EN") || (line.substring(0,3) == "EN,") || (line.substring(0,3) == "EN0") || (line.substring(0,3) == "EN1") || ((line.substring(0,2) == "JP") && (line.indexOf(",") == -1))) {
+            currentLabel = ""
          }
       }
    }
@@ -6191,7 +6231,7 @@ function LabelCheck() {
       for (var j = SubLine.length - 1; j >= 0; j--) {
          line = SubLine[j].trim();
          if (checking) {
-            if ((line == "EN") || ((line.substring(0,2) == "JP") && (line.indexOf(",") == -1))) {
+            if ((line == "EN") || (line.substring(0,3) == "EN,") || (line.substring(0,3) == "EN0") || (line.substring(0,3) == "EN1") || ((line.substring(0,2) == "JP") && (line.indexOf(",") == -1))) {
                checking = false;
             } else if ((line != "") && (line.substring(0,3) != "REM") && (line.substring(0,2) != "NO") && (line.substring(0,1) != "'")) {
                checking = false;
@@ -6205,20 +6245,12 @@ function LabelCheck() {
          }
       }
    }
+   
+   UnusedLabels.sort();
+   FallenLabels.sort();
+   IgnoredLabels.sort();
 
-   UnusedLabels.forEach(function(el) {
-      ret += LabelReturn(el, "Unused");
-   });
-
-   FallenLabels.forEach(function(el) {
-      ret += LabelReturn(el, "Unused (Fallen Into)");
-   });
-
-   IgnoredLabels.forEach(function(el) {
-      ret += LabelReturn(el, "Ignored (Dependency)");
-   });
-
-   return ret;
+   return [UnusedLabels, FallenLabels, IgnoredLabels];
 }
 
 function Min(x, y) {
@@ -7216,11 +7248,11 @@ End Function
       </div>
       <div id="terminaldiv"; style="width:100%;display:block;">
          <div style="width:99%;height:calc(49% - 7px);">
-            <textarea id="FrameTerminal"; wrap="off"; onkeydown="KeyCapture(this, event)"; style="width:100%;height:100%;overflow-x:hidden;"></textarea>
+            <textarea id="FrameTerminal"; wrap="hard"; onkeydown="KeyCapture(this, event)"; style="width:100%;height:100%;overflow-x:hidden;"></textarea>
          </div>
          <br/>
          <div style="width:99%;height:calc(49% - 7px);">
-            <textarea readonly id="FrameResponse"; wrap="off"; style="width:100%;height:100%;overflow-x:hidden;"></textarea>
+            <textarea readonly id="FrameResponse"; wrap="hard"; style="width:100%;height:100%;overflow-x:hidden;"></textarea>
          </div>
       </div>
    </div>
