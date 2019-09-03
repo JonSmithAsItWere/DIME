@@ -1,6 +1,20 @@
 DIME
 Version History
 
+v1.10
+- Added "Variable Swap" functionality as a tool to help when resources are running low
+  - Uses a form that asks for the array name, and variable names for each array index
+  - Has a function for swapping from the named variables to the array elements
+  - Has a function for swapping from the array elements to the named variables
+  - Notifies the user of how many replacements were made
+  - Backups will NOT be created when using this function so use cautiously
+  - Shortcut is F10
+- Updated tab controls for when a form is visible and the main application "grayed" out
+- Added header bar to all forms for consistency
+- Placed the "cancel" or "exit" button on all forms to be the left-most button for consistency
+- Fixed an issue with "Label Check" where it was skipping parts of the main it was checking
+- Reverted the cap on the terminal commands, and instead updated the error message
+
 v1.09
 - Terminal and Responses now use text wrap
 - Capped Terminal commands to be less than 80 characters

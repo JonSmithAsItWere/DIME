@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.09"
+   version="1.10"
    windowState="normal"
 />
 
@@ -2529,6 +2529,7 @@ NS = {
                 "<tr><td>F7</td><td>Error Check</td></tr>",
                 "<tr><td>F8</td><td>Label Check</td></tr>",
                 "<tr><td>F9</td><td>Varible Check</td></tr>",
+                "<tr><td>F10</td><td>Varible Swap Form</td></tr>",
                 "</table><br/><table>",
                 "<tr><td><b>Command</b></td><td><b>Description</b></td></tr>",
                 "<tr><td>^array[x]=\"string\"</td><td>Parses array into string segments</td></tr>",
@@ -3095,6 +3096,61 @@ function KeyCapture(element, e) {
          return;
       }
       switch (e.keyCode) {
+         case (9):
+            if (e.shiftKey) {
+               if (document.activeElement == document.getElementById("arrvalue")) {
+                  e.preventDefault();
+                  document.getElementById("swapend").focus();
+                  return;
+               }
+               if (document.activeElement == document.getElementById("modulename")) {
+                  e.preventDefault();
+                  document.getElementById("moduleend").focus();
+                  return;
+               }
+               if (document.activeElement == document.getElementById("customlogoname")) {
+                  e.preventDefault();
+                  document.getElementById("logoend").focus();
+                  return;
+               }
+               if (document.activeElement == document.getElementById("ioname")) {
+                  e.preventDefault();
+                  document.getElementById("ioend").focus();
+                  return;
+               }
+               if (document.activeElement == document.getElementById("ini")) {
+                  e.preventDefault();
+                  document.getElementById("comend").focus();
+                  return;
+               }
+            } else {
+               if (document.activeElement == document.getElementById("swapend")) {
+                  e.preventDefault();
+                  document.getElementById("arrvalue").focus();
+                  return;
+               }
+               if (document.activeElement == document.getElementById("moduleend")) {
+                  e.preventDefault();
+                  document.getElementById("modulename").focus();
+                  return;
+               }
+               if (document.activeElement == document.getElementById("logoend")) {
+                  e.preventDefault();
+                  document.getElementById("customlogoname").focus();
+                  return;
+               }
+               if (document.activeElement == document.getElementById("ioend")) {
+                  e.preventDefault();
+                  document.getElementById("ioname").focus();
+                  return;
+               }
+               if (document.activeElement == document.getElementById("comend")) {
+                  e.preventDefault();
+                  document.getElementById("ini").focus();
+                  return;
+               }
+            }
+            break;
          case (13):  //enter
             if (element == NS.myText) {
                switch (ParseChar()) {
@@ -3160,6 +3216,10 @@ function KeyCapture(element, e) {
          case (120):  //F9
             e.preventDefault();
             CheckVar();
+            return;
+         case (121):  //F10
+            e.preventDefault();
+            ShowVarSwapForm();
             return;
          default:
       }
@@ -3280,9 +3340,6 @@ function WatchKey(e) {
 function TerminalKey(e) {
    if (NS.myTerminal.selectionStart < NS.myTerminal.value.lastIndexOf(":")) {
       NS.myTerminal.setSelectionRange(NS.myTerminal.value.length, NS.myTerminal.value.length)
-   }
-   if ((NS.myTerminal.value.length - NS.myTerminal.value.lastIndexOf(":")) >= 79) {
-      NS.myTerminal.value = NS.myTerminal.value.substring(0, NS.myTerminal.value.lastIndexOf(":") + 78);
    }
    var command = NS.myTerminal.value.substring(NS.myTerminal.value.lastIndexOf(":") + 1);
    // 13 is the "Enter" key on the keyboard, 186 and shift is ":"
@@ -3951,6 +4008,7 @@ function ShowIOForm() {
       document.getElementById("ioassign").selectedIndex = 0;
       document.getElementById("iovalue").value = document.getElementById("ioassign").value;
       document.getElementById("ioform").style.display = "block";
+      document.getElementById("iovalue").focus();
    } else {
       CloseIOForm();
    }
@@ -3988,6 +4046,128 @@ function SetIOIndex(index) {
    document.getElementById("ioname").selectedIndex = index;
    document.getElementById("ioassign").selectedIndex = index;
    document.getElementById("iovalue").value = document.getElementById("ioassign").value;
+}
+
+function ShowVarSwapForm() {
+   if (document.getElementById("ioform").style.display == "none") {
+      CancelOptionsClick();
+      FindClose();
+      CloseIOForm();
+      document.getElementById("overlayText").innerHTML = "";
+      document.getElementById("overlay").style.display = "block";
+      document.getElementById("varswapform").style.display = "block";
+      document.getElementById("arrvalue").focus();
+   } else {
+      CloseVarSwapForm();
+   }
+}
+
+function CloseVarSwapForm() {
+   document.getElementById("overlay").style.display = "none";
+   document.getElementById("varswapform").style.display = "none";
+   SetSelection();
+}
+
+function SwapVarToArr() {
+   var text = NS.myText.value;
+   var arr = document.getElementById("arrvalue").value;
+   var tVar = "";
+   var tReg;
+   var index = 0;
+   var count = 0;
+   var rsp = "";
+   var error = VarRegex();
+
+   if (error.length > 0) {
+      var errorMsg = "The following errors were found:"
+      for (var i = 0; i < error.length; i++) {
+         errorMsg += "\r\n" + (i+1) + ".) " + error[i];
+      }
+      vMsgBox(errorMsg, 0, "Variable Swap");
+      return;
+   }
+
+   for (var i = 0; i < 20; i++) {
+      count = 0;
+      tVar = document.getElementById("varvalue" + i).value;
+      if (tVar == "") { continue; }
+      tReg = new RegExp("[^\\w@]" + tVar + "[^\\w@\\[]", "g")
+      index = text.search(tReg);
+      while (index != -1) {
+         count++;
+         text = text.substring(0, index + 1) + arr + "[" + i + "]" + text.substring(index + tVar.length + 1);
+         index = text.search(tReg);
+      }
+      rsp += tVar + "  -->  " + arr + "[" + i + "]  ... Replacements Made: " + count + "\r\n";
+   }
+
+   NS.myText.value = text;
+   vMsgBox(rsp, 0, "Variable Swap");
+   document.getElementById("arrvalue").focus();
+}
+
+function SwapArrToVar() {
+   var text = NS.myText.value;
+   var arr = document.getElementById("arrvalue").value;
+   var tArr = "";
+   var tVar = "";
+   var tReg;
+   var index = 0;
+   var count = 0;
+   var rsp = "";
+   var error = VarRegex();
+
+   if (error.length > 0) {
+      var errorMsg = "The following errors were found:"
+      for (var i = 0; i < errors.length; i++) {
+         errorMsg += "\r\n" + (i+1) + ".) " + errors[i];
+      }
+      vMsgBox(errorMsg, 0, "Variable Swap");
+      return;
+   }
+
+   for (var i = 0; i < 20; i++) {
+      count = 0;
+      tVar = document.getElementById("varvalue" + i).value;
+      tArr = arr + "[" + i + "]"
+      if (tVar == "") { continue; }
+      tReg = new RegExp("[^\\w@]" + tArr.replace("[", "\\[").replace("]", "\\]") + "[^\\w@]", "g")
+      index = text.search(tReg);
+      while (index != -1) {
+         count++;
+         text = text.substring(0, index + 1) + tVar + text.substring(index + tArr.length + 1);
+         index = text.search(tReg);
+      }
+      rsp += arr + "[" + i + "]  -->  " + tVar + "  ... Replacements Made: " + count + "\r\n";
+   }
+
+   NS.myText.value = text;
+   vMsgBox(rsp, 0, "Variable Swap");
+   document.getElementById("arrvalue").focus();
+}
+
+function VarRegex() {
+   var text = NS.myText.value;
+   var arr = document.getElementById("arrvalue").value;
+   var varRegex = /^[A-Za-z@][\w@]{0,7}$/;
+   var tVar = "";
+   var error = [];
+   if (arr != "") {
+      if (!varRegex.test(arr)) {
+         error.push("Array failed Regex test");
+      }
+   } else {
+      error.push("Array name cannot be blank");
+   }
+   for (var i = 0; i < 20; i++) {
+      tVar = document.getElementById("varvalue" + i).value;
+      if (tVar != "") {
+         if (!varRegex.test(tVar)) {
+            error.push("Index [" + i + "] failed Regex test");
+         }
+      }
+   }
+   return error;
 }
 
 function VarCheck() {
@@ -4244,6 +4424,7 @@ function ComSetupClick() {
          document.getElementById("comdevice").add(opt);
       }
       document.getElementById("comform").style.display = "block";
+      document.getElementById("ini").focus();
    } else {
       CloseComForm();
    }
@@ -4842,12 +5023,16 @@ function Terminal(command) {
    } else if ((command.charAt(0) == "~") & (command.length > 4)) {
       r = arrayReset(command.substring(1)) + "\r:";
    } else {
-      try {
-         r = NS.galil.command(command, "\r", ":", false);
-      } catch(e) {
-         r = e.description.substring(e.description.lastIndexOf("TC1") + 13) + ":"; // 13 is "TC1 returned "
+      if (command.length < 80) {
+         try {
+            r = NS.galil.command(command, "\r", ":", false);
+         } catch(e) {
+            r = e.description.substring(e.description.lastIndexOf("TC1") + 13) + ":"; // 13 is "TC1 returned "
+         }
+         if (r == ":") { r = "\r:"; }
+      } else {
+         r = "\"Command over 80 characters\"\r:"
       }
-      if (r == ":") { r = "\r:"; }
    }
    NS.myResponse.value = NS.myResponse.value + r;
 }
@@ -5376,6 +5561,7 @@ function ShowCustomModule() {
    document.getElementById("overlayText").innerHTML = "";
    document.getElementById("overlay").style.display = "block";
    document.getElementById("moduleform").style.display = "block";
+   document.getElementById("modulename").focus();
 }
 
 function CloseCustomModule() {
@@ -5550,6 +5736,7 @@ function ShowCustomLogoMenu() {
    document.getElementById("customlogoname").value = "";
    document.getElementById("overlay").style.display = "block";
    document.getElementById("logoform").style.display = "block";
+   document.getElementById("customlogoname").focus();
 }
 
 function CloseCustomLogo() {
@@ -6124,6 +6311,7 @@ function LabelCheck() {
    var labelToCheck = "";
    var currentLabel = "";
    var index = 0;
+   var ifCount = 0;
    var UnusedLabels = [];
    var FallenLabels = [];
    var IgnoredLabels = [];
@@ -6146,6 +6334,8 @@ function LabelCheck() {
       SubLine = MainText[i].split(";");
       for (var j = 0; j < SubLine.length; j++) {
          line = SubLine[j].trim();
+         if (line.substring(0,3) == "IF(") { ifCount++; }
+         if ((line == "ENDIF") && (ifCount > 0)) { ifCount--; }
          if (currentLabel == "") {
             currentLabel = LabelInLine(line);
          }
@@ -6156,7 +6346,7 @@ function LabelCheck() {
                UnusedLabels.splice(index, 1);
             }
          }
-         if ((line == "EN") || (line.substring(0,3) == "EN,") || (line.substring(0,3) == "EN0") || (line.substring(0,3) == "EN1") || ((line.substring(0,2) == "JP") && (line.indexOf(",") == -1))) {
+         if ((ifCount == 0) && ((line == "EN") || (line.substring(0,3) == "EN,") || (line.substring(0,3) == "EN0") || (line.substring(0,3) == "EN1") || ((line.substring(0,2) == "JP") && (line.indexOf(",") == -1)))) {
             currentLabel = ""
          }
       }
@@ -6670,6 +6860,7 @@ End Function
       <TD> Variable Check</TD>
       <TD align="right">F9</TD>
    </TR>
+   <TR><TD colspan="2"><HR></TD></TR>
    <TR id="quickref"; onclick=""; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Quick Reference</TD>
       <TD align="right">></TD>
@@ -6697,6 +6888,10 @@ End Function
    <TR onclick="HideMenu();ShowIOForm()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD colspan="2"> IO Setup</TD>
       <!-- <TD align="right"></TD> -->
+   </TR>
+   <TR onclick="HideMenu();ShowVarSwapForm()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Variable Swap</TD>
+      <TD align="right">F10</TD>
    </TR>
    <TR onclick="HideMenu();CamCalBackup()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD colspan="2"> Create CamCalBackup</TD>
@@ -6756,7 +6951,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:296px;top:131px;display:none;">
+<TABLE ID="MyReferenceMenu"; class="submenu"; style="left:296px;top:151px;display:none;">
    <TR id="quickref"; onclick="HideMenu();ShowReference(NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Error Codes</TD>
    </TR>
@@ -6780,7 +6975,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MySnippetMenu"; class="submenu"; style="left:306px;top:131px;display:none;">
+<TABLE ID="MySnippetMenu"; class="submenu"; style="left:306px;top:151px;display:none;">
    <TR id="snippet"; onclick="HideMenu();ShowReference(NS.MotorTuning)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Motor Tuning Module</TD>
    </TR>
@@ -6798,7 +6993,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:306px;top:151px;display:none;">
+<TABLE ID="MyWebLinksMenu"; class="submenu"; style="left:306px;top:171px;display:none;">
    <TR id="weblink"; onclick="HideMenu();Run(Link.Jira, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Jira</TD>
    </TR>
@@ -6810,7 +7005,7 @@ End Function
    </TR>
 </TABLE>
 
-<TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:306px;top:171px;display:none;">
+<TABLE ID="MyServerLinksMenu"; class="submenu"; style="left:306px;top:191px;display:none;">
    <TR id="serverlink"; onclick="HideMenu();Run(Link.JumpStart, 2)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> JumpStart</TD>
    </TR>
@@ -7262,7 +7457,9 @@ End Function
 
 
 
-<div id="comform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:80px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+<div id="comform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:100px;width:500px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div style="margin:auto;text-align:center;width:100%;height:15px;display:block;background-color:limegreen;"><b>COM Port Setup</b></div>
+   <br/>
    <div style="width:100px;display:inline-block;"><b>Library</b></div>
    <div style="width:50px;display:inline-block;"><b>Dev. #</b></div>
    <div style="width:calc(100% - 160px);display:inline-block;"><b>Port</b></div>
@@ -7273,72 +7470,80 @@ End Function
    <br/><br/>
    <button class="button"; onclick="ReplacePort()"; style="width:32%;";>Update</button>
    <button class="button"; onclick="CloseComForm();ComSetupClick();"; style="width:32%;";>Refresh List</button>
-   <button class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
+   <button id="comend"; class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
 </div>
 
-<div id="optionsform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:285px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
+<div id="optionsform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:310px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
+   <div style="margin:auto;text-align:center;width:100%;height:15px;display:block;background-color:limegreen;"><b>Options</b></div>
+   <br/>
    Post-Download Start Label:
    <select id="myStartLabel">
       <option value="Smart">Smart Detect</option>
       <option value="#AUTO">#AUTO</option>
       <option value="#AUTO1">#AUTO1</option>
    </select>
-   <br/>
+   <br/><br/>
    Main Background Color / Text Color:
    <br/>
-   <select id="myTextBC"; onchange="UpdateColor(this)"></select>
+   <select id="myTextBC"; onchange="UpdateColor(this)"></select>&nbsp;
    <select id="myTextC"; onchange="UpdateColor(this)"></select>
    <br/>
    Popup Background Color / Text Color:
    <br/>
-   <select id="myPopupBC"; onchange="UpdateColor(this)"></select>
+   <select id="myPopupBC"; onchange="UpdateColor(this)"></select>&nbsp;
    <select id="myPopupC"; onchange="UpdateColor(this)"></select>
    <br/>
    Terminal Background Color / Text Color:
    <br/>
-   <select id="myTerminalBC"; onchange="UpdateColor(this)"></select>
+   <select id="myTerminalBC"; onchange="UpdateColor(this)"></select>&nbsp;
    <select id="myTerminalC"; onchange="UpdateColor(this)"></select>
    <br/>
    Response Background Color / Text Color:
    <br/>
-   <select id="myResponseBC"; onchange="UpdateColor(this)"></select>
+   <select id="myResponseBC"; onchange="UpdateColor(this)"></select>&nbsp;
    <select id="myResponseC"; onchange="UpdateColor(this)"></select>
    <br/>
    Variable Background Color / Text Color:
    <br/>
-   <select id="myVariableBC"; onchange="UpdateColor(this)"></select>
+   <select id="myVariableBC"; onchange="UpdateColor(this)"></select>&nbsp;
    <select id="myVariableC"; onchange="UpdateColor(this)"></select>
    <br/>
    Value Background Color / Text Color:
    <br/>
-   <select id="myValueBC"; onchange="UpdateColor(this)"></select>
+   <select id="myValueBC"; onchange="UpdateColor(this)"></select>&nbsp;
    <select id="myValueC"; onchange="UpdateColor(this)"></select>
    <br/><br/>
    <button class="button"; onclick="SaveOptionsClick(true)"; style="width:24%;";>Save</button>
-   <button class="button"; onclick="CancelOptionsClick()"; style="width:24%;";>Cancel</button>
    <button class="button"; onclick="DefaultOptionsClick()"; style="width:49%;";>Restore Defaults</button>
+   <button class="button"; onclick="CancelOptionsClick()"; style="width:24%;";>Cancel</button>
 </div>
 
-<div id="logoform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:60px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
-   <div style="width:100px;font-size:1.2rem;display:inline-block;"><b>Custom Logo:</b></div>
+<div id="logoform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:85px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div style="margin:auto;text-align:center;width:100%;height:15px;display:block;background-color:limegreen;"><b>Custom Logo</b></div>
+   <br/>
+   <div style="width:100px;font-size:1.2rem;display:inline-block;"><b>Logo Text:</b></div>
    <input id="customlogoname"; maxlength="15"; style="width:calc(100% - 110px);display:inline-block;"></input>
    <br/><br/>
-   <button class="button"; onclick="CloseCustomLogo()"; style="width:49%;";>Cancel</button>
    <button class="button"; onclick="CustomLogoChange()"; style="width:49%;";>Update</button>
+   <button id="logoend"; class="button"; onclick="CloseCustomLogo()"; style="width:49%;";>Cancel</button>
 </div>
 
-<div id="moduleform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:80px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+<div id="moduleform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:105px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div style="margin:auto;text-align:center;width:100%;height:15px;display:block;background-color:limegreen;"><b>Custom Module</b></div>
+   <br/>
    <div style="width:150px;display:inline-block;"><b>Custom Module Name:</b></div>
    <input id="modulename"; maxlength="25"; style="width:calc(100% - 160px);display:inline-block;"></input>
    <br>
    <div style="width:150px;display:inline-block;"><b>Custom Module Abbr:</b></div>
    <input onkeyup="this.value = this.value.toUpperCase();"; id="moduleabbr"; maxlength="3"; size="3"; style="display:inline-block;"></input>
    <br/><br/>
-   <button class="button"; onclick="CloseCustomModule()"; style="width:49%;";>Cancel</button>
    <button class="button"; onclick="SubmitCustomModule()"; style="width:49%;";>Continue</button>
+   <button id="moduleend"; class="button"; onclick="CloseCustomModule()"; style="width:49%;";>Cancel</button>
 </div>
 
-<div id="ioform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:230px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+<div id="ioform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:255px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div style="margin:auto;text-align:center;width:100%;height:15px;display:block;background-color:limegreen;"><b>IO Setup</b></div>
+   <br/>
    <select id="ioname"; size="10"; onscroll="SetIOScroll(this.scrollTop)"; onchange="SetIOIndex(this.selectedIndex)"; style="overflow-y:hidden;width:110px;display:inline-block";></select>
    <select id="ioassign"; size="10"; onscroll="SetIOScroll(this.scrollTop)"; onchange="SetIOIndex(this.selectedIndex)"; style="width:calc(100% - 115px);display:inline-block";></select>
    <br/><br/>
@@ -7346,7 +7551,41 @@ End Function
    <input id="iovalue"; maxlength="80"; style="width:calc(100% - 60px);display:inline-block;"></input>
    <br/><br/>
    <button class="button"; onclick="UpdateIO()"; style="width:49%;";>Update</button>
-   <button class="button"; onclick="CloseIOForm()"; style="width:49%;";>Exit</button>
+   <button id="ioend"; class="button"; onclick="CloseIOForm()"; style="width:49%;";>Exit</button>
+</div>
+
+<div id="varswapform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:350px;width:400px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
+   <div style="margin:auto;text-align:center;width:100%;height:15px;display:block;background-color:limegreen;"><b>Variable Swap</b></div>
+   <div>&nbsp;This utility is meant to be used to swap variables into an array and vice</div>
+   <div>&nbsp;versa.The array used will not be dimensioned for you. Also, arrays that</div>
+   <div>&nbsp;utilize variables as the index will NOT be affected during either operation.</div>
+   <br/>
+   Array&nbsp;<input tabindex="0"; id="arrvalue"; maxlength="8"; style="width:calc(100% - 40px);display:inline-block;"></input>
+   <br/><br/>
+   [0]&nbsp;<input tabindex="1"; id="varvalue0"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [10]&nbsp;<input tabindex="11"; id="varvalue10"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [1]&nbsp;<input tabindex="2"; id="varvalue1"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [11]&nbsp;<input tabindex="12"; id="varvalue11"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [2]&nbsp;<input tabindex="3"; id="varvalue2"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [12]&nbsp;<input tabindex="13"; id="varvalue12"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [3]&nbsp;<input tabindex="4"; id="varvalue3"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [13]&nbsp;<input tabindex="14"; id="varvalue13"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [4]&nbsp;<input tabindex="5"; id="varvalue4"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [14]&nbsp;<input tabindex="15"; id="varvalue14"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [5]&nbsp;<input tabindex="6"; id="varvalue5"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [15]&nbsp;<input tabindex="16"; id="varvalue15"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [6]&nbsp;<input tabindex="7"; id="varvalue6"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [16]&nbsp;<input tabindex="17"; id="varvalue16"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [7]&nbsp;<input tabindex="8"; id="varvalue7"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [17]&nbsp;<input tabindex="18"; id="varvalue17"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [8]&nbsp;<input tabindex="9"; id="varvalue8"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [18]&nbsp;<input tabindex="19"; id="varvalue18"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [9]&nbsp;<input tabindex="10"; id="varvalue9"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   [19]&nbsp;<input tabindex="20"; id="varvalue19"; maxlength="8"; style="width:calc(50% - 30px);display:inline-block;"></input>
+   <br/><br/>
+   <button tabindex="23"; class="button"; onclick="SwapVarToArr()"; style="width:32%;";>Var <b>&rarr;</b> Array</button>
+   <button tabindex="21"; class="button"; onclick="SwapArrToVar()"; style="width:32%;";>Array <b>&rarr;</b> Var</button>
+   <button tabindex="22"; id="swapend"; class="button"; onclick="CloseVarSwapForm()"; style="width:32%;";>Exit</button>
 </div>
 
 <div id="overlay"; style="background-color:black;opacity:0.5;position:absolute;z-index:2000;top:0;left:0;height:105%;width:100%;display:block;vertical-align:middle;horizontal-align:middle;">
