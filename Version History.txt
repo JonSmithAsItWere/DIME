@@ -1,6 +1,19 @@
 DIME
 Version History
 
+v1.11
+- Updated Find window to include new functionality
+  - Updated to be more similar to the Notepad++ Find window
+  - "Replace" and "Replace All" functions have been added
+  - "Match variable" is an option to only include variables when using any of the functions
+- Added Single and Block "Commenting" functionality
+  - "REM"-style only
+  - Ctrl+Q will add "REM" to the beginning of all lines that are highlighted (if not present)
+  - Ctrl+Shift+Q will remove "REM" from the beginning of all lines that are highlighted (if present)
+  - Tip: Triple-click a line with ";" present before using either functionality
+- Added "MG" commands as a line to check for variables when using the "Variable Check" function
+- Fixed an issue where clicking "Master Reset" in the menu when not connected to a Galil would cause an error
+
 v1.10
 - Added "Variable Swap" functionality as a tool to help when resources are running low
   - Uses a form that asks for the array name, and variable names for each array index

@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.10"
+   version="1.11"
    windowState="normal"
 />
 
@@ -195,43 +195,47 @@ NS = {
    lastMatch: false,
    FindPath: "",
    FindHTM: ["<title>Find</title>",
-            "<style></style>",
+            "<style>",
+            "div {display:inline;vertical-align:top;}",
+            ".button{display:block;width:100%;height:24px;margin:2px 0px 0px 0px;font-size:0.75rem;font-size:11px;font-family:arial;}",
+            ".tab{overflow:hidden;border:1px solid #ccc;background-color: #f1f1f1;font-size:11px;font-family:arial;}",
+            "</style>",
             "<script type=\"text/javascript\">",
-            "function KeyCatch(e) {",
-            "if ((e.keyCode == 13) && (!e.ctrlKey)) {",
-            "Find(e.shiftKey);",
-            "return false;",
-            "}",
-            "if (e.keyCode == 27) {",
-            "close();",
-            "return false;",
-            "}",
-            "}",
-            "function Find(reverse) {",
-            "document.getElementById(\"findcount\").innerHTML = window.dialogArguments.Find(document.getElementById(\"findtext\").value, document.getElementById(\"matchcase\").checked, reverse);",
-            "document.getElementById(\"findtext\").focus();",
-            "document.getElementById(\"findtext\").select();",
-            "}",
-            "function FindCount() {",
-            "var count = window.dialogArguments.FindCount(document.getElementById(\"findtext\").value, document.getElementById(\"matchcase\").checked);",
-            "document.getElementById(\"findcount\").innerHTML = \"Count: \" + count + \" match\" + window.dialogArguments.ConditionalString(\"es\", (count != 1)) + \".\";",
-            "document.getElementById(\"findtext\").focus();",
-            "document.getElementById(\"findtext\").select();",
-            "}",
+            "function KeyCatch(e) {if ((e.keyCode == 13) && (!e.ctrlKey)) {Find(e, false);return false;}if (e.keyCode == 27) {close();return false;}}",
+            "function Find(e, reverse) {if (e.shiftKey) { reverse=!reverse; };document.getElementById(\"findcount\").innerHTML = window.dialogArguments.Find(document.getElementById(\"findtext\").value, document.getElementById(\"matchcase\").checked, document.getElementById(\"matchvar\").checked, reverse);document.getElementById(\"findtext\").focus();document.getElementById(\"findtext\").select();}",
+            "function FindCount() {var count = window.dialogArguments.FindCount(\"\", document.getElementById(\"findtext\").value, document.getElementById(\"matchcase\").checked, document.getElementById(\"matchvar\").checked);document.getElementById(\"findcount\").innerHTML = \"Count: \" + count + \" match\" + window.dialogArguments.ConditionalString(\"es\", (count != 1)) + \".\";document.getElementById(\"findtext\").focus();document.getElementById(\"findtext\").select();}",
+            "function FindMenu() {document.title = \"Find\"; document.getElementById(\"replacediv\").style.display = \"none\";document.getElementById(\"emptydiv\").style.display = \"inline\";document.getElementById(\"findmenu\").style.borderColor = \"blue\";document.getElementById(\"replacemenu\").style.borderColor = \"#ccc\";document.getElementById(\"countbutton\").style.display = \"block\";document.getElementById(\"replacebutton\").style.display = \"none\";document.getElementById(\"replaceallbutton\").style.display = \"none\";}",
+            "function ReplaceMenu() {document.title = \"Replace\"; document.getElementById(\"replacediv\").style.display = \"inline\";document.getElementById(\"emptydiv\").style.display = \"none\";document.getElementById(\"findmenu\").style.borderColor = \"#ccc\";document.getElementById(\"replacemenu\").style.borderColor = \"blue\";document.getElementById(\"countbutton\").style.display = \"none\";document.getElementById(\"replacebutton\").style.display = \"block\";document.getElementById(\"replaceallbutton\").style.display = \"block\";}",
+            "function SplitSwitch() {if (document.getElementById(\"splitswitch\").checked) {document.getElementById(\"findbutton\").style.display = \"none\";document.getElementById(\"findbackbutton\").style.display = \"inline\";document.getElementById(\"findforwardbutton\").style.display = \"inline\";} else {document.getElementById(\"findbutton\").style.display = \"block\";document.getElementById(\"findbackbutton\").style.display = \"none\";document.getElementById(\"findforwardbutton\").style.display = \"none\";}}",
+            "function Replace(e) {var rsp = window.dialogArguments.ReplaceVal(document.getElementById(\"findtext\").value, document.getElementById(\"replacetext\").value, document.getElementById(\"matchcase\").checked, document.getElementById(\"matchvar\").checked);if (rsp) { Find(e, document.getElementById(\"backwards\").checked); }}",
+            "function AllReplace() {document.getElementById(\"findcount\").innerHTML = window.dialogArguments.ReplaceAll(document.getElementById(\"findtext\").value, document.getElementById(\"replacetext\").value, document.getElementById(\"matchcase\").checked, document.getElementById(\"matchvar\").checked);}",
+            "function MatchVarClick() {if (document.getElementById(\"matchvar\").checked) {document.getElementById(\"matchcase\").checked = true;document.getElementById(\"matchcase\").disabled = true;} else {document.getElementById(\"matchcase\").disabled = false;}}",
             "<",
             "/script>",
-            "<body onkeypress=\"KeyCatch(event)\"; onunload=\"window.dialogArguments.NS.inFind=false\"; style=\"overflow:hidden;\";>",
-            "<div id=\"findform\"; style=\"position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:155px;width:350px;top:0px;left:0px;display:block\">",
-            "<div style=\"font-size:1.2rem;\";>Find what: </div>",
-            "<div><input type=\"text\"; id=\"findtext\"; style=\"overflow:hidden;height:25px;width:95%;\"></input></div>",
-            "<div style=\"width:100%;height:10px;\">&nbsp;</div>",
-            "<div>",
-            "Match case:<input id=\"matchcase\" type=\"checkbox\"></input>",
-            "<button class=\"button\"; onclick=\"Find(false)\";>Find Next</button>&nbsp;",
-            "<button class=\"button\"; onclick=\"Find(true)\";>Find Prev</button>&nbsp;",
-            "<button class=\"button\"; onclick=\"FindCount()\";>Count</button>&nbsp;",
+            "<body onkeypress=\"KeyCatch(event)\"; onunload=\"window.dialogArguments.NS.inFind=false\"; style=\"overflow:hidden;font-size:11px;font-family:arial;\";>",
+            "<div id=\"findform\"; style=\"position:fixed;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:192px;width:465px;top:0px;left:0px;\">",
+            "<div style=\"width:100%;\"><button id=\"findmenu\"; class=\"tab\" onclick=\"FindMenu()\"; style=\"border-color:blue\";>Find</button><button id=\"replacemenu\"; class=\"tab\" onclick=\"ReplaceMenu()\";>Replace</button></div>",
+            "<div style=\"width:453px;border:1px solid #ccc;padding:5px;\">",
+            "<div style=\"width:300px;\">",
+            "<div style=\"margin:2px 1px 1px 1px;width:100%;\"><div style=\"width:80px;text-align:right;line-height:24px;\">Find what:&nbsp;</div><input type=\"text\"; id=\"findtext\"; style=\"display:inline;overflow:hidden;width:211px;\"></input></div>",
+            "<div id=\"replacediv\"; style=\"margin:1px;display:none;width:100%;\";><div style=\"width:80px;text-align:right;line-height:24px;\">Replace with:&nbsp;</div><input type=\"text\"; id=\"replacetext\"; style=\"display:inline;overflow:hidden;width:211px;\"></input></div>",
+            "<div id=\"emptydiv\"; style=\"width:100%;height:24px;margin:1px;\">&nbsp;</div>",
+            "<div style=\"width:100%;height:20px;\">&nbsp;</div>",
+            "<div style=\"display:block;\"><input id=\"backwards\"; type=\"checkbox\";><div style=\"vertical-align:middle;\"; onclick=\"backwards.click()\">Backwards direction</div></input></div>",
+            "<div style=\"display:block;\"><input id=\"matchcase\"; type=\"checkbox\";><div style=\"vertical-align:middle;\"; onclick=\"matchcase.click()\">Match case</div></input></div>",
+            "<div style=\"display:block;\"><input id=\"matchvar\"; type=\"checkbox\"; onclick=\"MatchVarClick()\";><div style=\"vertical-align:middle;\"; onclick=\"matchvar.click()\">Match variable</div></input></div>",
             "</div>",
-            "<div><p id=\"findcount\" style=\"color:#FF0000;\"></p></div>",
+            "<div style=\"width:120px;\">",
+            "<button id=\"findbutton\"; class=\"button\"; onclick=\"Find(event,backwards.checked)\";>Find Next</button>",
+            "<button id=\"findbackbutton\"; class=\"button\"; onclick=\"Find(event, true)\"; style=\"display:none;width:60px;\";>Prev</button>",
+            "<button id=\"findforwardbutton\"; class=\"button\"; onclick=\"Find(event, false)\"; style=\"display:none;width:60px;\";>Next</button>",
+            "<button id=\"countbutton\"; class=\"button\"; onclick=\"FindCount()\";>Count</button>",
+            "<button id=\"replacebutton\"; class=\"button\"; onclick=\"Replace(event)\"; style=\"display:none\";>Replace</button>",
+            "<button id=\"replaceallbutton\"; class=\"button\"; onclick=\"AllReplace()\"; style=\"display:none\";>Replace All</button>",
+            "</div>",
+            "<div style=\"width:21px;\"><input id=\"splitswitch\"; type=\"checkbox\"; align=\"middle\"; onclick=\"SplitSwitch()\";></div>",
+            "</div>",
+            "<div id=\"findcount\" style=\"color:#FF0000;height:10px;width;478px;margin:1px;\"></div>",
             "</div>",
             "</body>"].join(""),
    myPoll: {},                 //used to set/clear polling interval
@@ -2516,6 +2520,8 @@ NS = {
                 "<tr><td>Ctrl+Shift+L</td><td>Return From Label Jump</td></tr>",
                 "<tr><td>Ctrl+N</td><td>New</td></tr>",
                 "<tr><td>Ctrl+O</td><td>Open</td></tr>",
+                "<tr><td>Ctrl+Q</td><td>Comment line(s)</td></tr>",
+                "<tr><td>Ctrl+Shift+Q</td><td>Uncomment line(s)</td></tr>",
                 "<tr><td>Ctrl+R</td><td>Reload</td></tr>",
                 "<tr><td>Ctrl+S</td><td>Save</td></tr>",
                 "<tr><td>Ctrl+T</td><td>Toggle Main Text View</td></tr>",
@@ -3452,6 +3458,9 @@ function PressCapture(e) {
       case 15:
          Open();
          break;
+      case 17:
+         ToggleComment(e.shiftKey);
+         break;
       case 18:
          Reload();
          break;
@@ -3468,8 +3477,10 @@ function PressCapture(e) {
          ToggleVariableWatch();
          break;
       case 24:
-         TextEdit("^x");
-         break;
+         if(!e.shiftKey) {
+            TextEdit("^x");
+            break;
+         }
       case 25:
          TextEdit("^y");
          break;
@@ -4076,7 +4087,7 @@ function SwapVarToArr() {
    var index = 0;
    var count = 0;
    var rsp = "";
-   var error = VarRegex();
+   var error = SwapError();
 
    if (error.length > 0) {
       var errorMsg = "The following errors were found:"
@@ -4091,7 +4102,7 @@ function SwapVarToArr() {
       count = 0;
       tVar = document.getElementById("varvalue" + i).value;
       if (tVar == "") { continue; }
-      tReg = new RegExp("[^\\w@]" + tVar + "[^\\w@\\[]", "g")
+      tReg = new RegExp("[^\\w@\"]" + tVar + "[^\\w@\"\\[]", "g")
       index = text.search(tReg);
       while (index != -1) {
          count++;
@@ -4115,7 +4126,7 @@ function SwapArrToVar() {
    var index = 0;
    var count = 0;
    var rsp = "";
-   var error = VarRegex();
+   var error = SwapError();
 
    if (error.length > 0) {
       var errorMsg = "The following errors were found:"
@@ -4146,7 +4157,7 @@ function SwapArrToVar() {
    document.getElementById("arrvalue").focus();
 }
 
-function VarRegex() {
+function SwapError() {
    var text = NS.myText.value;
    var arr = document.getElementById("arrvalue").value;
    var varRegex = /^[A-Za-z@][\w@]{0,7}$/;
@@ -4182,6 +4193,7 @@ function VarCheck() {
    var jpRegex = /^JP#/;
    var xqRegex = /^XQ#/;
    var ifRegex = /^IF\(/;
+   var mgRegex = /^MG[{"\s]/;
    var variable = ["TIME",
                    "~a",
                    "~b",
@@ -4298,6 +4310,22 @@ function VarCheck() {
 
          if ((jsRegex.test(line)) || (jpRegex.test(line)) || (xqRegex.test(line)) || (ifRegex.test(line))) {
             temp = line.substring(2).replace(/[\)\s\]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
+            tempArr = temp.split(",");
+
+            for (var k = 0; k < tempArr.length; k++) {
+               temp = tempArr[k].indexOf("[");
+               if (temp == -1) {
+                  if (tempArr[k] != "") {
+                     varAssign.push([tempArr[k], i + 1]);
+                  }
+               } else {
+                  arrAssign.push([tempArr[k].substring(0, temp), i + 1]);
+               }
+            }
+         }
+
+         if (mgRegex.test(line)) {
+            temp = line.substring(2).replace(/\{[^\}]*\}/g, "").replace(/"[^"]*"/g, "").replace(/[\)\s\]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
             tempArr = temp.split(",");
 
             for (var k = 0; k < tempArr.length; k++) {
@@ -4438,9 +4466,9 @@ function CloseComForm() {
 function CountPorts(ini, format) {
    var fso = new ActiveXObject("Scripting.FileSystemObject");
    var oFile = fso.OpenTextFile(ini, 1);
-   var sTemp = oFile.ReadAll().toLowerCase();
+   var sTemp = oFile.ReadAll();
    oFile.Close();
-   var found = CountMatch(sTemp, format.toLowerCase());
+   var found = FindCount(sTemp, format, false, false);
    return found;
 }
 
@@ -4505,7 +4533,7 @@ function FindShow() {
       if (NS.myFrameDiv.style.display == "none") { return; }
       CancelOptionsClick();
       CloseComForm();
-      var w = 350, h = 155
+      var w = 465, h = 192;
       NS.find = window.showModelessDialog(NS.FindPath, window, "resizable:0;dialogWidth:" + w + "px;dialogHeight:" + h + "px;");
       NS.inFind = true
    }
@@ -4523,35 +4551,43 @@ function FindClose() {
    try { NS.find.close(); } catch(e) {}
 }
 
-function Find(findText, matchCase, reverse) {
+function Find(findText, matchCase, matchVar, reverse) {
    var pos, lines, chr;
    var rsp = "";
    var text = NS.myText.value;
-   if (!matchCase) {
-      text = text.toLowerCase();
-      findText = findText.toLowerCase();
-   }
 
-   if ((text == "") || (findText == "")) { return rsp; }
+   if ((text == "") || (findText == "")) { return ""; }
 
-   if (reverse) {
-      pos = text.substring(0, NS.startSel).lastIndexOf(findText);
-      if (pos == -1) {
-         pos = text.substring(NS.startSel).lastIndexOf(findText);
-         if (pos != -1) {
-            rsp = "Top of document was reached. Found first occurance from the bottom."
-            pos += NS.startSel;
+   if (matchVar) {
+      temp = FindVar(text, findText, matchCase, reverse);
+      pos = temp[0];
+      rsp = temp[1];
+   } else {
+      if (!matchCase) {
+         text = text.toLowerCase();
+         findText = findText.toLowerCase();
+      }
+
+      if (reverse) {
+         pos = text.substring(0, NS.startSel).lastIndexOf(findText);
+         if (pos == -1) {
+            pos = text.substring(NS.startSel).lastIndexOf(findText);
+            if (pos != -1) {
+               rsp = "Top of document was reached. Found first occurance from the bottom."
+               pos += NS.startSel;
+            }
+         }
+      } else {
+         pos = text.substring(NS.endSel).indexOf(findText);
+         if (pos == -1) {
+            rsp = "Bottom of document was reached. Found first occurance from the top."
+            pos = text.substring(0, NS.endSel).indexOf(findText);
+         } else {
+            pos += NS.endSel;
          }
       }
-   } else {
-      pos = text.substring(NS.endSel).indexOf(findText);
-      if (pos == -1) {
-         rsp = "Bottom of document was reached. Found first occurance from the top."
-         pos = text.substring(0, NS.endSel).indexOf(findText);
-      } else {
-         pos += NS.endSel;
-      }
    }
+
    if (pos != -1) {
       NS.startSel = pos;
       NS.endSel = pos + findText.length;
@@ -4570,7 +4606,7 @@ function Find(findText, matchCase, reverse) {
       MaintainSelection();
       NS.myText.scrollTop = scroll;
    } else {
-      rsp = "\"" + findText + "\" not found.";
+      rsp = "\"" + findText + "\"" + ConditionalString(" variable", matchVar) + " not found.";
    }
 
    try {
@@ -4586,28 +4622,148 @@ function Find(findText, matchCase, reverse) {
    return rsp;
 }
 
-function FindCount(findText, matchCase) {
-   var text = NS.myText.value;
-
-   if (!matchCase) {
-      text = text.toLowerCase();
-      findText = findText.toLowerCase();
+function FindVar(text, findText, matchCase, reverse) {
+   var pos = -1;
+   var found = 0;
+   var rsp = "";
+   var param = ConditionalString("i", (!matchCase)) + "g";
+   var varRegex = new RegExp("[^\\w@#]" + findText + "[^\\w@\\[]", param);
+   if (reverse) {
+      found = text.substring(0, NS.startSel).search(varRegex);
+      while (found != -1) {
+         if (pos == -1) { pos = found; } else { pos += found + 1; }
+         found = text.substring(pos + 1, NS.startSel).search(varRegex);
+      }
+      if (pos == -1) {
+         found = text.substring(NS.startSel).search(varRegex);
+         while (found != -1) {
+            if (pos == -1) { pos = found; } else { pos += found + 1; }
+            found = text.substring(NS.startSel + pos + 1).search(varRegex);
+         }
+         if (pos != -1) {
+            rsp = "Top of document was reached. Found first variable from the bottom."
+            pos += NS.startSel;
+         }
+      }
+      if (pos != -1) { pos++; }
+   } else {
+      pos = text.substring(NS.endSel).search(varRegex);
+      if (pos == -1) {
+         rsp = "Bottom of document was reached. Found first variable from the top."
+         pos = text.substring(0, NS.endSel).search(varRegex);
+      } else {
+         pos += NS.endSel;
+      }
+      if (pos != -1) { pos++; }
    }
-
-   return CountMatch(text, findText);
+   return [pos, rsp];
 }
 
-function CountMatch(text, findText) {
-   var count = 0;
+function FindCount(text, findText, matchCase, matchVar) {
+   if (text == "") { text = NS.myText.value; }
    if ((text == "") || (findText == "")) { return 0; }
 
-   var pos = text.indexOf(findText);
-   while (pos > -1){
+   var count = 0;
+   var index = 0;
+   var param = ConditionalString("i", (!matchCase)) + "g";
+   if (matchVar) {
+      var varRegex = new RegExp("[^\\w@#]" + findText + "[^\\w@\\[]", param);
+   } else {
+      var varRegex = new RegExp(findText, param);
+   }
+   index = text.search(varRegex);
+   while (index != -1) {
       count++;
-      pos += findText.length;
-      pos = text.indexOf(findText, pos);
+      text = text.substring(index + 1);
+      index = text.search(varRegex);
    }
    return count;
+}
+
+function ReplaceVal(findText, replaceText, matchCase, matchVar) {
+   if (matchVar) {
+      if (!CheckVarReplace(findText, replaceText)) { return false; }
+   }
+   var substr = NS.myText.value.substring(NS.myText.selectionStart, NS.myText.selectionEnd)
+   if (!matchCase) {
+      substr = substr.toLowerCase();
+      findText = findText.toLowerCase();
+   }
+   if (substr == findText) {
+      NS.myText.value = NS.myText.value.substring(0, NS.myText.selectionStart) + replaceText + NS.myText.value.substring(NS.myText.selectionEnd);
+   }
+   return true;
+}
+
+function ReplaceAll(findText, replaceText, matchCase, matchVar) {
+   var text = NS.myText.value;
+   var ret = "";
+   if (matchVar) {
+      if (!CheckVarReplace(findText, replaceText)) { return ""; }
+   }
+   var count = 0;
+   var index = 0;
+   var pos = 0;
+
+   if (matchVar) {
+      var varRegex = new RegExp("[^\\w@#]" + findText + "[^\\w@\\[]", ConditionalString("i", (!matchCase)) + "g");
+      index = text.search(varRegex);
+      while (index != -1) {
+         count++;
+         ret += text.substring(0, index + 1) + replaceText
+         text = text.substring(index + findText.length + 1);
+         index = text.search(varRegex);
+      }
+   } else {
+      if (!matchCase) {
+         findText = findText.toLowerCase();
+         index = text.toLowerCase().indexOf(findText);
+      } else {
+         index = text.indexOf(findText);
+      }
+      while (index != -1) {
+         count++;
+         ret += text.substring(0, index) + replaceText
+         text = text.substring(index + findText.length);
+         if (!matchCase) {
+            index = text.toLowerCase().indexOf(findText);
+         } else {
+            index = text.indexOf(findText);
+         }
+      }
+   }
+
+   ret += text;
+   NS.myText.value = ret;
+   return "Replace All: " + count + " replacement" + ConditionalString("s", (count != 1)) + " made.";
+}
+
+function CheckVarReplace(findText, replaceText) {
+   var varRegex = /^[A-Za-z@][\w@]{0,7}$/;
+   var arrRegex = /^[A-Za-z@][\w@]{0,7}\[$/;
+   var galRegex = /^_[A-Z]{2}[A-HW-Z]$/;
+   var findIsVar = varRegex.test(findText);
+   var findIsArr = arrRegex.test(findText);
+   var findIsGal = galRegex.test(findText);
+   var replaceIsVar = varRegex.test(replaceText);
+   var replaceIsArr = arrRegex.test(replaceText);
+   var replaceIsGal = galRegex.test(replaceText);
+   var error = [];
+
+   if ((!findIsVar) && (!findIsArr) && (!findIsGal)) { error.push("Find text is not a variable, array, or galil operand"); }
+   if ((!replaceIsVar) && (!replaceIsArr) && (!replaceIsGal)) { error.push("Replace text is not a variable, array, or galil operand"); }
+   if ((findIsVar != replaceIsVar) || (findIsArr != replaceIsArr) || (findIsGal != replaceIsGal)) { error.push("Find text and Replace text must both be same type of variable"); }
+
+   if (error.length > 0) {
+      var errorMsg = "The following errors were found:"
+      for (var i = 0; i < error.length; i++) {
+         errorMsg += "\r\n" + (i+1) + ".) " + error[i];
+      }
+      vMsgBox(errorMsg, 0, "Replace (Match variable)");
+      return false;
+   }
+
+   return true;
 }
 
 function GoToLineNum() {
@@ -5038,6 +5194,10 @@ function Terminal(command) {
 }
 
 function MasterReset(fromTerminal) {
+   if (NS.connection == "OFFLINE") {
+      GalilConnect();
+      if (NS.connection == "OFFLINE") { return; }
+   }
    document.getElementById("overlayText").innerHTML = "Performing Master Reset<br/>Please Wait...";
    document.getElementById("overlay").style.display = "block";
    setTimeout(function() {
@@ -6264,6 +6424,7 @@ function CheckAndPopulateDupLab(fileText) {
                        "#PRO_REQ"];
 
    res2 = res2.concat(ignoreLabels);
+   res2 = res2.concat(pluginLabels);
 
    return [res1, res2];
 }
@@ -6435,7 +6596,7 @@ function LabelCheck() {
          }
       }
    }
-   
+
    UnusedLabels.sort();
    FallenLabels.sort();
    IgnoredLabels.sort();
@@ -6537,6 +6698,30 @@ function ShowAbout() {
 
 function SelectAll() {
    NS.myText.select();
+   SetSelection();
+}
+
+function ToggleComment(shift) {
+   var start = NS.myText.selectionStart;
+   var end = NS.myText.selectionEnd;
+   var text = NS.myText.value;
+   if (text[end - 1] == "\n") { end--; }
+   var lineStart = text.substring(0, start).lastIndexOf("\n");
+   var lineEnd = text.substring(end).indexOf("\n") + end;
+   var semiStart = text.substring(0, start).lastIndexOf(";");
+   var semiEnd = text.substring(end).indexOf(";") + end;
+   if (semiStart>lineStart) { lineStart = semiStart; }
+   if ((semiEnd<lineEnd) && (semiEnd != -1)) { lineEnd = semiEnd; }
+
+   var ret = text.substring(lineStart, lineEnd);
+   if (shift) {
+      ret = ret.replace(/;(REM)/g,";").replace(/\n(REM)/g,"\n");
+   } else {
+      ret = ret.replace(/;(?!REM)/g,";REM").replace(/\n(?!REM)/g,"\nREM");
+   }
+
+   NS.myText.value = text.substring(0, lineStart) + ret + text.substring(lineEnd);
+   NS.myText.setSelectionRange(lineStart + 1, lineStart + ret.length);
    SetSelection();
 }
 
@@ -6792,6 +6977,15 @@ End Function
    <TR onclick="HideMenu();ToggleIndent()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Toggle Auto-Indent</TD>
       <TD align="right"> Ctrl+I</TD>
+   </TR>
+   <TR><TD colspan="2"><HR></TD></TR>
+   <TR onclick="HideMenu();ToggleComment(false)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Comment Line(s)</TD>
+      <TD align="right"> Ctrl+Q</TD>
+   </TR>
+   <TR onclick="HideMenu();ToggleComment(true)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Uncomment Line(s)</TD>
+      <TD align="right"> Ctrl+Shift+Q</TD>
    </TR>
 </TABLE>
 
