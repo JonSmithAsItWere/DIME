@@ -1,7 +1,12 @@
 DIME
 Version History
 
-v1.11
+2019/09/20 - v1.12
+- Improved commenting functionality
+- Fixed an issue where using Shift+F3 to do "Find Next" backwards was not working correctly
+- Made some minor improvements to the Regex for the "Variable Check" function
+
+2019/09/18 - v1.11
 - Updated Find window to include new functionality
   - Updated to be more similar to the Notepad++ Find window
   - "Replace" and "Replace All" functions have been added
@@ -14,7 +19,7 @@ v1.11
 - Added "MG" commands as a line to check for variables when using the "Variable Check" function
 - Fixed an issue where clicking "Master Reset" in the menu when not connected to a Galil would cause an error
 
-v1.10
+2019/09/03 - v1.10
 - Added "Variable Swap" functionality as a tool to help when resources are running low
   - Uses a form that asks for the array name, and variable names for each array index
   - Has a function for swapping from the named variables to the array elements
@@ -28,21 +33,21 @@ v1.10
 - Fixed an issue with "Label Check" where it was skipping parts of the main it was checking
 - Reverted the cap on the terminal commands, and instead updated the error message
 
-v1.09
+2019/08/27 - v1.09
 - Terminal and Responses now use text wrap
 - Capped Terminal commands to be less than 80 characters
 - Added "@" as a character as a valid variable character for "Variable Check"
 - Added condition to ignore certain 3D Profiling variables/labels/arrays for "Variable Check"
 - "Label Check" will no longer mark a label as "used" if it is a top level label that JP#'s to itself
 
-v1.08
+2019/08/26 - v1.08
 - Added "Variable Check" functionality as a tool to help find potential variable errors
   - Breaks errors down into types as "Variable", "Label", and "Array"
   - Shortcut is F9
 - Added all current plugin labels to "Error Check" and "Label Check" where appropriate
 - Changed the font in the "Error Check" and "Label Check" dialogs to be monospace
 
-v1.07
+2019/08/20 - v1.07
 - Added "Label Check" functionality as a tool to help find unused labels
   - Breaks down labels as "Unused", "Unused (Fallen Into)", and "Ignored (Dependency)"
   - Shortcut is F8
@@ -51,11 +56,11 @@ v1.07
 - Changed error check for characters in a line from "more than 80" to "80 or more"
 - Added "Create CamCalBackup" functionality under "Utilities"
 
-v1.06
+2019/08/07 - v1.06
 - Added "IO Setup" functionality under "Utilities"
 - Updated String Manipulation module in code snippets
 
-v1.05
+2019/08/02 - v1.05
 - Added "Reload" functionality to allow the user to update their current text with the saved text
   - This will allow users who edit in Notepad++ to reload there changes instantaneously
   - A backup is created in case of accidental clicks
@@ -63,12 +68,12 @@ v1.05
 - Fixed issue where "Return from Label Jump" was not working properly
 - Moved "Poll Interval" from the main button bar to the variable watch / IO button bar
 
-v1.04
+2019/07/29 - v1.04
 - Fixed Indicators, ShotScale, and Watlow COM port setup operations
 - Saying "no" to "Download anyway?" when download a main with errors will now display errors afterwards
 - Fixed issue with displaying array contents in variable watch
 
-v1.03
+2019/07/16 - v1.03
 - Changed the shortcut to return from a label jump from Ctrl+R to Ctrl+Shift+L
 - Fixed issue with the naming convention of the DIME backups (the time was not printing correctly)
 - Fixed issue where SetSelection was not functioning properly and was causing an error
@@ -76,16 +81,16 @@ v1.03
 - Added Line Control module in code snippets
 - Updated String Manipulation module in code snippets
 
-v1.02
+2019/07/11 - v1.02
 - Improved machine backup functionality
 - Improved machine upload functionality
 - Fixed issue where you would get an error relating to the find window
 
-v1.01
+2019/07/09 - v1.01
 - Added new style find window as a modeless dialog
 - Added mismatched quotes to error checking
 - Improved logo swap error catching
 - General bug fixes
 
-v1.00
+2019/06/19 - v1.00
 - Initial release

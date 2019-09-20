@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.11"
+   version="1.12"
    windowState="normal"
 />
 
@@ -193,6 +193,7 @@ NS = {
    errorCheck: {},
    lastFind: "",
    lastMatch: false,
+   lastVar: false,
    FindPath: "",
    FindHTM: ["<title>Find</title>",
             "<style>",
@@ -3208,7 +3209,7 @@ function KeyCapture(element, e) {
             if (NS.inFind) {
                NS.find.Find(e.shiftKey);
             } else {
-               if (NS.lastFind != "") { Find(NS.lastFind, NS.lastMatch, e.shiftKey); }
+               if (NS.lastFind != "") { Find(NS.lastFind, NS.lastMatch, NS.lastVar, e.shiftKey); }
             }
             return;
          case (118):  //F7
@@ -4293,7 +4294,7 @@ function VarCheck() {
             if (variable.indexOf(temp) == -1) {
                variable.push(temp);
             }
-            temp = line.substring(line.indexOf("=") + 1).replace(/[\)\s\]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
+            temp = line.substring(line.indexOf("=") + 1).replace(/[\) \]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
             tempArr = temp.split(",");
 
             for (var k = 0; k < tempArr.length; k++) {
@@ -4309,7 +4310,7 @@ function VarCheck() {
          }
 
          if ((jsRegex.test(line)) || (jpRegex.test(line)) || (xqRegex.test(line)) || (ifRegex.test(line))) {
-            temp = line.substring(2).replace(/[\)\s\]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
+            temp = line.substring(2).replace(/[\) \]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
             tempArr = temp.split(",");
 
             for (var k = 0; k < tempArr.length; k++) {
@@ -4325,7 +4326,8 @@ function VarCheck() {
          }
 
          if (mgRegex.test(line)) {
-            temp = line.substring(2).replace(/\{[^\}]*\}/g, "").replace(/"[^"]*"/g, "").replace(/[\)\s\]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
+            //                       remove {___}                remove "___"                remove spaces, ), ]     change operators into ","        change "[" into "[]"
+            temp = line.substring(2).replace(/{[^}]*[}\n]/g, "").replace(/"[^"]*["\n]/g, "").replace(/[\) \]]/g, "").replace(/[\(+-\/*><=&|%]/g, ",").replace(/\[/g, "[],");
             tempArr = temp.split(",");
 
             for (var k = 0; k < tempArr.length; k++) {
@@ -4619,6 +4621,7 @@ function Find(findText, matchCase, matchVar, reverse) {
 
    NS.lastFind = findText;
    NS.lastMatch = matchCase;
+   NS.lastVar = matchVar;
    return rsp;
 }
 
@@ -6702,26 +6705,29 @@ function SelectAll() {
 }
 
 function ToggleComment(shift) {
+   var text = NS.myText.value;
    var start = NS.myText.selectionStart;
    var end = NS.myText.selectionEnd;
-   var text = NS.myText.value;
-   if (text[end - 1] == "\n") { end--; }
    var lineStart = text.substring(0, start).lastIndexOf("\n");
-   var lineEnd = text.substring(end).indexOf("\n") + end;
    var semiStart = text.substring(0, start).lastIndexOf(";");
-   var semiEnd = text.substring(end).indexOf(";") + end;
-   if (semiStart>lineStart) { lineStart = semiStart; }
-   if ((semiEnd<lineEnd) && (semiEnd != -1)) { lineEnd = semiEnd; }
+   if (semiStart > lineStart) { lineStart = semiStart; }
+   var lineEnd = text.substring(end).search(/[;\n]/g) + end - 1;
+
+   if (lineStart > lineEnd) {
+      lineStart = lineStart + lineEnd;
+      lineEnd = lineStart - lineEnd;
+      lineStart = lineStart - lineEnd;
+   }
 
    var ret = text.substring(lineStart, lineEnd);
    if (shift) {
-      ret = ret.replace(/;(REM)/g,";").replace(/\n(REM)/g,"\n");
+      ret = ret.replace(/([;\n])REM (?! )/g,"$1").replace(/([;\n])REM/g,"$1");
    } else {
-      ret = ret.replace(/;(?!REM)/g,";REM").replace(/\n(?!REM)/g,"\nREM");
+      ret = ret.replace(/([;\n])(?!REM)(?!REM )(?!;)(?!\n)/g, "$1REM").replace(/([;\n])REM(?! )/g, "$1REM ");
    }
 
    NS.myText.value = text.substring(0, lineStart) + ret + text.substring(lineEnd);
-   NS.myText.setSelectionRange(lineStart + 1, lineStart + ret.length);
+   NS.myText.setSelectionRange(lineStart + 1, lineStart + ret.length + 1);
    SetSelection();
 }
 
