@@ -1,6 +1,11 @@
 DIME
 Version History
 
+2019/09/25 - v1.13
+- Added an option to configure comment behavior
+- Added an option to perform a variable check on upload
+- Rearranged items in the Options form so that it looks a little nicer
+
 2019/09/20 - v1.12
 - Improved commenting functionality
 - Fixed an issue where using Shift+F3 to do "Find Next" backwards was not working correctly

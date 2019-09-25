@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.12"
+   version="1.13"
    windowState="normal"
 />
 
@@ -190,6 +190,7 @@ NS = {
    find: {},
    labelCheck: {},
    varCheck: {},
+   varCheckPrompt: "false",
    errorCheck: {},
    lastFind: "",
    lastMatch: false,
@@ -257,6 +258,7 @@ NS = {
    galil: new ActiveXObject("Galil"),  //galil object
    gAddress: "100.100.100.101",//default galil address
    startLabel: "Smart",        //post-download start label (Smart = #AUTO/#AUTO1)
+   commentToggle: "true",        //allows comment toggling instead of on without shift and off with shift
    textBC: "#FFFFFF",          //main text background color
    textC: "#000000",           //main text font color
    popupBC: "#FFFFFF",         //popup background color
@@ -2892,6 +2894,8 @@ function PopulateOptionsLists() {
 //set options values and background colors
 function SetOptions() {
    document.getElementById("myStartLabel").value = NS.startLabel;
+   document.getElementById("myVarCheckPrompt").value = NS.varCheckPrompt;
+   document.getElementById("myCommentBehavior").value = NS.commentToggle;
    document.getElementById("myTextBC").value = NS.textBC;
    document.getElementById("myTextC").value = NS.textC;
    document.getElementById("myPopupBC").value = NS.popupBC;
@@ -2916,6 +2920,14 @@ function SetOptions() {
    document.getElementById("myVariableC").style.backgroundColor = NS.variableC;
    document.getElementById("myValueBC").style.backgroundColor = NS.valueBC;
    document.getElementById("myValueC").style.backgroundColor = NS.valueC;
+
+   if (NS.commentToggle == "true") {
+      document.getElementById("uncomment").style.display = "none";
+      document.getElementById("commentname").innerHTML = "Toggle Comment";
+   } else {
+      document.getElementById("uncomment").style.display = "block";
+      document.getElementById("commentname").innerHTML = "Comment Line(s)";
+   }
 }
 
 function OptionsClick() {
@@ -2933,6 +2945,8 @@ function SaveOptionsClick(bool) {
 
    //store saved values
    NS.startLabel = document.getElementById("myStartLabel").value;
+   NS.varCheckPrompt = document.getElementById("myVarCheckPrompt").value;
+   NS.commentToggle = document.getElementById("myCommentBehavior").value;
    NS.textBC = document.getElementById("myTextBC").value;
    NS.textC = document.getElementById("myTextC").value;
    NS.popupBC = document.getElementById("myPopupBC").value;
@@ -2946,6 +2960,14 @@ function SaveOptionsClick(bool) {
    NS.valueBC = document.getElementById("myValueBC").value;
    NS.valueC = document.getElementById("myValueC").value;
 
+   if (NS.commentToggle == "true") {
+      document.getElementById("uncomment").style.display = "none";
+      document.getElementById("commentname").innerHTML = "Toggle Comment";
+   } else {
+      document.getElementById("uncomment").style.display = "block";
+      document.getElementById("commentname").innerHTML = "Comment Line(s)";
+   }
+
    try {
       //overwrite HTA with new variable values
       var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -2953,6 +2975,7 @@ function SaveOptionsClick(bool) {
       var temp = f.ReadAll();
       f.Close();
       temp = ReplaceVar(temp, "startLabel", NS.startLabel);
+      temp = ReplaceVar(temp, "commentToggle", NS.commentToggle);
       temp = ReplaceVar(temp, "textBC", NS.textBC);
       temp = ReplaceVar(temp, "textC", NS.textC);
       temp = ReplaceVar(temp, "popupBC", NS.popupBC);
@@ -3027,6 +3050,8 @@ function DefaultOptionsClick() {
    var rsp = vMsgBox("Are you sure you want to restore default options?", 4,"Restore Defaults?"); // 4 = vbYesNo
    if (rsp == 6) { // yes
       NS.startLabel = "Smart";
+      NS.varCheckPrompt = "false";
+      NS.commentToggle = "true";
       NS.textBC = "#FFFFFF";
       NS.textC = "#000000";
       NS.popupBC = "#FFFFFF";
@@ -5007,8 +5032,9 @@ function UploadToGalil() {
    setTimeout(function() {
       var tCon = NS.galil.address;
       var errorText = ErrorCheck();
+      var rsp = "";
       if (errorText != "") {
-         var rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to upload anyway?", 4, "Warning");
+         rsp = vMsgBox("Errors were found in the main\r\n\r\nWould you like to upload anyway?", 4, "Warning");
          if (rsp == 7) { //no
             try { NS.errorCheck.close(); } catch(e) {}
             document.getElementById("overlay").style.display = "none";
@@ -5020,6 +5046,25 @@ function UploadToGalil() {
                                           errorText,
                                           "</table>"].join(""), "Error Check", "div", 550, 300);
             return;
+         }
+      }
+
+      if (NS.varCheckPrompt == "true") {
+         var vars = VarCheck();
+         if (vars != "") {
+            rsp = vMsgBox("Potential variable errors were found in the main\r\n\r\nWould you like to upload anyway?", 4, "Warning");
+            if (rsp == 7) { //no
+               try { NS.varCheck.close(); } catch(e) {}
+               document.getElementById("overlay").style.display = "none";
+               NS.varCheck = ShowModeless(["<table style=\"font-family:'monospace';font-size:14px;\">",
+                                             "<col width=\"80px\">",
+                                             "<col width=\"70px\">",
+                                             "<col width=\"170px\">",
+                                             "<tr style=\"cursor:default;\";><td><b>Type</b></td><td><b>Line</b></td><td><b>Element</b></td></tr>",
+                                             vars,
+                                             "</table>"].join(""), "Variable Check", "div", 350, 300);
+               return;
+            }
          }
       }
 
@@ -6707,11 +6752,12 @@ function SelectAll() {
 function ToggleComment(shift) {
    var text = NS.myText.value;
    var start = NS.myText.selectionStart;
-   var end = NS.myText.selectionEnd;
+   var end = NS.myText.selectionEnd - 1;
    var lineStart = text.substring(0, start).lastIndexOf("\n");
    var semiStart = text.substring(0, start).lastIndexOf(";");
    if (semiStart > lineStart) { lineStart = semiStart; }
    var lineEnd = text.substring(end).search(/[;\n]/g) + end - 1;
+   var rem = new RegExp("^([;\n])REM", "g")
 
    if (lineStart > lineEnd) {
       lineStart = lineStart + lineEnd;
@@ -6720,6 +6766,8 @@ function ToggleComment(shift) {
    }
 
    var ret = text.substring(lineStart, lineEnd);
+   if(NS.commentToggle == "true") { shift = rem.test(ret); }
+
    if (shift) {
       ret = ret.replace(/([;\n])REM (?! )/g,"$1").replace(/([;\n])REM/g,"$1");
    } else {
@@ -6986,10 +7034,10 @@ End Function
    </TR>
    <TR><TD colspan="2"><HR></TD></TR>
    <TR onclick="HideMenu();ToggleComment(false)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
-      <TD> Comment Line(s)</TD>
+      <TD id="commentname"> Comment Line(s)</TD>
       <TD align="right"> Ctrl+Q</TD>
    </TR>
-   <TR onclick="HideMenu();ToggleComment(true)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="uncomment"; onclick="HideMenu();ToggleComment(true)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Uncomment Line(s)</TD>
       <TD align="right"> Ctrl+Shift+Q</TD>
    </TR>
@@ -7673,49 +7721,66 @@ End Function
    <button id="comend"; class="button"; onclick="CloseComForm()"; style="width:32%;";>Close</button>
 </div>
 
-<div id="optionsform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:310px;width:260px;top:calc(50% - 130px);left:calc(50% - 150px);display:none;">
+<div id="optionsform"; style="position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:355px;width:320px;top:90px;left:calc(50% - 180px);display:none;">
    <div style="margin:auto;text-align:center;width:100%;height:15px;display:block;background-color:limegreen;"><b>Options</b></div>
    <br/>
-   Post-Download Start Label:
-   <select id="myStartLabel">
+   <b>Post-Download Start Label:</b>
+   <select style="width:156px;" id="myStartLabel">
       <option value="Smart">Smart Detect</option>
       <option value="#AUTO">#AUTO</option>
       <option value="#AUTO1">#AUTO1</option>
    </select>
    <br/><br/>
-   Main Background Color / Text Color:
-   <br/>
-   <select id="myTextBC"; onchange="UpdateColor(this)"></select>&nbsp;
-   <select id="myTextC"; onchange="UpdateColor(this)"></select>
-   <br/>
-   Popup Background Color / Text Color:
-   <br/>
-   <select id="myPopupBC"; onchange="UpdateColor(this)"></select>&nbsp;
-   <select id="myPopupC"; onchange="UpdateColor(this)"></select>
-   <br/>
-   Terminal Background Color / Text Color:
-   <br/>
-   <select id="myTerminalBC"; onchange="UpdateColor(this)"></select>&nbsp;
-   <select id="myTerminalC"; onchange="UpdateColor(this)"></select>
-   <br/>
-   Response Background Color / Text Color:
-   <br/>
-   <select id="myResponseBC"; onchange="UpdateColor(this)"></select>&nbsp;
-   <select id="myResponseC"; onchange="UpdateColor(this)"></select>
-   <br/>
-   Variable Background Color / Text Color:
-   <br/>
-   <select id="myVariableBC"; onchange="UpdateColor(this)"></select>&nbsp;
-   <select id="myVariableC"; onchange="UpdateColor(this)"></select>
-   <br/>
-   Value Background Color / Text Color:
-   <br/>
-   <select id="myValueBC"; onchange="UpdateColor(this)"></select>&nbsp;
-   <select id="myValueC"; onchange="UpdateColor(this)"></select>
+   <b>Variable Check On Download:</b>
+   <select style="width:143px;" id="myVarCheckPrompt">
+      <option value="true">Enabled</option>
+      <option value="false">Disabled</option>
+   </select>
    <br/><br/>
-   <button class="button"; onclick="SaveOptionsClick(true)"; style="width:24%;";>Save</button>
-   <button class="button"; onclick="DefaultOptionsClick()"; style="width:49%;";>Restore Defaults</button>
-   <button class="button"; onclick="CancelOptionsClick()"; style="width:24%;";>Cancel</button>
+   <b>Comment Behavior:</b>
+   <select style="width:199px;" id="myCommentBehavior">
+      <option value="true">Toggle (Based Off First Line)</option>
+      <option value="false">Strict (Based Off "Shift" Key)</option>
+   </select>
+   <br/><br/>
+   <table>
+      <tr>
+         <td><b>Object</b></td><td><b>Background</b></td><td><b>Text Color</b></td>
+      </tr>
+      <tr>
+         <td>Main Editor</td>
+         <td><select style="width:100%;" id="myTextBC"; onchange="UpdateColor(this)"></select></td>
+         <td><select style="width:100%;" id="myTextC"; onchange="UpdateColor(this)"></select></td>
+      </tr>
+      <tr>
+         <td>References</td>
+         <td><select style="width:100%;" id="myPopupBC"; onchange="UpdateColor(this)"></select></td>
+         <td><select style="width:100%;" id="myPopupC"; onchange="UpdateColor(this)"></select></td>
+      </tr>
+      <tr>
+         <td>Terminal</td>
+         <td><select style="width:100%;" id="myTerminalBC"; onchange="UpdateColor(this)"></select></td>
+         <td><select style="width:100%;" id="myTerminalC"; onchange="UpdateColor(this)"></select></td>
+      </tr>
+      <tr>
+         <td>Response</td>
+         <td><select style="width:100%;" id="myResponseBC"; onchange="UpdateColor(this)"></select></td>
+         <td><select style="width:100%;" id="myResponseC"; onchange="UpdateColor(this)"></select></td>
+      </tr>
+      <tr>
+         <td>Variable</td>
+         <td><select style="width:100%;" id="myVariableBC"; onchange="UpdateColor(this)"></select></td>
+         <td><select style="width:100%;" id="myVariableC"; onchange="UpdateColor(this)"></select></td>
+      </tr>
+         <td>Value</td>
+         <td><select style="width:100%;" id="myValueBC"; onchange="UpdateColor(this)"></select></td>
+         <td><select style="width:100%;" id="myValueC"; onchange="UpdateColor(this)"></select></td>
+      </tr>
+   </table>
+   </br>
+   <button class="button"; onclick="SaveOptionsClick(true)"; style="width:32%;";>Save</button>
+   <button class="button"; onclick="DefaultOptionsClick()"; style="width:33%;";>Restore Defaults</button>
+   <button class="button"; onclick="CancelOptionsClick()"; style="width:32%;";>Cancel</button>
 </div>
 
 <div id="logoform"; style="z-index:3000;position:fixed;font-size:1.2rem;border-width:1px;border-style:solid;background-color:#F0F0F0;padding:5px;height:85px;width:300px;top:50%;left:50%;transform:translate(-50%, -50%);display:none">
