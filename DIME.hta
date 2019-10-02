@@ -2893,7 +2893,7 @@ function HandleOnLoad() {
          document.getElementById("overlay").style.display = "block";
          var trusted = CheckTrustedUser();
          if (!trusted) {
-            ver[1] = ver[1].replace("Lite: false", "Lite: true");
+            ver[1] = ver[1].replace("\n   Lite: false", "\n   Lite: true");
             NS.Lite = true;
          }
          var ver = VersionMatch();
