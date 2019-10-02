@@ -166,6 +166,7 @@ INI = {
 NS = {
    HTA: document.getElementById("DIME"),
    UserName: new ActiveXObject("WScript.Network").UserName,  //windows username
+   Lite: true,
    PortalVersion: "",          //default Portal Version
    PortalBuild: "",            //default Portal Build
    FileName: "",               //filepath and filename of the text file
@@ -685,99 +686,211 @@ NS = {
                "ZP\t\tPositive Antifriction Bias",
                "ZS\t\tZero Subroutine Stack"].join("\r\n"),
    MotorTuning: ["REM=============================Motor Tuning Module==============================",
-                  "REM           Author: Prog Dept   Date: 03/30/2017   Version: 2.0",
-                  "REM               ===============================================",
-                  "REM                              Revision History",
-                  "REM               ===============================================",
-                  "REM      Rev: Change:                                     Date:        By:",
-                  "REM      ------------------------------------------------------------------",
-                  "REM      01 - Modified From Base Module                 ##/##/##       XXX",
-                  "REM      ------------------------------------------------------------------",
-                  "REM",
-                  "REM==============================Initialize I/O==================================",
-                  "",
-                  "REM   Upon calling this module, the current position of the gantry is used",
-                  "REM   to define the position as 0,0,0,0",
-                  "REM   Between each step of tuning, the gantry will return to this position",
-                  "REM   BE SURE THERE IS ROOM ON ALL AXES TO MOVE ~2000 COUNTS IN BOTH DIRECTIONS",
-                  "",
-                  "#TUNER",
-                  "   POS_VAL=0",
-                  "   DP 0,0,0,0",
-                  "   DM SPD[4]",
-                  "   DM ACDC[4]",
-                  "   TELL=0",
-                  "   SHXYZ;IF(AXES=4);SHW;ENDIF;JS#TUNE",
-                  "   SPD[0]=_SPX;SPD[1]=_SPY;SPD[2]=_SPZ",
-                  "   ACDC[0]=_ACX;ACDC[1]=_ACY;ACDC[2]=_ACZ",
-                  "   IF(AXES=4);SPD[3]=_SPW;ACDC[3]=_ACW;ENDIF",
-                  "",
-                  "REM ============================================================",
-                  "REM   Reference for usage of Axis variables",
-                  "REM ============================================================   ",
-                  "   WAIT_TM=1000;'Time to wait between moves (ms)",
-                  "   S_PC=100;'Move Speed Percentage (based on #TUNE speed)",
-                  "   AC_DC=100;'Accel/Decel Percentage (Based on #TUNE speed)",
-                  "   M_PC=100;'Move Distance Percentage, starts at 2000",
-                  "   NEXT=0;'goes to next axis",
-                  "   TELL=1;' Tells tuning info about current Axis",
-                  "REM ============================================================",
-                  "REM   Type in above commands in terminal to adjust values ",
-                  "REM  ======================BE CAREFUL======================",
-                  "REM   These Variables are reset between axes for safety",
-                  "REM ============================================================",
-                  "   ",
-                  "   ~a=0",
-                  "   ",
-                  "#TUNELP",
-                  "   JS#TELL,TELL>0",
-                  "   SP~a=(SPD[~a]*(S_PC/100))",
-                  "   AC~a=(ACDC[~a]*(AC_DC/100))",
-                  "   DC~a=_AC~a",
-                  "   WT WAIT_TM",
-                  "   PR~a=(2000*(M_PC/100))",
-                  "   BG~a;AM~a",
-                  "   WT WAIT_TM",
-                  "   PR~a=(0-(2000*(M_PC/100)))",
-                  "   BG~a;AM~a",
-                  "   JP#TUNELP,NEXT=0",
-                  "",
-                  "   WAIT_TM=400;S_PC=100;AC_DC=100;M_PC=100;NEXT=0;ST~a;AM~a",
-                  "   PA 0,0,0,0;BGZ;AMZ;IF(AXES=4);BGW;AMW;ENDIF;BGXY;AMXY;WT500",
-                  "",
-                  "   ~a=~a+1",
-                  "   TELL=1",
-                  "   ",
-                  "   JP#TELL,((~a=3)&(AXES=3))",
-                  "   JP#TELL,(~a=4)",
-                  "   ",
-                  "   JP#TUNELP",
-                  "",
-                  "#TELL",
-                  "   TELL=0",
-                  "   IF((~a=0)|((AXES-~a)=0))",
-                  "      MG {EH} \"X-Axis Tune Values\"",
-                  "      MG {EH} \"KPX=\",{Z5.1}_KPX,\" KDX=\",{Z5.1}_KDX,\" KIX=\",{Z5.3}_KIX",
-                  "      MG {EH} \"FAX=\",{Z5.1}_FAX,\" FVX=\",{Z5.1}_FVX{^13}",
-                  "   ENDIF",
-                  "   IF((~a=1)|((AXES-~a)=0))",
-                  "      MG {EH} \"Y-Axis Tune Values\"",
-                  "      MG {EH} \"KPY=\",{Z5.1}_KPY,\" KDY=\",{Z5.1}_KDY,\" KIY=\",{Z5.3}_KIY",
-                  "      MG {EH} \"FAY=\",{Z5.1}_FAY,\" FVY=\",{Z5.1}_FVY{^13}",
-                  "   ENDIF",
-                  "   IF((~a=2)|((AXES-~a)=0))",
-                  "      MG {EH} \"Z-Axis Tune Values\"",
-                  "      MG {EH} \"KPZ=\",{Z5.1}_KPZ,\" KDZ=\",{Z5.1}_KDZ,\" KIZ=\",{Z5.3}_KIZ",
-                  "      MG {EH} \"FAZ=\",{Z5.1}_FAZ,\" FVZ=\",{Z5.1}_FVZ{^13}",
-                  "   ENDIF",
-                  "   IF(((~a=3)|((AXES-~a)=0))&(AXES=4))",
-                  "      MG {EH} \"W-Axis Tune Values\"",
-                  "      MG {EH} \"KPW=\",{Z5.1}_KPW,\" KDW=\",{Z5.1}_KDW,\" KIW=\",{Z5.3}_KIW",
-                  "      MG {EH} \"FAW=\",{Z5.1}_FAW,\" FVW=\",{Z5.1}_FVW{^13}",
-                  "   ENDIF",
-                  "EN",
-                  "",
-                  "REM===============================End of Module=================================="].join("\r\n"),
+                 "REM           Author: Prog Dept   Date: 10/01/2019   Version: 3.0",
+                 "REM               ===============================================",
+                 "REM                              Revision History",
+                 "REM               ===============================================",
+                 "REM      Rev: Change:                                     Date:        By:",
+                 "REM      ------------------------------------------------------------------",
+                 "REM      01 - Modified From Base Module                 ##/##/##       XXX",
+                 "REM      ------------------------------------------------------------------",
+                 "REM",
+                 "REM==============================Initialize I/O==================================",
+                 "",
+                 "REM   Upon calling this module, the current position of the gantry is used",
+                 "REM   to define the position as 0,0,0,0",
+                 "REM   Between each step of tuning, the gantry will return to this position",
+                 "REM   BE SURE THERE IS ROOM ON ALL AXES TO MOVE ~2000 COUNTS IN ALL DIRECTIONS",
+                 "",
+                 "#TUNER",
+                 "   POS_VAL=0",
+                 "   DP 0,0,0,0",
+                 "   DM SPD[8]",
+                 "   DM ACDC[8]",
+                 "   TELL=0",
+                 "   TELLS=0",
+                 "   MAXAXES=0",
+                 "   START=-1",
+                 "   FINISH=0",
+                 "   SHXYZ;IF(AXES=4);SHW;ENDIF;JS#TUNE",
+                 "   SPD[0]=_SPX;SPD[1]=_SPY;SPD[2]=_SPZ;SPD[3]=_SPW",
+                 "   SPD[4]=_SPE;SPD[5]=_SPF;SPD[6]=_SPG;SPD[7]=_SPH",
+                 "   ACDC[0]=_ACX;ACDC[1]=_ACY;ACDC[2]=_ACZ;ACDC[3]=_ACW",
+                 "   ACDC[4]=_ACE;ACDC[5]=_ACF;ACDC[6]=_ACG;ACDC[7]=_ACH",
+                 "",
+                 "REM ============================================================",
+                 "REM   Reference for usage of Axis variables",
+                 "REM ============================================================   ",
+                 "   WAIT_TM=1000;REM Time to wait between moves (ms)",
+                 "   S_PC=100    ;REM Move Speed Percentage (based on #TUNE speed)",
+                 "   AC_DC=100   ;REM Accel/Decel Percentage (Based on #TUNE speed)",
+                 "   M_PC=100    ;REM Move Distance Percentage, starts at 2000",
+                 "   NEXT=0      ;REM goes to next axis",
+                 "   FINISH=0    ;REM ends tuning and prints all tune info for all axes tuned",
+                 "   TELL=1      ;REM Tells tuning info about current Axis",
+                 "   TELLS=0     ;REM Tells settling info",
+                 "REM ============================================================",
+                 "REM   Type in above commands in terminal to adjust values ",
+                 "REM  ======================BE CAREFUL======================",
+                 "REM   These Variables are reset between axes for safety",
+                 "REM ============================================================",
+                 "   MG{EH},\"Select Start Axis, START=n where n = 0(x/a) to 7(h)\"",
+                 "#TUNSTR",
+                 "   IF(START>7)",
+                 "      MG{EH},{Z9.0}START,\" is out of range, try again.\"",
+                 "      START=-1",
+                 "   ENDIF",
+                 "   JP#TUNSTR,((START<0)|(START>7))",
+                 "   ~c=START",
+                 "",
+                 "#TUNELP",
+                 "   JS#TELL,TELL>0",
+                 "   FL~c=1000000",
+                 "   BL~c=-1000000",
+                 "   SP~c=(SPD[~c]*(S_PC/100))",
+                 "   AC~c=(ACDC[~c]*(AC_DC/100))",
+                 "   DC~c=_AC~c",
+                 "   JS#TNSTL,(TELLS=1);'tells you about settling times",
+                 "   WT WAIT_TM",
+                 "   PR~c=(2000*(M_PC/100))",
+                 "   BG~c;AM~c",
+                 "   JS#TNSTL,(TELLS=1)",
+                 "   WT WAIT_TM",
+                 "   PR~c=(0-(2000*(M_PC/100)))",
+                 "   BG~c;AM~c",
+                 "   JP#TUNELP,NEXT=0",
+                 "",
+                 "   WAIT_TM=400;S_PC=100;AC_DC=100;M_PC=100;NEXT=0;ST~c;AM~c",
+                 "   PA 0,0,0,0;BGZ;AMZ;IF(AXES=4);BGW;AMW;ENDIF;BGXY;AMXY;WT500",
+                 "",
+                 "   ~c=~c+1",
+                 "   MAXAXES=~c",
+                 "   IF(~c=8)",
+                 "      FINISH=1",
+                 "   ENDIF",
+                 "",
+                 "   TELL=1",
+                 "",
+                 "   JP#TELLALL,(FINISH=1)",
+                 "",
+                 "   JP#TUNELP",
+                 "",
+                 "#TELL",
+                 "   TELL=0",
+                 "   IF(~c=0);xA=\"X\";ENDIF",
+                 "   IF(~c=1);xA=\"Y\";ENDIF",
+                 "   IF(~c=2);xA=\"Z\";ENDIF",
+                 "   IF(~c=3);xA=\"W\";ENDIF",
+                 "   IF(~c=4);xA=\"E\";ENDIF",
+                 "   IF(~c=5);xA=\"F\";ENDIF",
+                 "   IF(~c=6);xA=\"G\";ENDIF",
+                 "   IF(~c=7);xA=\"H\";ENDIF",
+                 "   MG{EH},{S}xA,\"-Axis Tune Values\"",
+                 "   MG{EH}{N},\"KP\",{S}xA,\"=\",{Z5.2}_KP~c",
+                 "   MG{EH}{N},\" KD\",{S}xA,\"=\",{Z5.2}_KD~c",
+                 "   MG{EH},\" KI\",{S}xA,\"=\",{Z5.2}_KI~c",
+                 "   MG{EH}{N},\"FA\",{S}xA,\"=\",{Z5.2}_FA~c",
+                 "   MG{EH}\" FV\",{S}xA,\"=\",{Z5.2}_FV~c",
+                 "EN",
+                 "",
+                 "#TELLALL",
+                 "   ~c=0",
+                 "   MG{EH}{N},\"KP \"",
+                 "#KPLP",
+                 "   IF(@FRAC[_KP~c]<>0)",
+                 "      MG{EH}{N},{Z5.2}_KP~c",
+                 "   ELSE",
+                 "      MG{EH}{N},{Z5.0}_KP~c",
+                 "   ENDIF",
+                 "   ~c=~c+1",
+                 "   IF(~c<>MAXAXES)",
+                 "      MG{EH}{N},\",\"",
+                 "      JP#KPLP",
+                 "   ENDIF",
+                 "   MG{EH}\"\"",
+                 "   ~c=0",
+                 "   MG{EH}{N},\"KD \"",
+                 "#KDLP",
+                 "   IF(@FRAC[_KD~c]<>0)",
+                 "      MG{EH}{N},{Z5.2}_KD~c",
+                 "   ELSE",
+                 "      MG{EH}{N},{Z5.0}_KD~c",
+                 "   ENDIF",
+                 "   ~c=~c+1",
+                 "   IF(~c<>MAXAXES)",
+                 "      MG{EH}{N},\",\"",
+                 "      JP#KDLP",
+                 "   ENDIF",
+                 "   MG{EH}\"\"",
+                 "   ~c=0",
+                 "   MG{EH}{N},\"KI \"",
+                 "#KILP",
+                 "",
+                 "   IF(@FRAC[_KI~c]<>0)",
+                 "      MG{EH}{N},{Z5.2}_KI~c",
+                 "   ELSE",
+                 "      MG{EH}{N},{Z5.0}_KI~c",
+                 "   ENDIF",
+                 "   ~c=~c+1",
+                 "   IF(~c<>MAXAXES)",
+                 "      MG{EH}{N},\",\"",
+                 "      JP#KILP",
+                 "   ENDIF",
+                 "   MG{EH}\"\"",
+                 "   ~c=0",
+                 "   MG{EH}{N},\"FA \"",
+                 "#FALP",
+                 "   IF(@FRAC[_FA~c]<>0)",
+                 "      MG{EH}{N},{Z5.2}_FA~c",
+                 "   ELSE",
+                 "      MG{EH}{N},{Z5.0}_FA~c",
+                 "   ENDIF",
+                 "   ~c=~c+1",
+                 "   IF(~c<>MAXAXES)",
+                 "      MG{EH}{N},\",\"",
+                 "      JP#FALP",
+                 "   ENDIF",
+                 "   MG{EH}\"\"",
+                 "   ~c=0",
+                 "   MG{EH}{N},\"FV \"",
+                 "#FVLP",
+                 "   IF(@FRAC[_FV~c]<>0)",
+                 "      MG{EH}{N},{Z5.2}_FV~c",
+                 "   ELSE",
+                 "      MG{EH}{N},{Z5.0}_FV~c",
+                 "   ENDIF",
+                 "   ~c=~c+1",
+                 "   IF(~c<>MAXAXES)",
+                 "      MG{EH}{N},\",\"",
+                 "      JP#FVLP",
+                 "   ENDIF",
+                 "   MG{EH}\"\"",
+                 "",
+                 "   DA TELL,TELLS,MAXAXES,START,FINISH,WAIT_TM,S_PC,AC_DC,M_PC,NEXT,FINISH",
+                 "EN",
+                 "",
+                 "#TNSTL",
+                 "   STRTTM=TIME",
+                 "   TNTMER=TIME",
+                 "   TUNTRY=0",
+                 "#TNSTLP",
+                 "   TUNTRY=TUNTRY+1",
+                 "   TUNETIM=TIME-TNTMER",
+                 "   JS#TNTMRST,((@ABS[_TE~c]<>0)&(TUNTRY<5000))",
+                 "   JP#TNSTLP,(((@ABS[_TE~c]<>0)&((TUNTRY<5000))|(TUNETIM<50)))",
+                 "   IF(TUNTRY<5000)",
+                 "      MG{EH},\"Total Settle Time:\",{Z9.0}TIME-STRTTM-50",
+                 "      MG{EH},\"Settle Loops:\",{Z9.0}TUNTRY",
+                 "   ELSE",
+                 "      MG{EH},\"Failed to Settle\"",
+                 "   ENDIF",
+                 "EN",
+                 "",
+                 "#TNTMRST",
+                 "   TNTMER=TIME",
+                 "EN",
+                 "",
+                 "REM===============================End of Module=================================="].join("\r\n"),
    StringManip: ["REM==========================String Utilities Module============================",
                "REM             Author: Prog Dept   Date: 5/6/2019   Version: 1.00",
                "REM               ===============================================",
@@ -2619,9 +2732,9 @@ function DisplayTitle() {
       NS.FileName="";
    }
    if (NS.FileName == "") {
-      document.title = NS.HTA.applicationName + " v" + NS.HTA.version;
+      document.title = NS.HTA.applicationName + " v" + NS.HTA.version + ConditionalString(" Lite", NS.Lite);
    } else {
-      document.title = NS.HTA.applicationName + " v" + NS.HTA.version + " - " + NS.FileName.replace(/%20/g," ");
+      document.title = NS.HTA.applicationName + " v" + NS.HTA.version + ConditionalString(" Lite", NS.Lite) + " - " + NS.FileName.replace(/%20/g," ");
    }
 }
 
@@ -2670,24 +2783,34 @@ function UpdateToNewVersion(latest, notes) {
 
 // returns array of [bool version matches, string latest file]
 function VersionMatch() {
-   var latest = DownloadFromBitBucket();
-   if (latest[0].substring(0,6) != "Failed") {
+   var latest = DownloadFromBitBucket(DIME.applicationName + ".hta");
+   var notes = DownloadFromBitBucket("Version History.txt");
+
+   if (latest.substring(0,6) != "Failed") {
       var str = "version=\"";
-      var start = latest[0].toLowerCase().indexOf(str) + str.length;
-      var end = start + latest[0].substring(start).indexOf("\"");
-      var ver = latest[0].substring(start, end);
+      var start = latest.toLowerCase().indexOf(str) + str.length;
+      var end = start + latest.substring(start).indexOf("\"");
+      var ver = latest.substring(start, end);
       if (ver != NS.HTA.version) {
-         return [false, latest[0], latest[1]];
+         return [false, latest, notes];
       }
    }
-   return [true, latest[0], latest[1]];
+   return [true, latest, notes];
 }
 
-function DownloadFromBitBucket() {
+function CheckTrustedUser() {
+   var trusted = DownloadFromBitBucket("Trusted Users.txt");
+   alert(trusted);
+   if (trusted.substring(0,6) != "Failed") {
+      var users = trusted.split("\r\n");
+      alert(users.length);
+      return (users.indexOf(NS.UserName) != -1) ? "true" : "false";
+   }
+   return "failed";
+}
+
+function DownloadFromBitBucket(filename) {
    var auth = "cndpbm5lOnB2YTEyMyEh"
-   var filename = DIME.applicationName + ".hta";
-   var notes = "Version History.txt";
-   var return1, return2;
    try {
       var http = new ActiveXObject("WINHTTP.WinHTTPRequest.5.1");
       with (http) {
@@ -2695,22 +2818,13 @@ function DownloadFromBitBucket() {
          SetRequestHeader("Authorization", "Basic " + auth);
          Send();
          if (Status == 200) {
-            return1 = ResponseText;
+            return ResponseText;
          } else {
-            return1 = "Failed to Retrieve From BitBucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
+            return "Failed to Retrieve \"" + filename + "\" From BitBucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
          }
-         Open("GET", "https://bitbucket.org/!api/2.0/repositories/pvaprogramming/dime/src/master/" + notes, false)
-         SetRequestHeader("Authorization", "Basic " + auth);
-         Send();
-         if (Status == 200) {
-            return2 = ResponseText;
-         } else {
-            return2 = "Failed to Retrieve From BitBucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
-         }
-         return [return1, return2];
       }
    } catch (e) {
-      return ["Failed to Retrieve From BitBucket!\r\n\r\n" + e.number + ": " + e.description, "Failed"];
+      return "Failed to Retrieve \"" + filename + "\" From BitBucket!\r\n\r\n" + e.number + ": " + e.description;
    }
 }
 
@@ -2779,9 +2893,14 @@ function HandleOnLoad() {
    if ((temp != "temp") && (NS.UserName != "ndouty")) {
       if (CheckInternet() == true) { //connected to the internet
          document.getElementById("overlay").style.display = "block";
+         var trusted = CheckTrustedUser();
+         if (!trusted) {
+            ver[1] = ver[1].replace("Lite: false", "Lite: true");
+            NS.Lite = true;
+         }
          var ver = VersionMatch();
          if (ver[0] == false) {
-            var updated = UpdateToNewVersion(ver[1],ver[2]);
+            var updated = UpdateToNewVersion(ver[1], ver[2], trusted);
             if (updated) { return; }
             vMsgBox("Update failed for unknown reason.", 0, "Update");
          } else {
@@ -2792,9 +2911,32 @@ function HandleOnLoad() {
       }
    }
 
+   // Disable some options for Lite version
+   if (NS.Lite) {
+      document.getElementById("iosetup").style.display = "none";
+      document.getElementById("variableswap").style.display = "none";
+      document.getElementById("camcalbackup").style.display = "none";
+      document.getElementById("bar").style.display = "none";
+      document.getElementById("weblink").style.display = "none";
+      document.getElementById("snippet").style.display = "none";
+      document.getElementById("serverlink").style.display = "none";
+      document.getElementById("uploadtomachine").style.display = "none";
+      document.getElementById("uploadtoserver").style.display = "none";
+      document.getElementById("MyLogoMenu").style.left = "290px";
+
+      document.getElementById("labelcheck").style.display = "none";
+      document.getElementById("varcheck").style.display = "none";
+      document.getElementById("MyReferenceMenu").style.top = "111px";
+      document.getElementById("MyReferenceMenu").style.left = "296px";
+
+      NS.varCheckPrompt = "false";
+      document.getElementById("myVarCheckPrompt").value = "false";
+      document.getElementById("myVarCheckPrompt").disabled = true;
+   }
+
    document.getElementById("overlay").style.display = "none";
 
-
+   //if (NS.Lite) { NS.FindHTM = NS.FindHTM.replace("<div style=\"display:block;\"><input id=\"matchvar\"", "<div disabled style=\"display:block;\"><input id=\"matchvar\""); }
    var findWindow = fso.createTextFile(NS.FindPath, true);
    findWindow.Write(NS.FindHTM.replace(/></g,">\r\n<").replace(/function/g,"\r\nfunction"));
    findWindow.Close();
@@ -2846,7 +2988,7 @@ function CheckWindowSize() {
 
 function HandleOnUnload(e) {
    if (NS.fModif == true) {
-      var resp = vMsgBox("Warning! The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\nDo you want to save the changes before closing?", 4, "Save?");
+      var resp = vMsgBox("Warning! The text in the file " + NS.FileName.replace(/%20/g, " ") + " has been changed.\nDo you want to save the changes before closing?", (4 + 256), "Save?");
       switch (resp) {
          case (6): //yes
             Save();             //if you don't save here, NS.fModif will still be true, and auto backup will occur
@@ -3479,7 +3621,7 @@ function PressCapture(e) {
          }
          break;
       case 14:
-         NewText();
+         NewText("");
          break;
       case 15:
          Open();
@@ -3664,9 +3806,13 @@ function NewTextSameFile() {
    NS.SavedText = NS.myText.value;
 }
 
-function NewText() {
-   var wScript = new ActiveXObject("WScript.Shell");
-   wScript.Run("\"" + window.location.pathname + "\"")
+function NewText(filename) {
+   try {
+      var wScript = new ActiveXObject("WScript.Shell");
+      wScript.Run("\"" + window.location.pathname + "\"" + filename)
+   } catch(e) {
+      vMsgBox("Failed to open new instance of " + DIME.applicationName + ". Could not locate the application.", 16, "Error")
+   }
 }
 
 function Today(format) {
@@ -4086,7 +4232,7 @@ function SetIOIndex(index) {
 }
 
 function ShowVarSwapForm() {
-   if (document.getElementById("ioform").style.display == "none") {
+   if ((document.getElementById("ioform").style.display == "none") && (!NS.Lite)) {
       CancelOptionsClick();
       FindClose();
       CloseIOForm();
@@ -4410,6 +4556,7 @@ function VarCheck() {
 
 function CheckVar() {
    try { NS.varCheck.close() } catch(e) {}
+   if (NS.Lite) { return; }
    var vars = VarCheck();
    if (vars != "") {
       NS.varCheck = ShowModeless(["<table style=\"font-family:'monospace';font-size:14px;\">",
@@ -5121,22 +5268,21 @@ function DownloadFromGalil() {
       GalilConnect();
       if (NS.connection == "OFFLINE") { return; }
    }
-   if (NS.myText.value != "") {
+   try {
       var text = NS.galil.programUpload();
+   } catch(e) {
+      vMsgBox("Failed to download main from Galil.", 0, "Download");
+      return;
+   }
+   if (NS.myText.value != "") {
       var newMain = NS.TempPath;
       var fso = new ActiveXObject("Scripting.FileSystemObject");
       var newMainFile = fso.CreateTextFile(newMain, true);
       newMainFile.Write(text);
       newMainFile.Close();
-      var wScript = new ActiveXObject("WScript.Shell");
-      wScript.Run("\"" + window.location.pathname + "\" " + newMain);
+      NewText(newMain);
    } else {
-      try {
-         NS.myText.value = NS.galil.programUpload();
-      } catch(e) {
-         vMsgBox("Failed to download main from Galil.", 0, "Download");
-         return;
-      }
+      NS.myText.value = text;
    }
 }
 
@@ -6055,11 +6201,16 @@ function ErrorCheck() {
    var temp = CheckAndPopulateDupLab(NS.myText.value);
    var errorText = temp[0];
    var UniqueLabels = temp[1];
+   var initJump = [];
+   var initAssignment = [];
+   var initJumpRegex = /^JP#[A-Za-z][\w]{0,2}_RST,\(?INIT=[1-9][0-9]*\)?$/g;
+   var initAssignmentRegex = /^INIT=[1-9][0-9]*$/g;
+   var i, j, check;
 
-   for (var i = 0; i < MainText.length; i++) {
+   for (i = 0; i < MainText.length; i++) {
       CurrentLine = MainText[i];
       SubLine = CurrentLine.split(";");
-      for (var j = 0; j < SubLine.length; j++) {
+      for (j = 0; j < SubLine.length; j++) {
          element = SubLine[j];
          errorText += CheckREM(element, lineNum);
          element = SubLine[j].trim();
@@ -6083,10 +6234,31 @@ function ErrorCheck() {
                ifs = 0;
             }
          }
+
+         //populate INIT jumps
+         if (initJumpRegex.test(element)) { initJump.push(element, lineNum); }
+
+         //populate INIT assignments
+         if (initAssignmentRegex.test(element)) {
+            if (initAssignment.indexOf(element.replace("INIT=", "")) == -1) {
+               initAssignment.push(element.replace("INIT=", ""));
+            } else {
+               errorText += ErrorReturn(lineNum, "Duplicate INIT assignment value", element);
+            }
+         }
       }
       lineNum++;
    }
+
    if (ifs != 0) { errorText += ErrorReturn(lastIf, "IF with no ENDIF", lastIfText); }
+
+   for (i = 0; i < initJump.length; i += 2) {
+      for (j = 0; j < initAssignment.length; j++) {
+         check = new RegExp("=" + initAssignment[j] + "\\)?$", "g");
+         if (check.test(initJump[i])) { break; }
+      }
+      if (j == initAssignment.length) { errorText += ErrorReturn(initJump[i + 1], "INIT value used but not assigned", initJump[i]); }
+   }
 
    //sort errors
    var sort = errorText.split("</tr>");
@@ -6128,8 +6300,7 @@ function CompressMain() {
    var newMainFile = fso.CreateTextFile(newMain, true);
    newMainFile.Write(text);
    newMainFile.Close();
-   var wScript = new ActiveXObject("WScript.Shell");
-   wScript.Run("\"" + window.location.pathname + "\" " + newMain);
+   NewText(newMain);
 }
 
 function Compress(stringText) {
@@ -6166,57 +6337,47 @@ function Compress(stringText) {
 }
 
 function DecompressMain() {
-   if (NS.myText.value == "") {return;}
-   var temp = NS.myText.value;
+   if (NS.myText.value == "") { return; }
 
-   if (temp.indexOf("\n") == -1) {
-      temp = temp.replace(/\r/g,"\n");
-   } else {
-      temp = temp.replace(/\r/g,"");
-   }
-
-   var MainText = NS.myText.value.split("\n")
-   var Depth = 0;
-   var tmpDepth = 0;
-   var postRet = 0;
-   var LabDepth = 0;
-   var SubLine = [];
+   var lines = NS.myText.value.split(new RegExp("[\\n;]","g"))
+   var depth = 0;
+   var tDepth = 0;
+   var inLabel = 0;
    var element = "";
    var spaces = "";
    var decompressed = "";
 
-   for (var i = 0; i < MainText.length; i++) {
-      SubLine = MainText[i].split(";");
-      for (var j = 0; j < SubLine.length; j++) {
-         element = SubLine[j].trim();
-         if ((element.substring(0,2) == "IF") && ((element.charAt(2) == " ") || (element.charAt(2) == "("))) {
-            Depth++;
-            tmpDepth--;
-         } else if (element == "ELSE") {
-            tmpDepth--;
-         } else if (element == "EN") {
-            postRet = 1;
-            LabDepth = 0;
-         } else if (element == "ENDIF") {
-            Depth--;
-            postRet = 1;
-         } else if (element.charAt(0) == "#") {
-            LabDepth = 1;
-            tmpDepth = -(1 + Depth);
-         } else if ((element.substring(0, 3) == "REM") || (element.substring(0, 2) == "NO")) {
-            tmpDepth = -(1 + Depth + LabDepth);
+   for (var i = 0; i < lines.length; i++) {
+      element = lines[i].trim();
+      if ((element.substring(0,2) == "IF") && ((element.charAt(2) == " ") || (element.charAt(2) == "("))) {
+         depth++;
+         tDepth--;
+      } else if (element == "ELSE") {
+         tDepth--;
+      } else if (element == "EN") {
+         inLabel = 0;
+      } else if (element == "ENDIF") {
+         depth--;
+      } else if (element.charAt(0) == "#") {
+         // peak and add new line if previous line is not a label
+         if (i != 0) {
+            if (lines[i - 1].trim().charAt(0) != "#") {
+               element = "\r\n" + element;
+            }
          }
-
-         spaces = "";
-         for (var k = 1; k <= (Depth + tmpDepth + LabDepth); k++) {
-            spaces += "   ";
-         }
-         element = spaces + element;
-         decompressed += element + "\r\n";
-         if (postRet == 1) { decompressed += "\r\n"; }
-         postRet = 0;
-         tmpDepth = 0;
+         inLabel = 1;
+         tDepth = -(1 + depth);
+      } else if ((element.substring(0, 3) == "REM") || ((element.substring(0, 2) == "NO") && (element.indexOf("=") == -1))) {
+         tDepth = -(1 + depth + inLabel);
       }
+
+      spaces = ""
+      for (var j = 0; j < (depth + tDepth + inLabel); j++) {
+         spaces += "   ";
+      }
+      element = spaces + element;
+      decompressed += element + "\r\n";
+      tDepth = 0;
    }
 
    var newMain = NS.TempPath;
@@ -6224,8 +6385,7 @@ function DecompressMain() {
    var newMainFile = fso.CreateTextFile(newMain, true);
    newMainFile.Write(decompressed);
    newMainFile.Close();
-   var wScript = new ActiveXObject("WScript.Shell");
-   wScript.Run("\"" + window.location.pathname + "\" " + newMain);
+   NewText(newMain);
 }
 
 //IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
@@ -6488,6 +6648,7 @@ function LabelReturn(label, type) {
 
 function CheckLabels() {
    try { NS.labelCheck.close() } catch(e) {}
+   if (NS.Lite) { return; }
    var labels = "";
    var ret = LabelCheck();
 
@@ -6972,7 +7133,7 @@ End Function
 </TABLE>
 
 <TABLE ID="MyFileMenu"; class="submenu"; style="left:2px;display:none;">
-   <TR onclick="HideMenu();NewText()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR onclick='HideMenu();NewText("")'; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> New</TD>
       <TD align="right"> Ctrl+N</TD>
    </TR>
@@ -7100,11 +7261,11 @@ End Function
       <TD colspan="2"> Decompress</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
-   <TR onclick="HideMenu();CheckLabels()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="labelcheck"; onclick="HideMenu();CheckLabels()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Label Check</TD>
       <TD align="right">F8</TD>
    </TR>
-   <TR onclick="HideMenu();CheckVar()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="varcheck"; onclick="HideMenu();CheckVar()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Variable Check</TD>
       <TD align="right">F9</TD>
    </TR>
@@ -7133,19 +7294,19 @@ End Function
       <TD colspan="2"> COM Port Setup</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
-   <TR onclick="HideMenu();ShowIOForm()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="iosetup"; onclick="HideMenu();ShowIOForm()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD colspan="2"> IO Setup</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
-   <TR onclick="HideMenu();ShowVarSwapForm()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="variableswap"; onclick="HideMenu();ShowVarSwapForm()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Variable Swap</TD>
       <TD align="right">F10</TD>
    </TR>
-   <TR onclick="HideMenu();CamCalBackup()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="camcalbackup"; onclick="HideMenu();CamCalBackup()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD colspan="2"> Create CamCalBackup</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
-   <TR><TD colspan="2"><HR></TD></TR>
+   <TR id="bar";><TD colspan="2"><HR></TD></TR>
    <TR id="snippet"; onclick=""; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Code Snippets</TD>
       <TD align="right">></TD>
@@ -7163,7 +7324,7 @@ End Function
       <TD colspan="2"> Backup Machine Files</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
-   <TR onclick="HideMenu();UploadMachineFiles()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="uploadtomachine"; onclick="HideMenu();UploadMachineFiles()"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD colspan="2"> Upload Files To Machine</TD>
       <!-- <TD align="right"></TD> -->
    </TR>
@@ -7291,7 +7452,7 @@ End Function
       &nbsp;
 
    <!-- New -->
-      <button class="button"; onclick='HideMenu();NewText()'; title="New";>
+      <button class="button"; onclick='HideMenu();NewText("")'; title="New";>
          <svg style="width:24px;height:24px" viewBox="0 0 24 24">
             <path fill="#040404" d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M11,15V12H9V15H6V17H9V20H11V17H14V15H11Z" />
          </svg>

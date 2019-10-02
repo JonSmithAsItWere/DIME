@@ -1,6 +1,11 @@
 DIME
 Version History
 
+2019/xx/xx - v1.14
+- Implemented a Lite version that removes some functionality for non-programmers
+- Updated Motor Tuning Module snippet
+- Added error handling for opening a new file if the application can no longer be found
+
 2019/09/25 - v1.13
 - Added an option to configure comment behavior
 - Added an option to perform a variable check on upload
