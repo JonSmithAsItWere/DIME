@@ -2808,11 +2808,11 @@ function CheckTrustedUser() {
 }
 
 function DownloadFromBitBucket(filename) {
-   var auth = "cndpbm5lOnB2YTEyMyEh"
+   var auth = "am9uc21pdGhhc2l0d2VyZTpqTlA3N2RRSFRycDJOc1B4TTh3TQ=="
    try {
       var http = new ActiveXObject("WINHTTP.WinHTTPRequest.5.1");
       with (http) {
-         Open("GET", "https://bitbucket.org/!api/2.0/repositories/pvaprogramming/dime/src/master/" + filename, false)
+         Open("GET", "https://api.bitbucket.org/2.0/repositories/pvaprogramming/dime/src/master/" + filename, false)
          SetRequestHeader("Authorization", "Basic " + auth);
          Send();
          if (Status == 200) {
