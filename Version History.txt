@@ -1,6 +1,14 @@
 DIME
 Version History
 
+2022/03/14 - v1.16
+- Removed the 'ProgSite' link since it's inactive
+- Updated the 'Quick Reference' menu options to attempt to direct the user to the commands to the DMC 4000 Command Reference as listed on the Galil website
+  (with the fallback for having no internet connection being that the original "quick ref" text text gets displayed instead
+- Corrected the "quick ref." content of the 'ErrorCodes' and 'StopCodes' sections by updating it with the most up-to-date nomenclature and content that's available on our server and on the Galil website
+- Overhauled the Run() function to be able to call ShowReference() in lieu of an internet connection to support these updates
+- Updated the title 'DMC Reference' to 'Command Reference' in the menus
+ 
 2022/03/14 - v1.15
 - Updated the authentication key
 - Updated / corrected the endpoint URL to the Bitbucket API
