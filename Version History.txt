@@ -4,6 +4,9 @@ Version History
 2022/03/14 - v1.15
 - Updated the authentication key
 - Updated / corrected the endpoint URL to the Bitbucket API
+- Updated the copyright date
+- Updated the link to the PathMaster plugins directory on the server
+- 
 
 2019/xx/xx - v1.14
 - Implemented a Lite version that removes some functionality for non-programmers
