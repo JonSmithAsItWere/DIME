@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.15"
+   version="1.16"
    windowState="normal"
 />
 
@@ -138,7 +138,6 @@ window.resizeTo(675,845);   //initial window size
 
 Link = {   // NOTE: '"' and '\' characters in the links below must be escaped with '\'
    JumpStart: "\"\\\\pva.local\\shared\\programming\\System Programming\\Open JumpStart.xlsm\"",
-   ProgSite: "\"https://sites.google.com/pva.net/pvarosebud\"",
    Jira: "\"https://pvaprogramming.atlassian.net/secure/Dashboard.jspa\"",
    BitBucket: "\"https://bitbucket.org/pvaprogramming/application\"",
    DMCRef: "\"\\\\pva.local\\shared\\Customer Service\\Manuals\\CutSheet\\Galil Motion Control\\4000\\Galil DMC-40x0 Command Reference Manual 1761.pdf\"",
@@ -149,7 +148,10 @@ Link = {   // NOTE: '"' and '\' characters in the links below must be escaped wi
    Portal: "\"\\\\pva.local\\shared\\Customer Service\\APPS\\SOFTWARE\\PVAPortal\"",
    Cutsheets: "\"\\\\pva.local\\shared\\Customer Service\\Manuals\\CutSheet\"",
    Pictures: "\"\\\\pva.local\\shared\\Customer Service\\Pictures\\Project Pictures\"",
-   Machines: "\"\\\\pva.local\\shared\\Projects\\Machines\""
+   Machines: "\"\\\\pva.local\\shared\\Projects\\Machines\"",
+   ErrorCodes: "\"https://www.galil.com/download/comref/com4000/index.html#tell_error_code.html+DMC4000\"",
+   StopCodes: "\"https://www.galil.com/download/comref/com4000/index.html#stop_code.html+DMC4000\"",
+   CommandReference: "\"https://www.galil.com/download/comref/com4000/index.html#cover.html+DMC4000\""
 };
 
 // Lib Name: [filepath, string to match device port, number of device port (initialized to 0)]
@@ -272,14 +274,19 @@ NS = {
    variableC: "#000000",       //variable watch variable font colors
    valueBC: "#FFFFFF",         //variable watch value background colors
    valueC: "#000000",          //variable watch value font colors
-   ErrorCodes: ["1\tUnrecognized command",
+   ErrorCodes: ["Error Codes Returnable by TC (Tell Error Code)",
+               "https://www.galil.com/download/comref/com4000/index.html#tell_error_code.html+DMC4000",
+               "",
+               "(Below List Was Last Updated on 3/14/22)",
+               "",
+               "1\tUnrecognized command",
                "2\tCommand only valid from program",
                "3\tCommand not valid in program",
                "4\tOperand error",
                "5\tInput buffer full",
                "6\tNumber out of range",
                "7\tCommand not valid while running",
-               "8\tCommand not valid when not running",
+               "8\tCommand not valid while not running",
                "9\tVariable error",
                "10\tEmpty program line or undefined label",
                "11\tInvalid label or line number",
@@ -288,89 +295,95 @@ NS = {
                "14\tEEPROM check sum error",
                "15\tEEPROM write error",
                "16\tIP incorrect sign during position move or IP given during forced deceleration",
-               "17\tED and DL not valid while program running",
+               "17\tED, BN and DL not valid while program running",
                "18\tCommand not valid when contouring",
                "19\tApplication strand already executing",
                "20\tBegin not valid with motor off",
                "21\tBegin not valid while running",
                "22\tBegin not possible due to Limit Switch",
                "24\tBegin not valid because no sequence defined",
-               "25\tVariable not given in IN command",
                "28\tS operand not valid",
                "29\tNot valid during coordinated move",
-               "30\tSequence segment too short",
+               "30\tSequence Segment Too Short",
                "31\tTotal move distance in a sequence > 2 billion",
-               "32\tMore than 511 segments in a sequence",
+               "32\tSegment buffer full",
                "33\tVP or CR commands cannot be mixed with LI commands",
+               "39\tNo time specified",
                "41\tContouring record range error",
                "42\tContour data being sent too slowly",
                "46\tGear axis both master and follower",
-               "50\tNot enough fields in CR command",
+               "50\tNot enough fields",
                "51\tQuestion mark not valid",
-               "52\tMissing \" or string too long",
+               "52\tMissing double quotes or string too long",
                "53\tError in {}",
                "54\tQuestion mark part of string",
                "55\tMissing [ or []",
                "56\tArray index invalid or out of range",
                "57\tBad function or array",
-               "58\tBad command response",
+               "58\tBad command response - i.e._GNX",
                "59\tMismatched parentheses",
                "60\tDownload error - line too long or too many lines",
                "61\tDuplicate or bad label",
                "62\tToo many labels",
                "63\tIF statement without ENDIF",
-               "65\tIN command must have a comma",
                "66\tArray space full",
                "67\tToo many arrays or variables",
-               "68\tNot valid from USB Port",
-               "71\tIN only valid in task #0",
                "80\tRecord mode already running",
                "81\tNo array or source specified",
                "82\tUndefined Array",
                "83\tNot a valid number",
                "84\tToo many elements",
                "90\tOnly A B C D valid operand",
-               "96\tSM jumper needs to be installed for stepper motor operation",
                "97\tBad Binary Command Format",
                "98\tBinary Commands not valid in application program",
                "99\tBad binary command number",
                "100\tNot valid when running ECAM",
-               "101\tImproper index into ET (must be 0-256)",
+               "101\tImproper index into ET",
                "102\tNo master axis defined for ECAM",
-               "103\tMaster axis modulus greater than 256*EP value",
+               "103\tMaster axis modulus greater than 256 EP value",
                "104\tNot valid when axis performing ECAM",
                "105\tEB1 command must be given first",
+               "106\tPrivilege Violation",
                "110\tNo hall effect sensors detected",
                "111\tMust be made brushless by BA command",
                "112\tBZ command timeout",
                "113\tNo movement in BZ command",
                "114\tBZ command runaway",
-               "118\tAxis must be configured as stepper",
+               "118\tController has GL1600 not GL1800",
                "119\tNot valid for axis configured as stepper",
-               "120\tBad Ethernet transmit",
-               "121\tBad Ethernet packet received",
-               "122\tEthernet input buffer overrun",
-               "123\tTCP lost sync",
-               "124\tEthernet handle already in use",
-               "125\tNo ARP response from IP address",
-               "126\tClosed Ethernet Handle",
-               "127\tIllegal Modbus Function Code",
-               "128\tIP address not valid",
-               "129\tHC already executed",
-               "130\tIllegal IOC command",
-               "131\tTimeout On Serial Port",
+               "120\tBad Ethernet transmit - not valid for PCI",
+               "121\tBad Ethernet packet received - not valid for PCI",
+               "123\tTCP lost sync - not valid for PCI",
+               "124\tEthernet handle already in use - not valid for PCI",
+               "125\tNo ARP response from IP address - not valid for PCI",
+               "126\tClosed Ethernet handle - not valid for PCI",
+               "127\tIllegal Modbus function code - not valid for PCI",
+               "128\tIP address not valid - not valid for PCI",
+               "130\tRemote IO command error - not valid for PCI",
+               "131\tSerial Port Timeout - not valid for PCI, See Remarks",
                "132\tAnalog inputs not present",
-               "132\tPLCSCAN Program not defined (IOC-7007 only",
-               "133\tHandle must be UDP",
+               "133\tCommand not valid when locked / Handle must be UDP - not valid for PCI",
                "134\tAll motors must be in MO for this command",
-               "134\tPLCSCAN program executing (IOC-7007 only) ",
                "135\tMotor must be in MO",
-               "141\tIncorrect Xilinx configuration",
-               "150\tNot defined as digital input",
-               "151\tNot defined as digital output",
-               "152\tNot defined as analog input",
-               "153\tNot defined as analog output"].join("\r\n"),
-   StopCodes: ["0\tMotors are running, independent mode",
+               "136\tInvalid Password",
+               "137\tInvalid lock setting",
+               "138\tPasswords not identical",
+               "140\tSerial encoder error - Valid for BiSS support",
+               "141\tFeature not supported",
+               "143\tTM timed out - Valid on SER firmware (SSI and BiSS)",
+               "144\tIncompatible with encoder type",
+               "160\tBX failure",
+               "161\tSine amp axis not initialized",
+               "163\tIA command not valid when DHCP mode enabled",
+               "164\tExceeded maximum sequence length, BGS or BGT is required",
+               "165\tCannot have both SINE and SSI feedback enabled at once - DMC-30000 only",
+               "166\tUnable to set analog output - 30000 Hardware, see AO"].join("\r\n"),
+   StopCodes: ["Stop Codes Returnable by SC (Stop Code)",
+               "https://www.galil.com/download/comref/com4000/index.html#stop_code.html+DMC4000",
+               "",
+               "(Below List Was Last Updated on 3/14/22)",
+               "",
+               "0\tMotors are running, independent mode",
                "1\tMotors decelerating or stopped at commanded independent position",
                "2\tDecelerating or stopped by FWD limit switch or soft limit FL",
                "3\tDecelerating or stopped by REV limit switch or soft limit BL",
@@ -396,10 +409,12 @@ NS = {
                "99\tMC timeout",
                "100\tVector Sequence running",
                "101\tVector Sequence stopped"].join("\r\n"),
-   DMCCommands: ["DMC-40x0 Firmware Command Reference",
+   CommandReference: ["DMC-40x0 Firmware Command Reference",
+               "https://www.galil.com/download/comref/com4000/index.html",
                "Revision: 1761",
-               "12/20/18",
                "©2018 Galil Motion Control",
+               "",
+               "(Below List Was Last Updated on 12/20/18)",
                "",
                "'\t\tComment",
                "-\t\tSubtraction Operator",
@@ -3211,28 +3226,34 @@ function DefaultOptionsClick() {
 }
 
 function Run(link, type) {;
+   haveInternet = false
+
    if (type == 1) {  // website link
-      var temp = CheckInternet();
-      if (temp == false) {
+      var haveInternet = CheckInternet();
+      if ( haveInternet == false ) {
          vMsgBox("Navigation failed. You are not connected to the internet.", 0, "Web Links");
          setTimeout(HideMenu,10);
          return;
       }
-   }
-   if (type == 2) {  // server link
-      var fso = new ActiveXObject("Scripting.FileSystemObject")
+   } else if (type == 2) { // server link
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
       if (!fso.FolderExists("\\\\pva.local\\shared")) {
          vMsgBox("Navigation failed. You are not connected to the server.", 0, "Server Links");
          setTimeout(HideMenu,10);
          return;
       }
+   } else { // reference object
+      var haveInternet = CheckInternet();
    }
-
-   var wScript = new ActiveXObject("WScript.Shell")
-   try{
-      wScript.run(link);
-   } catch(e) {
-      vMsgBox("Navigation failed. Unknown Error.", 0, "Navigation");
+   if ( haveInternet == true ) {
+      var wScript = new ActiveXObject("WScript.Shell");
+      try {
+         wScript.run(link);
+      } catch(e) {
+         vMsgBox("Navigation failed. Unknown Error.", 0, "Navigation");
+      }
+   } else {
+      ShowReference(type);
    }
 
    setTimeout(HideMenu,10);
@@ -5949,8 +5970,8 @@ function ShowReference(reference) {
          w = document.innerWidth;
          h = 440;
          break;
-      case (NS.DMCCommands):
-         title = "DMC Reference";
+      case (NS.CommandReference):
+         title = "Command Reference";
          w = document.innerWidth;
          h = document.innerHeight;
          break;
@@ -7359,14 +7380,14 @@ End Function
 </TABLE>
 
 <TABLE ID="MyReferenceMenu"; class="submenu"; style="left:296px;top:151px;display:none;">
-   <TR id="quickref"; onclick="HideMenu();ShowReference(NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="quickref"; onclick="HideMenu();Run(Link.ErrorCodes,NS.ErrorCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Error Codes</TD>
    </TR>
-   <TR id="quickref"; onclick="HideMenu();ShowReference(NS.StopCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="quickref"; onclick="HideMenu();Run(Link.StopCodes,NS.StopCodes)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Stop Codes</TD>
    </TR>
-   <TR id="quickref"; onclick="HideMenu();ShowReference(NS.DMCCommands)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
-      <TD> DMC Commands</TD>
+   <TR id="quickref"; onclick="HideMenu();Run(Link.CommandReference,NS.CommandReference)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+      <TD> Command Reference</TD>
    </TR>
 </TABLE>
 
