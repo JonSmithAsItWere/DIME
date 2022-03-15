@@ -2913,8 +2913,9 @@ function HandleOnLoad() {
          }
          var ver = VersionMatch();
          if (ver[0] == false) {
-            var fileCrLf = ver[1].replace(new RegExp("$\\n","g"),"\n\r")
-            var updated = UpdateToNewVersion(fileCrLf, ver[2], trusted);
+            ver[1] = ver[1].replace("\n","\r\n")
+            ver[2] = ver[2].replace("\n","\r\n")
+            var updated = UpdateToNewVersion(ver[1], ver[2], trusted);
             if (updated) { return; }
             vMsgBox("Update failed for unknown reason.", 0, "Update");
          } else {
