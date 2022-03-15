@@ -1,6 +1,9 @@
 DIME
 Version History
 
+2022/03/15 - v1.161
+- DIME's source code is now written using CRLF line endings when being updated from Bitbucket
+
 2022/03/14 - v1.16
 - Removed the 'ProgSite' link since it's inactive
 - Updated the 'Quick Reference' menu options to attempt to direct the user to the commands to the DMC 4000 Command Reference as listed on the Galil website
