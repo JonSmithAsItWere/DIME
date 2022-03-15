@@ -139,7 +139,7 @@ window.resizeTo(675,845);   //initial window size
 Link = {   // NOTE: '"' and '\' characters in the links below must be escaped with '\'
    JumpStart: "\"\\\\pva.local\\shared\\programming\\System Programming\\Open JumpStart.xlsm\"",
    Jira: "\"https://pvaprogramming.atlassian.net/secure/Dashboard.jspa\"",
-   BitBucket: "\"https://bitbucket.org/pvaprogramming/application\"",
+   Bitbucket: "\"https://bitbucket.org/pvaprogramming/application\"",
    DMCRef: "\"\\\\pva.local\\shared\\Customer Service\\Manuals\\CutSheet\\Galil Motion Control\\4000\\Galil DMC-40x0 Command Reference Manual 1761.pdf\"",
    SpecialRef: "\"\\\\pva.local\\shared\\Customer Service\\Manuals\\CutSheet\\Galil Motion Control\\4000\\DMC4000_PVA_Special_Command_Reference_2016-12-23.pdf\"",
    SystemProgramming: "\"\\\\pva.local\\shared\\Programming\\System Programming\"",
@@ -2833,11 +2833,11 @@ function DownloadFromBitbucket(filename) {
          if (Status == 200) {
             return ResponseText;
          } else {
-            return "Failed to Retrieve \"" + filename + "\" From BitBucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
+            return "Failed to Retrieve \"" + filename + "\" From Bitbucket!\r\n\r\n" + "Status recieved: " + Status + "\r\n" + ResponseText;
          }
       }
    } catch (e) {
-      return "Failed to Retrieve \"" + filename + "\" From BitBucket!\r\n\r\n" + e.number + ": " + e.description;
+      return "Failed to Retrieve \"" + filename + "\" From Bitbucket!\r\n\r\n" + e.number + ": " + e.description;
    }
 }
 
@@ -7425,7 +7425,7 @@ End Function
    <TR id="weblink"; onclick="HideMenu();Run(Link.Jira, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Jira</TD>
    </TR>
-   <TR id="weblink"; onclick="HideMenu();Run(Link.BitBucket, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
+   <TR id="weblink"; onclick="HideMenu();Run(Link.Bitbucket, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
       <TD> Bitbucket</TD>
    </TR>
    <TR id="weblink"; onclick="HideMenu();Run(Link.ProgSite, 1)"; onmouseover="SubMenuOver(this)"; onmouseout="SubMenuOut(this)">
