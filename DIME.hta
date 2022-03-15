@@ -3226,11 +3226,11 @@ function DefaultOptionsClick() {
 }
 
 function Run(link, type) {;
-   haveInternet = false
+   haveAccess = false
 
    if (type == 1) {  // website link
-      var haveInternet = CheckInternet();
-      if ( haveInternet == false ) {
+      var haveAccess = CheckInternet();
+      if ( haveAccess == false ) {
          vMsgBox("Navigation failed. You are not connected to the internet.", 0, "Web Links");
          setTimeout(HideMenu,10);
          return;
@@ -3241,11 +3241,13 @@ function Run(link, type) {;
          vMsgBox("Navigation failed. You are not connected to the server.", 0, "Server Links");
          setTimeout(HideMenu,10);
          return;
+      } else {
+         var haveAccess = true
       }
    } else { // reference object
-      var haveInternet = CheckInternet();
+      var haveAccess = CheckInternet();
    }
-   if ( haveInternet == true ) {
+   if ( haveAccess == true ) {
       var wScript = new ActiveXObject("WScript.Shell");
       try {
          wScript.run(link);
