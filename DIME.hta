@@ -2790,7 +2790,7 @@ function UpdateToNewVersion(latest, notes) {
    var notesPath = NS.Path + "Version History.txt";
    var n = fso.CreateTextFile(notesPath, true);
    // n.Write(notes.replace(/\n/g,"\r\n"));
-   f.Write(notes)
+   n.Write(notes)
    n.Close();
    wScript.Run("\"" + notesPath + "\"")
 
