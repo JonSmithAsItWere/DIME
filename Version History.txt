@@ -1,6 +1,9 @@
 DIME
 Version History
 
+2022/03/18 - v1.162
+- Incremented the version number
+
 2022/03/15 - v1.161
 - DIME's source code is now written using CRLF line endings when being updated from Bitbucket
 - Fixed a bug with Run() that kept server links from opening properly
