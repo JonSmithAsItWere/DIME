@@ -1,6 +1,11 @@
 DIME
 Version History
 
+2022/03/18 - v1.163
+- Changed all of the line endings from a 'Windows'-style (CRLF) to a 'Unix'-style (LF)
+  (Apparently this makes the SmartScreen / Windows Defender features of Windows no
+   longer block elements of this application, giving it full access... scary.)
+
 2022/03/18 - v1.162
 - Incremented the version number
 
