@@ -20,7 +20,7 @@
    showInTaskBar="yes"
    singleInstance="no"
    sysMenu="yes"
-   version="1.162"
+   version="1.163"
    windowState="normal"
 />
 
@@ -2779,7 +2779,8 @@ function UpdateToNewVersion(latest, notes) {
    } catch(e) {
       return false;
    }
-   f.Write(latest.replace(/\n/g,"\r\n"));
+//   f.Write(latest.replace(/\n/g,"\r\n"));
+   f.Write(latest)
    f.Close();
    CancelOptionsClick();
    SaveOptionsClick(false);
@@ -2788,7 +2789,8 @@ function UpdateToNewVersion(latest, notes) {
 
    var notesPath = NS.Path + "Version History.txt";
    var n = fso.CreateTextFile(notesPath, true);
-   n.Write(notes.replace(/\n/g,"\r\n"));
+   // n.Write(notes.replace(/\n/g,"\r\n"));
+   f.Write(notes)
    n.Close();
    wScript.Run("\"" + notesPath + "\"")
 
